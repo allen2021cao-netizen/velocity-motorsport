@@ -5,7 +5,11 @@ import {TRACKS,timeIcon} from './tracks.js';
 import {vehicleFactory} from './vehicles.js';
 import {stepVehicle,readGamepad} from './physics';
 import {Session,options,mountSetup} from './session';
-import {setupGraphics,enhanceCar,enhanceTrack} from './graphics';
+import {setupGraphics,enhanceCar} from './graphics';
+import {Atmosphere} from './environment/atmosphere';
+import {RoadSurfaces} from './environment/materials';
+import {buildCity,animateCity} from './environment/city';
+import {CITY_PROFILES} from './environment/profiles';
 'use strict';
 if (typeof THREE === 'undefined') {
   document.getElementById('loadErr').style.display = 'flex';
@@ -60,6 +64,9 @@ const hemi = new THREE.HemisphereLight(0x2a3555, 0x0a0c14, .5); scene.add(hemi);
 const sunLight = new THREE.DirectionalLight(0x8899cc, .35);
 sunLight.position.set(-200, 300, 100); scene.add(sunLight);
 const graphics=setupGraphics(renderer,scene,camera,sunLight);
+const atmosphere=new Atmosphere(renderer,scene,sunLight,ambient,hemi);
+const surfaces=new RoadSurfaces();
+let cityReport=null,tourAngle=0;
 const session=new Session();
 let wetness=0;
 
@@ -314,7 +321,7 @@ function buildStrip(offA, offB, yA, yB, mat) {
   geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   geo.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
   geo.setIndex(idx); geo.computeVertexNormals();
-  return new THREE.Mesh(geo, mat);
+  const mesh=new THREE.Mesh(geo, mat);mesh.receiveShadow=true;return mesh;
 }
 function addPalm(x, z, s) {
   const lean = (Math.sin(x * 3.1) + Math.cos(z * 2.3)) * .07;
@@ -519,55 +526,11 @@ function buildWorld(ti) {
   if (precipMode === 'snow') { rainMat.color.setHex(0xffffff); rainMat.size = .32; rainMat.opacity = .8; precipSpeed = 9; }
   else { rainMat.color.setHex(0x6688aa); rainMat.size = .16; rainMat.opacity = .55; precipSpeed = 45; }
 
-  // —— 渐变天穹 ——
-  const skyHor = shadeCol(mixCol(E.fog[0], E.orb[0], .35), night ? 1.6 : 1.25);
-  const skyTop = shadeCol(E.sky, night ? .9 : .75);
-  const skyTexC = D_(canvasTex(16, 256, (g, w, h) => {
-    const gr = g.createLinearGradient(0, 0, 0, h);
-    gr.addColorStop(0, hex6(skyTop));
-    gr.addColorStop(.62, hex6(E.sky));
-    gr.addColorStop(.8, hex6(skyHor));
-    gr.addColorStop(1, hex6(shadeCol(E.fog[0], 1.05)));
-    g.fillStyle = gr; g.fillRect(0, 0, w, h);
-  }));
-  const dome = new THREE.Mesh(D_(new THREE.SphereGeometry(1350, 24, 12)),
-    D_(new THREE.MeshBasicMaterial({ map: skyTexC, side: THREE.BackSide, fog: false, depthWrite: false })));
-  worldGroup.add(dome);
-  // 日/月光晕
-  const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: E.orb[0], transparent: true, opacity: .22, fog: false, depthWrite: false }));
-  halo.scale.set(E.orb[1] * 2.6, E.orb[1] * 2.6, 1);
-  halo.position.set(E.orb[2], E.orb[3], E.orb[4]);
-  worldGroup.add(halo);
-  const orbCore = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xffffff, transparent: true, opacity: night ? .85 : 1, fog: false, depthWrite: false }));
-  orbCore.scale.set(E.orb[1] * .5, E.orb[1] * .5, 1);
-  orbCore.position.set(E.orb[2], E.orb[3], E.orb[4]);
-  worldGroup.add(orbCore);
-  if (!night) {
-    // 白天/黄昏:云层
-    for (let i = 0; i < 12; i++) {
-      const cl = new THREE.Sprite(new THREE.SpriteMaterial({ map: cloudTex, transparent: true, fog: false, depthWrite: false,
-        opacity: .35 + rnd() * .35, color: dusk ? 0xffb890 : 0xffffff }));
-      const th = rnd() * TAU, rr2 = 450 + rnd() * 550;
-      cl.position.set(rr2 * Math.cos(th), 170 + rnd() * 160, rr2 * Math.sin(th));
-      cl.scale.set(160 + rnd() * 180, 44 + rnd() * 40, 1);
-      worldGroup.add(cl);
-    }
-  } else {
-    // 夜晚:地平线城市光穹
-    for (let i = 0; i < 6; i++) {
-      const th = i / 6 * TAU + .4;
-      const gl = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, fog: false, depthWrite: false,
-        opacity: .16, color: [0xff37a0, 0x37e0ff, 0xffa040][i % 3] }));
-      gl.position.set(1050 * Math.cos(th), 30, 1050 * Math.sin(th));
-      gl.scale.set(620, 200, 1);
-      worldGroup.add(gl);
-    }
-  }
-
-  const roadTex = D_(makeRoadTex(day, E.line));
-  const roadMat = D_(new THREE.MeshPhongMaterial({ map: roadTex, shininess: night || dusk ? 90 : 25, specular: night || dusk ? 0x8899bb : 0x333840 }));
-  worldGroup.add(buildStrip(ROAD_W, -ROAD_W, 0, 0, roadMat));
-  const wallMat = D_(new THREE.MeshPhongMaterial({ color: day ? 0x8a9099 : 0x232733, shininess: 30, specular: 0x445566, side: THREE.DoubleSide }));
+  skyOrb.visible=false;stars.visible=night&&!wetness;
+  atmosphere.set(CITY_PROFILES[T.theme],wetness>0);
+  const roadMat=D_(surfaces.material(wetness>0));
+  worldGroup.add(buildStrip(ROAD_W,-ROAD_W,0,0,roadMat));
+  const wallMat = D_(new THREE.MeshStandardMaterial({ color: 0x91958f, roughness: .9, side: THREE.DoubleSide }));
   worldGroup.add(buildStrip(ROAD_W + .3, ROAD_W + .3, 0, 1.1, wallMat));
   worldGroup.add(buildStrip(-ROAD_W - .3, -ROAD_W - .3, 1.1, 0, wallMat));
   // 红白路肩条纹(沿赛道方向重复,F1式护墙顶缘)
@@ -585,34 +548,16 @@ function buildWorld(ti) {
   let maxR = T.base; for (const m of T.modes) maxR += Math.abs(m[1]);
   // 地面材质纹理(噪点细节)
   const groundTexC = D_(canvasTex(128, 128, (g, w, h) => {
-    g.fillStyle = hex6(E.ground); g.fillRect(0, 0, w, h);
+    g.fillStyle = hex6(T.theme==='alps'?0xd9e1e3:T.theme==='dubai'?0xb6a785:0x6e746b); g.fillRect(0, 0, w, h);
     for (let i = 0; i < 500; i++) {
-      g.fillStyle = hex6(shadeCol(E.ground, .85 + Math.random() * .3));
+      g.fillStyle = hex6(shadeCol(T.theme==='alps'?0xd9e1e3:T.theme==='dubai'?0xb6a785:0x6e746b, .85 + Math.random() * .3));
       g.fillRect(Math.random() * w, Math.random() * h, 2 + Math.random() * 3, 2 + Math.random() * 3);
     }
   }, true));
-  groundTexC.repeat.set(90, 90);
-  const groundMat = D_(new THREE.MeshPhongMaterial({ map: groundTexC, shininess: 5 }));
-  if (T.sea) {
-    const land = new THREE.Mesh(D_(new THREE.CircleGeometry(maxR + 70, 40)), groundMat);
-    land.rotation.x = -Math.PI / 2; land.position.y = -.05; worldGroup.add(land);
-    const seaCol = night ? 0x06121e : 0x1e6e9e;
-    const sea = new THREE.Mesh(D_(new THREE.PlaneGeometry(3600, 3600)),
-      D_(new THREE.MeshPhongMaterial({ color: seaCol, shininess: 160, specular: night ? 0x445566 : 0xaaccdd })));
-    sea.rotation.x = -Math.PI / 2; sea.position.y = -.4; worldGroup.add(sea);
-    // 水面日月倒影光带
-    const dir = Math.atan2(E.orb[4], E.orb[2]);
-    const sg2 = D_(new THREE.PlaneGeometry(26, 700));
-    sg2.rotateX(-Math.PI / 2);
-    const streak = new THREE.Mesh(sg2,
-      D_(new THREE.MeshBasicMaterial({ color: E.orb[0], transparent: true, opacity: .15, blending: THREE.AdditiveBlending, depthWrite: false })));
-    streak.rotation.y = Math.PI / 2 - dir;
-    streak.position.set(Math.cos(dir) * (maxR + 420), -.35, Math.sin(dir) * (maxR + 420));
-    worldGroup.add(streak);
-  } else {
-    const g2 = new THREE.Mesh(D_(new THREE.PlaneGeometry(3200, 3200)), groundMat);
-    g2.rotation.x = -Math.PI / 2; g2.position.y = -.05; worldGroup.add(g2);
-  }
+  groundTexC.repeat.set(600, 600);
+  const groundMat = D_(new THREE.MeshStandardMaterial({ map: groundTexC, roughness: 1 }));
+  const g2 = new THREE.Mesh(D_(new THREE.PlaneGeometry(6000, 6000)), groundMat);
+  g2.rotation.x = -Math.PI / 2; g2.position.y = -.05; g2.receiveShadow=true;worldGroup.add(g2);
 
   {
     const p = sPts[0], n = sNrm[0], t = sTan[0];
@@ -633,392 +578,7 @@ function buildWorld(ti) {
     worldGroup.add(banner);
   }
 
-  // 净距检查:任意点与"非本段"赛道保持安全距离(防止景观跨段侵入路面)
-  function roadClear(x, z, clearance, ownI, span) {
-    const lim = (ROAD_W + clearance) * (ROAD_W + clearance);
-    for (let k = 0; k < SAMPLES; k += 6) {
-      if (ownI != null) {
-        let dI = Math.abs(k - ownI); if (dI > SAMPLES / 2) dI = SAMPLES - dI;
-        if (dI < span) continue;
-      }
-      const dx = x - sPts[k].x, dz = z - sPts[k].z;
-      if (dx * dx + dz * dz < lim) return false;
-    }
-    return true;
-  }
-  const themeOpts = {
-    tokyo:    { sides: [-1, 1], hMin: 12, hMax: 58, dens: .68, facades: 'night', signs: 12, lamps: true },
-    hongkong: { sides: [1], hMin: 20, hMax: 75, dens: .78, facades: 'night', signs: 14, lamps: true },
-    newyork:  { sides: [-1, 1], hMin: 25, hMax: 95, dens: .72, facades: 'night', signs: 8, lamps: true },
-    la:       { sides: [-1, 1], hMin: 8, hMax: 30, dens: .5, facades: 'dusk', signs: 10, lamps: true, palms: true },
-    miami:    { sides: [1], hMin: 10, hMax: 26, dens: .58, facades: 'miami', signs: 0, lamps: false, palms: true, palmsOuter: true },
-    paris:    { sides: [-1, 1], hMin: 13, hMax: 19, dens: .76, facades: 'paris', signs: 0, lamps: false },
-    dubai:    { sides: [-1, 1], hMin: 30, hMax: 120, dens: .33, facades: 'dubai', signs: 0, lamps: false },
-    alps:     { sides: [-1, 1], hMin: 0, hMax: 0, dens: 0, facades: null, signs: 0, lamps: false, pines: true },
-    shanghai: { sides: [1], hMin: 16, hMax: 30, dens: .5, facades: 'paris', signs: 16, lamps: true },
-    vegas:    { sides: [-1, 1], hMin: 14, hMax: 60, dens: .6, facades: 'night', signs: 16, lamps: true },
-    london:   { sides: [1], hMin: 12, hMax: 22, dens: .75, facades: 'dusk', signs: 6, lamps: true, trees: true },
-    monaco:   { sides: [1], hMin: 10, hMax: 24, dens: .7, facades: 'miami', signs: 0, lamps: false, palms: true },
-  }[T.theme];
-  if (T.theme === 'paris') themeOpts.trees = true;
-
-  let facMats = [];
-  if (themeOpts.facades === 'night') {
-    for (let i = 0; i < 4; i++) {
-      const tex = D_(facadeNight(['#ffd27f', '#ffd27f', '#9fd8ff', '#ff9fb0', '#b9ff88']));
-      facMats.push(D_(new THREE.MeshPhongMaterial({ map: tex, emissive: 0x999999, emissiveMap: tex, color: 0x5a5f6e })));
-    }
-  } else if (themeOpts.facades === 'dusk') {
-    for (let i = 0; i < 4; i++) {
-      const tex = D_(facadeDusk());
-      facMats.push(D_(new THREE.MeshPhongMaterial({ map: tex, emissive: 0x777777, emissiveMap: tex, color: 0x776a80 })));
-    }
-  } else if (themeOpts.facades === 'miami') {
-    [['#f7d8e0', '#35506a'], ['#cfeee8', '#35506a'], ['#f5eecf', '#4a5a6a'], ['#d8e8f5', '#3a4a5a']].forEach(([b, w]) => {
-      const tex = D_(facadeDay(b, w));
-      facMats.push(D_(new THREE.MeshPhongMaterial({ map: tex })));
-    });
-  } else if (themeOpts.facades === 'paris') {
-    [['#e8dcc2', '#3a4148'], ['#ddd0b5', '#3a4148'], ['#e2d6c0', '#454c54'], ['#d5c8ac', '#3a4148']].forEach(([b, w]) => {
-      const tex = D_(facadeDay(b, w));
-      facMats.push(D_(new THREE.MeshPhongMaterial({ map: tex })));
-    });
-  } else if (themeOpts.facades === 'dubai') {
-    [['#bcd6e4', '#7fa8c0'], ['#c8dce8', '#8fb4c8'], ['#aac8da', '#6f98b0'], ['#d0e0ea', '#95b8cc']].forEach(([b, w]) => {
-      const tex = D_(facadeDay(b, w));
-      facMats.push(D_(new THREE.MeshPhongMaterial({ map: tex })));
-    });
-  }
-
-  let signCount = 0, crownCount = 0;
-  const beaconMat = D_(new THREE.MeshBasicMaterial({ color: 0xff2020 }));
-  if (facMats.length) {
-    for (let i = 0; i < SAMPLES; i += 20) {
-      for (const side of themeOpts.sides) {
-        if (rnd() > themeOpts.dens) continue;
-        const p = sPts[i], n = sNrm[i];
-        const wdt = 10 + rnd() * 14, dep = 10 + rnd() * 12;
-        const hgt = themeOpts.hMin + rnd() * (themeOpts.hMax - themeOpts.hMin);
-        const dist = ROAD_W + 7 + dep / 2 + rnd() * 26; // 按进深保证本段路净距
-        const bx = p.x + n.x * side * dist, bz = p.z + n.z * side * dist;
-        if (!roadClear(bx, bz, Math.max(wdt, dep) / 2 + 1, i, 46)) continue; // 防跨段侵入
-        const b = new THREE.Mesh(boxGeo, facMats[(rnd() * facMats.length) | 0]);
-        b.scale.set(wdt, hgt, dep);
-        b.position.set(bx, hgt / 2 - .1, bz);
-        b.rotation.y = Math.atan2(n.x * side, n.z * side) + (rnd() - .5) * .3; // 立面朝路
-        worldGroup.add(b);
-        if (T.theme === 'paris') {
-          const roof = new THREE.Mesh(boxGeo, D_(new THREE.MeshPhongMaterial({ color: 0x4a505a })));
-          roof.scale.set(wdt * .96, 2.2, dep * .96);
-          roof.position.set(b.position.x, hgt - .1 + 1.1, b.position.z);
-          roof.rotation.y = b.rotation.y;
-          worldGroup.add(roof);
-        }
-        if (signCount < themeOpts.signs && rnd() < .3) {
-          const st = signTexts[signCount % signTexts.length]; signCount++;
-          const tex = D_(neonSignTex(st[0], st[1]));
-          const sign = new THREE.Mesh(D_(new THREE.PlaneGeometry(14, 3.5)),
-            D_(new THREE.MeshBasicMaterial({ map: tex, transparent: true, side: THREE.DoubleSide })));
-          const sp = new THREE.Vector3(p.x + n.x * side * (dist - wdt * .35 - 2), 8 + rnd() * 12, p.z + n.z * side * (dist - wdt * .35 - 2));
-          sign.position.copy(sp);
-          sign.lookAt(p.x, sp.y, p.z);
-          worldGroup.add(sign);
-        }
-        if ((night || dusk) && hgt > 50 && crownCount < 10 && rnd() < .4) { // 楼顶灯冠+航空障碍灯
-          crownCount++;
-          const crown = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, depthWrite: false,
-            opacity: .7, color: [0x37e0ff, 0xff37a0, 0xffa040, 0xb9ff00][(rnd() * 4) | 0] }));
-          crown.scale.set(14, 7, 1);
-          crown.position.set(b.position.x, hgt + 2, b.position.z);
-          worldGroup.add(crown);
-          const beacon = new THREE.Mesh(boxGeo, beaconMat);
-          beacon.scale.set(.5, .5, .5);
-          beacon.position.set(b.position.x, hgt + 1, b.position.z);
-          worldGroup.add(beacon);
-        }
-      }
-    }
-    for (let i = 0; i < 28; i++) {
-      const th = i / 28 * TAU;
-      const r = maxR + 260 + rnd() * 200;
-      if (T.sea && Math.sin(th) < -.1) continue;
-      const hgt = 40 + rnd() * (T.theme === 'newyork' || T.theme === 'dubai' ? 190 : 120);
-      const b = new THREE.Mesh(boxGeo, facMats[(rnd() * facMats.length) | 0]);
-      b.scale.set(30 + rnd() * 40, hgt, 30 + rnd() * 40);
-      b.position.set(r * Math.cos(th), hgt / 2, r * Math.sin(th));
-      worldGroup.add(b);
-    }
-  }
-
-  if (themeOpts.palms) {
-    for (let i = 0; i < SAMPLES; i += 40) {
-      const side = themeOpts.palmsOuter ? -1 : ((i / 40) % 2 ? 1 : -1);
-      const p = sPts[i], n = sNrm[i];
-      const d = ROAD_W + 3.5 + rnd() * 4;
-      const px2 = p.x + n.x * side * d, pz2 = p.z + n.z * side * d;
-      if (roadClear(px2, pz2, 1.5, i, 50)) addPalm(px2, pz2, .8 + rnd() * .5);
-    }
-  }
-  // 欧陆林荫行道树
-  if (themeOpts.trees) {
-    for (let i = 0; i < SAMPLES; i += 46) {
-      const side = (i / 46) % 2 ? 1 : -1;
-      const p = sPts[i], n = sNrm[i];
-      const d = ROAD_W + 4.5 + rnd() * 3;
-      const tx2 = p.x + n.x * side * d, tz2 = p.z + n.z * side * d;
-      if (roadClear(tx2, tz2, 2, i, 50)) addTree(tx2, tz2, .75 + rnd() * .45);
-    }
-  }
-  // 护栏花坛(地中海/欧陆风情)
-  if (T.theme === 'monaco' || T.theme === 'paris') {
-    const potMat = D_(new THREE.MeshPhongMaterial({ color: 0x77876a }));
-    const bloomMats = [0xe84393, 0xffd166, 0xff6b6b, 0xf8f0f8].map(c => D_(new THREE.MeshPhongMaterial({ color: c })));
-    const bloomGeo = D_(new THREE.SphereGeometry(.55, 8, 6));
-    for (let i = 0; i < SAMPLES; i += 110) {
-      const p = sPts[i], n = sNrm[i], side = (i / 110) % 2 ? 1 : -1;
-      const fx = p.x + n.x * side * (ROAD_W + 1.6), fz = p.z + n.z * side * (ROAD_W + 1.6);
-      if (!roadClear(fx, fz, .5, i, 40)) continue;
-      const pot = new THREE.Mesh(boxGeo, potMat);
-      pot.scale.set(.9, .5, .9); pot.position.set(fx, 1.35, fz); worldGroup.add(pot);
-      const bloom = new THREE.Mesh(bloomGeo, bloomMats[(rnd() * 4) | 0]);
-      bloom.position.set(fx, 1.85, fz); worldGroup.add(bloom);
-    }
-  }
-  if (themeOpts.pines) {
-    for (let i = 0; i < SAMPLES; i += 16) {
-      for (const side of [-1, 1]) {
-        if (rnd() < .45) continue;
-        const p = sPts[i], n = sNrm[i];
-        const d = ROAD_W + 4 + rnd() * 34;
-        const px2 = p.x + n.x * side * d, pz2 = p.z + n.z * side * d;
-        if (roadClear(px2, pz2, 1.5, i, 50)) addPine(px2, pz2, .8 + rnd() * .9, true);
-      }
-    }
-    for (let i = 0; i < 12; i++) {
-      const th = i / 12 * TAU + .2;
-      addMountain((maxR + 320 + rnd() * 200) * Math.cos(th), (maxR + 320 + rnd() * 200) * Math.sin(th), 160 + rnd() * 120, 130 + rnd() * 130, true);
-    }
-    const chaletMat = D_(new THREE.MeshPhongMaterial({ color: 0x7a5c40 }));
-    for (let i = 0; i < SAMPLES; i += 180) {
-      const p = sPts[i], n = sNrm[i], side = (i / 180) % 2 ? 1 : -1;
-      const d = ROAD_W + 16 + rnd() * 10;
-      const hx2 = p.x + n.x * side * d, hz2 = p.z + n.z * side * d;
-      if (!roadClear(hx2, hz2, 6, i, 46)) continue;
-      const hut = new THREE.Mesh(boxGeo, chaletMat);
-      hut.scale.set(7, 4, 9);
-      hut.position.set(hx2, 2, hz2);
-      worldGroup.add(hut);
-      const roof = new THREE.Mesh(pineConeGeo, snowMat);
-      roof.position.set(hut.position.x, 5.4, hut.position.z);
-      roof.scale.set(4.2, 1.4, 4.2);
-      worldGroup.add(roof);
-    }
-  }
-  if (T.theme === 'la' || T.theme === 'monaco') {
-    for (let i = 0; i < 10; i++) {
-      const th = i / 10 * TAU;
-      if (T.sea && Math.sin(th) < -.1) continue;
-      addMountain((maxR + 340 + rnd() * 160) * Math.cos(th), (maxR + 340 + rnd() * 160) * Math.sin(th), 200 + rnd() * 120, 70 + rnd() * 60, false);
-    }
-  }
-  if (T.theme === 'dubai') {
-    const duneMat = D_(new THREE.MeshPhongMaterial({ color: 0xd8bd8a }));
-    for (let i = 0; i < 20; i++) {
-      const th = rnd() * TAU, r = maxR + 120 + rnd() * 320;
-      const dune = new THREE.Mesh(D_(new THREE.SphereGeometry(1, 10, 8)), duneMat);
-      dune.scale.set(60 + rnd() * 90, 10 + rnd() * 16, 60 + rnd() * 90);
-      dune.position.set(r * Math.cos(th), -2, r * Math.sin(th));
-      worldGroup.add(dune);
-    }
-  }
-
-  const innerMin = (() => { let m = T.base; for (const md of T.modes) m -= Math.abs(md[1]); return Math.max(m, 80); })();
-  const lmR = innerMin * .55, lmA = .9;
-  const lmX = lmR * Math.cos(lmA), lmZ = lmR * Math.sin(lmA);
-  if (T.theme === 'tokyo') { // 东京塔:红色镂空钢架+观景台
-    const latRed = D_(new THREE.MeshPhongMaterial({ map: latticeTex, transparent: true, alphaTest: .35, side: THREE.DoubleSide, color: 0xe8542a }));
-    const t1 = new THREE.Mesh(mountainGeo, latRed); t1.scale.set(26, 60, 26); t1.position.set(lmX, 0, lmZ); worldGroup.add(t1);
-    const t2 = new THREE.Mesh(mountainGeo, latRed); t2.scale.set(10, 55, 10); t2.position.set(lmX, 45, lmZ); worldGroup.add(t2);
-    const deckM = D_(new THREE.MeshPhongMaterial({ color: 0xf2ead8, emissive: 0x3a342a }));
-    const deck1 = new THREE.Mesh(boxGeo, deckM); deck1.scale.set(15, 4, 15); deck1.position.set(lmX, 42, lmZ); worldGroup.add(deck1);
-    const deck2 = new THREE.Mesh(boxGeo, deckM); deck2.scale.set(8, 3, 8); deck2.position.set(lmX, 78, lmZ); worldGroup.add(deck2);
-    const tip = new THREE.Mesh(D_(new THREE.CylinderGeometry(.5, .5, 22, 6)), D_(new THREE.MeshPhongMaterial({ color: 0xd84315, emissive: 0x832000 })));
-    tip.position.set(lmX, 105, lmZ); worldGroup.add(tip);
-    const tg = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xff5030, transparent: true, opacity: .9, depthWrite: false }));
-    tg.scale.set(10, 10, 1); tg.position.set(lmX, 116, lmZ); worldGroup.add(tg);
-  } else if (T.theme === 'paris') { // 埃菲尔铁塔:镂空钢架+暖光
-    const iron = D_(new THREE.MeshPhongMaterial({ color: 0x6b6353 }));
-    const lat = D_(new THREE.MeshPhongMaterial({ map: latticeTex, transparent: true, alphaTest: .35, side: THREE.DoubleSide, color: 0x8a8068 }));
-    const base = new THREE.Mesh(mountainGeo, lat); base.scale.set(34, 52, 34); base.position.set(lmX, 0, lmZ); worldGroup.add(base);
-    const mid = new THREE.Mesh(mountainGeo, lat); mid.scale.set(17, 46, 17); mid.position.set(lmX, 38, lmZ); worldGroup.add(mid);
-    const top = new THREE.Mesh(mountainGeo, lat); top.scale.set(7, 42, 7); top.position.set(lmX, 74, lmZ); worldGroup.add(top);
-    for (const yy of [30, 60]) {
-      const plat = new THREE.Mesh(boxGeo, iron);
-      plat.scale.set(yy === 30 ? 30 : 16, 2, yy === 30 ? 30 : 16);
-      plat.position.set(lmX, yy, lmZ); worldGroup.add(plat);
-    }
-    const ant = new THREE.Mesh(D_(new THREE.CylinderGeometry(.4, .4, 16, 6)), iron); ant.position.set(lmX, 118, lmZ); worldGroup.add(ant);
-    const eg2 = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xffd9a0, transparent: true, opacity: .3, depthWrite: false }));
-    eg2.scale.set(70, 90, 1); eg2.position.set(lmX, 40, lmZ); worldGroup.add(eg2);
-  } else if (T.theme === 'dubai') {
-    const glassM = D_(new THREE.MeshPhongMaterial({ color: 0xaeccdd, shininess: 130, specular: 0xffffff }));
-    let y = 0;
-    for (let i = 0; i < 6; i++) {
-      const rr = 20 - i * 3, hh = 40 - i * 3;
-      const seg = new THREE.Mesh(D_(new THREE.CylinderGeometry(rr * .8, rr, hh, 8)), glassM);
-      seg.position.set(lmX, y + hh / 2, lmZ); worldGroup.add(seg);
-      y += hh;
-    }
-    const spire = new THREE.Mesh(D_(new THREE.CylinderGeometry(.5, 1.5, 36, 6)), glassM);
-    spire.position.set(lmX, y + 18, lmZ); worldGroup.add(spire);
-  } else if (T.theme === 'newyork') { // 帝国大厦:亮窗立面
-    const em = facMats.length ? facMats[0] : D_(new THREE.MeshPhongMaterial({ color: 0x3c414e, emissive: 0x1a1c26 }));
-    let y = 0;
-    for (const [w2, h2] of [[42, 60], [32, 40], [22, 30], [12, 20]]) {
-      const seg = new THREE.Mesh(boxGeo, em);
-      seg.scale.set(w2, h2, w2);
-      seg.position.set(lmX, y + h2 / 2, lmZ); worldGroup.add(seg);
-      y += h2;
-    }
-    const spire = new THREE.Mesh(D_(new THREE.CylinderGeometry(.6, 1.8, 26, 6)), em);
-    spire.position.set(lmX, y + 13, lmZ); worldGroup.add(spire);
-    const sg = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xffffff, transparent: true, opacity: .8, depthWrite: false }));
-    sg.scale.set(8, 8, 1); sg.position.set(lmX, y + 26, lmZ); worldGroup.add(sg);
-  } else if (T.theme === 'hongkong') { // 中环塔楼:亮窗立面
-    const hkM = facMats.length ? facMats[1] : D_(new THREE.MeshPhongMaterial({ color: 0x1a2230, emissive: 0x0c1220 }));
-    const twr = new THREE.Mesh(boxGeo, hkM);
-    twr.scale.set(30, 150, 30); twr.position.set(lmX, 75, lmZ); worldGroup.add(twr);
-    const edge = D_(new THREE.MeshBasicMaterial({ color: 0x37e0ff }));
-    for (const [ex, ez] of [[-15.2, -15.2], [-15.2, 15.2], [15.2, -15.2], [15.2, 15.2]]) {
-      const e = new THREE.Mesh(boxGeo, edge);
-      e.scale.set(.6, 150, .6);
-      e.position.set(lmX + ex, 75, lmZ + ez); worldGroup.add(e);
-    }
-  } else if (T.theme === 'shanghai') { // 东方明珠
-    const pearl = D_(new THREE.MeshPhongMaterial({ color: 0xb03a6a, emissive: 0x5a1030 }));
-    const col = new THREE.Mesh(D_(new THREE.CylinderGeometry(3, 4, 100, 8)), pearl);
-    col.position.set(lmX, 50, lmZ); worldGroup.add(col);
-    for (let i = 0; i < 3; i++) { // 三根斜撑腿
-      const a2 = i / 3 * TAU + .5;
-      const bx = lmX + Math.cos(a2) * 13, bz = lmZ + Math.sin(a2) * 13;
-      const leg = new THREE.Mesh(D_(new THREE.CylinderGeometry(1.1, 1.4, 42, 6)), pearl);
-      leg.position.set((bx + lmX) / 2, 19, (bz + lmZ) / 2);
-      leg.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(lmX - bx, 38, lmZ - bz).normalize());
-      worldGroup.add(leg);
-    }
-    const s1 = new THREE.Mesh(D_(new THREE.SphereGeometry(12, 14, 10)), pearl);
-    s1.position.set(lmX, 40, lmZ); worldGroup.add(s1);
-    const s2 = new THREE.Mesh(D_(new THREE.SphereGeometry(7, 12, 8)), pearl);
-    s2.position.set(lmX, 82, lmZ); worldGroup.add(s2);
-    const ant = new THREE.Mesh(D_(new THREE.CylinderGeometry(.5, .8, 30, 6)), pearl);
-    ant.position.set(lmX, 115, lmZ); worldGroup.add(ant);
-    const pg = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xff4d88, transparent: true, opacity: .85, depthWrite: false }));
-    pg.scale.set(16, 16, 1); pg.position.set(lmX, 40, lmZ); worldGroup.add(pg);
-  } else if (T.theme === 'vegas') { // 观景高塔
-    const tm = D_(new THREE.MeshPhongMaterial({ color: 0x8890a0, emissive: 0x202430 }));
-    const shaft = new THREE.Mesh(D_(new THREE.CylinderGeometry(3.5, 5, 105, 8)), tm);
-    shaft.position.set(lmX, 52, lmZ); worldGroup.add(shaft);
-    const pod = new THREE.Mesh(D_(new THREE.CylinderGeometry(11, 8, 9, 10)), tm);
-    pod.position.set(lmX, 108, lmZ); worldGroup.add(pod);
-    const band = new THREE.Mesh(D_(new THREE.CylinderGeometry(11.15, 11.15, 2.2, 12, 1, true)), D_(new THREE.MeshBasicMaterial({ color: 0xffd27f })));
-    band.position.set(lmX, 109, lmZ); worldGroup.add(band);
-    const spike = new THREE.Mesh(D_(new THREE.CylinderGeometry(.4, 1, 24, 6)), tm);
-    spike.position.set(lmX, 124, lmZ); worldGroup.add(spike);
-    for (const [cc, yy] of [[0xff37a0, 108], [0x37e0ff, 100]]) {
-      const gl = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: cc, transparent: true, opacity: .9, depthWrite: false }));
-      gl.scale.set(14, 14, 1); gl.position.set(lmX, yy, lmZ); worldGroup.add(gl);
-    }
-  } else if (T.theme === 'london') { // 大本钟式钟楼
-    const stone = D_(new THREE.MeshPhongMaterial({ color: 0xa89a72 }));
-    const tower = new THREE.Mesh(boxGeo, stone);
-    tower.scale.set(9, 58, 9); tower.position.set(lmX, 29, lmZ); worldGroup.add(tower);
-    const clockM = D_(new THREE.MeshBasicMaterial({ map: clockTex }));
-    for (let i = 0; i < 4; i++) { // 四面真表盘
-      const face = new THREE.Mesh(D_(new THREE.PlaneGeometry(7.2, 7.2)), clockM);
-      const a2 = i * Math.PI / 2;
-      face.position.set(lmX + Math.sin(a2) * 4.6, 50, lmZ + Math.cos(a2) * 4.6);
-      face.rotation.y = a2;
-      worldGroup.add(face);
-    }
-    const roof = new THREE.Mesh(mountainGeo, D_(new THREE.MeshPhongMaterial({ color: 0x3a5a48 })));
-    roof.scale.set(6.5, 14, 6.5); roof.position.set(lmX, 58, lmZ); worldGroup.add(roof);
-    const cg = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xffd890, transparent: true, opacity: .8, depthWrite: false }));
-    cg.scale.set(10, 10, 1); cg.position.set(lmX, 50, lmZ); worldGroup.add(cg);
-  } else if (T.theme === 'alps') { // 冰湖与巨石
-    const lake = new THREE.Mesh(D_(new THREE.CircleGeometry(42, 28)),
-      D_(new THREE.MeshPhongMaterial({ color: 0xa8d4e8, shininess: 160, specular: 0xffffff })));
-    lake.rotation.x = -Math.PI / 2;
-    lake.position.set(lmX, .02, lmZ);
-    worldGroup.add(lake);
-    for (let i = 0; i < 6; i++) {
-      const rock = new THREE.Mesh(mountainGeo, mountainMat);
-      const a2 = rnd() * TAU, rr2 = 45 + rnd() * 12;
-      rock.scale.set(3 + rnd() * 4, 2.5 + rnd() * 3, 3 + rnd() * 4);
-      rock.position.set(lmX + Math.cos(a2) * rr2, 0, lmZ + Math.sin(a2) * rr2);
-      worldGroup.add(rock);
-    }
-  } else if (T.theme === 'monaco') { // 码头游艇
-    const hullMat = D_(new THREE.MeshPhongMaterial({ color: 0xf4f6f8, shininess: 90 }));
-    const mastMat = D_(new THREE.MeshPhongMaterial({ color: 0x888e98 }));
-    for (let i = 0; i < 4; i++) {
-      const a2 = -Math.PI / 2 + (rnd() - .5) * 1.6;
-      const rr2 = maxR + 95 + rnd() * 60;
-      const bx = rr2 * Math.cos(a2), bz = rr2 * Math.sin(a2);
-      const hull = new THREE.Mesh(boxGeo, hullMat);
-      hull.scale.set(2.4, .9, 6.5 + rnd() * 3);
-      hull.position.set(bx, -.05, bz);
-      hull.rotation.y = rnd() * TAU;
-      worldGroup.add(hull);
-      const mast = new THREE.Mesh(D_(new THREE.CylinderGeometry(.09, .12, 7, 6)), mastMat);
-      mast.position.set(bx, 3.4, bz);
-      worldGroup.add(mast);
-    }
-  }
-
-  if (themeOpts.lamps) {
-    const lampHeadMat = D_(new THREE.MeshBasicMaterial({ color: 0xffc46a }));
-    const lampPoleMat = D_(new THREE.MeshPhongMaterial({ color: 0x2a2f3d }));
-    const lampPoleGeo = D_(new THREE.CylinderGeometry(.14, .18, 7, 6));
-    // 路灯光斑(路面投影,共享几何/材质,加色叠加)
-    const lampPoolGeo = D_(new THREE.PlaneGeometry(11, 11));
-    lampPoolGeo.rotateX(-Math.PI / 2);
-    const lampPoolMat = D_(new THREE.MeshBasicMaterial({ map: glowTex, color: 0xff9a3c, transparent: true, opacity: .2, blending: THREE.AdditiveBlending, depthWrite: false }));
-    for (let i = 0; i < SAMPLES; i += 120) {
-      const side = (i / 120) % 2 ? 1 : -1;
-      const p = sPts[i], n = sNrm[i];
-      const x = p.x + n.x * side * (ROAD_W + 1.8), z = p.z + n.z * side * (ROAD_W + 1.8);
-      if (!roadClear(x, z, .5, i, 40)) continue;
-      const pole = new THREE.Mesh(lampPoleGeo, lampPoleMat);
-      pole.position.set(x, 3.5, z); worldGroup.add(pole);
-      const head = new THREE.Mesh(D_(new THREE.SphereGeometry(.32, 8, 6)), lampHeadMat);
-      head.position.set(x - n.x * side * 1.4, 6.9, z - n.z * side * 1.4); worldGroup.add(head);
-      const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xffb050, transparent: true, opacity: .8, depthWrite: false }));
-      spr.scale.set(5, 5, 1); spr.position.copy(head.position); worldGroup.add(spr);
-      const pool = new THREE.Mesh(lampPoolGeo, lampPoolMat); // 地面光斑
-      pool.position.set(head.position.x, .06, head.position.z);
-      worldGroup.add(pool);
-      if ((i / 120) % 2 === 0) {
-        const pl = new THREE.PointLight(0xff9a3c, .85, 55, 2);
-        pl.position.set(head.position.x, 6.5, head.position.z);
-        worldGroup.add(pl);
-      }
-    }
-  } else if (day) {
-    const lampPoleMat = D_(new THREE.MeshPhongMaterial({ color: 0x6a7078 }));
-    const lampPoleGeo = D_(new THREE.CylinderGeometry(.14, .18, 7, 6));
-    for (let i = 0; i < SAMPLES; i += 140) {
-      const side = (i / 140) % 2 ? 1 : -1;
-      const p = sPts[i], n = sNrm[i];
-      const lx2 = p.x + n.x * side * (ROAD_W + 1.8), lz2 = p.z + n.z * side * (ROAD_W + 1.8);
-      if (!roadClear(lx2, lz2, .5, i, 40)) continue;
-      const pole = new THREE.Mesh(lampPoleGeo, lampPoleMat);
-      pole.position.set(lx2, 3.5, lz2);
-      worldGroup.add(pole);
-    }
-  }
-
-  enhanceTrack(worldGroup,sPts,sNrm,T.theme,wetness>0,worldDisposables);
-  worldGroup.traverse(o=>{if(o.isPointLight||o.isSpotLight)o.intensity*=22;});
+  cityReport=buildCity(worldGroup,sPts,sNrm,T.theme,worldDisposables,trackLen);
   buildMinimapPath();
 }
 
@@ -1387,6 +947,8 @@ function updateMenuCar() {
 }
 function toMenu() {
   state = 'menu';
+  showroom.visible=true;
+  document.getElementById('tourOverlay')?.classList.add('hidden');
   document.getElementById('menu').classList.remove('hidden');
   document.getElementById('hud').style.display = 'none';
   document.getElementById('cockpit').style.display = 'none';
@@ -1794,6 +1356,12 @@ function updateAI(dt) {
 
 // ---------------- 摄像机 ----------------
 function updateCamera(dt) {
+  if(state==='tour'){
+    tourAngle+=dt*.055;
+    const focus=cityReport.focus;
+    camera.position.set(focus.x+Math.sin(tourAngle)*(cityReport.key==='alps'?150:420),focus.y+(cityReport.key==='alps'?45:70),focus.z+Math.cos(tourAngle)*(cityReport.key==='alps'?150:420));
+    camera.lookAt(focus);camera.fov=53;camera.updateProjectionMatrix();return;
+  }
   if (state === 'menu') {
     camAngle += dt * .12;
     const c = carObjs[selected];
@@ -2129,7 +1697,7 @@ function loop() {
     }
     accumulator-=step;
   }
-  if(state!=='menu'){
+  if(state!=='menu'&&state!=='tour'){
     updateHud(dt);
     const advisory=options.line&&sCurv[wrapIdx(player.trackIdx+35)]>.15&&player.speed>24?' • 弯道在前 / 建议减速':'';
     document.getElementById('telemetry').textContent=(options.mode==='time'?'TIME ATTACK':'MOTORSPORT')+'  /  '+(player.abs?'ABS ': '')+(player.traction?'TCS ': '')+Math.abs(player.latG).toFixed(2)+' G'+advisory+'\n'+(wetness?'湿地':'干地')+' · 胎温 '+Math.round(player.temperature)+'°C · 最佳 '+fmt(session.best)+(session.invalid?' · 本圈无效':'')+(options.mode==='endurance'?'\n油量 '+Math.round(player.fuel)+'% · 胎耗 '+Math.round(player.wear*100)+'%'+(session.pit?' · 补给 '+session.pit.toFixed(1)+'/8 秒':''):'');
@@ -2146,7 +1714,8 @@ function loop() {
   updateCamera(dt || .0001);
   updateRain(dt || .001);
   updateParticles(dt || .001);
-  graphics.render(state==='menu'?showroom.position:player.pos);
+  animateCity(worldGroup,dt);
+  graphics.render(state==='menu'?showroom.position:state==='tour'?cityReport.focus:player.pos,state==='tour');
 }
 
 addEventListener('resize', () => {
@@ -2167,6 +1736,16 @@ addEventListener('orientationchange', () => {
 });
 
 mountSetup(()=>{graphics.quality(options.quality);qLevel=options.quality==='low'?3:options.quality==='balanced'?1:0;applyQuality();buildWorld(trackSel);});
+const tourButton=document.createElement('button');tourButton.id='tourBtn';tourButton.textContent='城市巡览  ↗';document.getElementById('selPanel').append(tourButton);
+const tourOverlay=document.createElement('div');tourOverlay.id='tourOverlay';tourOverlay.className='hidden';tourOverlay.innerHTML='<div><small>CITY EXPLORER</small><h2 id="tourCity"></h2><p id="tourLandmark"></p></div><div class="tour-actions"><button id="tourPrev">上一座城市</button><button id="tourNext">下一座城市</button><button id="tourBack">返回车库</button></div>';document.body.append(tourOverlay);
+function enterTour(){
+ state='tour';paused=false;document.getElementById('menu').classList.add('hidden');document.getElementById('hud').style.display='none';
+ carObjs.forEach(c=>c.group.visible=false);showroom.visible=false;headlight.visible=false;
+ tourAngle=Math.atan2(sPts[0].x-cityReport.focus.x,sPts[0].z-cityReport.focus.z);
+ tourOverlay.classList.remove('hidden');document.getElementById('tourCity').textContent=CITY_PROFILES[TRACKS[trackSel].theme].label;document.getElementById('tourLandmark').textContent=cityReport.landmark;
+}
+tourButton.onclick=enterTour;document.getElementById('tourBack').onclick=toMenu;
+for(const [id,step] of [['tourPrev',-1],['tourNext',1]])document.getElementById(id).onclick=()=>{trackSel=(trackSel+step+TRACKS.length)%TRACKS.length;[...trackGrid.children].forEach((c,j)=>c.classList.toggle('sel',j===trackSel));buildWorld(trackSel);enterTour();};
 let pitHeld=false;
 document.getElementById('pitButton').addEventListener('pointerdown',e=>{pitHeld=true;e.target.setPointerCapture(e.pointerId);});
 for(const type of ['pointerup','pointercancel'])document.getElementById('pitButton').addEventListener(type,()=>pitHeld=false);
@@ -2181,7 +1760,7 @@ document.querySelector('#mirror').textContent='COCKPIT VIEW';
 graphics.quality(options.quality);qLevel=options.quality==='low'?3:options.quality==='balanced'?1:0;applyQuality();
 buildWorld(trackSel);toMenu();loop();
 // Read-only diagnostics for performance and smoke testing.
-window.__velocity={snapshot:()=>({state,paused,track:TRACKS[trackSel].theme,car:CARS[selected].type,speed:player.speed,heading:player.heading,position:player.pos.toArray(),lap:player.lap,laps:session.laps,mode:options.mode,wetness,ai:ais.length,fuel:player.fuel,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,fps:fpsEMA,physicsHz:120,detailed:!!carObjs[selected].detailed,camera:camMode})};
+window.__velocity={snapshot:()=>({state,paused,track:TRACKS[trackSel].theme,car:CARS[selected].type,speed:player.speed,heading:player.heading,position:player.pos.toArray(),lap:player.lap,laps:session.laps,mode:options.mode,wetness,ai:ais.length,fuel:player.fuel,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,fps:fpsEMA,physicsHz:120,detailed:!!carObjs[selected].detailed,camera:camMode,environment:{...cityReport,sky:atmosphere.snapshot(),surfaces:surfaces.status}})};
 
 
 

@@ -9,7 +9,8 @@ Node 22+ is recommended. Run `npm ci`, then `npm run dev`. `npm run build` type-
 ## Contents
 
 - 13 vehicles: 12 enhanced procedural classics and one independently loaded, Draco-compressed Ferrari 458 GLB with interior and animated wheel assemblies.
-- 12 city-themed circuits. Shanghai adds a Bund-inspired bank, river and Pudong-inspired skyline. **Routes and building placements are artistic approximations, not GIS-derived or surveyed replicas.**
+- 12 city environments with distinct facades, structural landmarks, street grids, balconies, cornices, shops, drainage, lamps and vegetation. Photographic HDR skies provide environment reflections; asphalt uses local diffuse/normal/roughness textures. Waterfronts have animated wave normals; mountain regions have terrain and snow lines. **Routes and building placements are artistic approximations, not GIS-derived or surveyed replicas.**
+- City Explorer: inspect each city's landmark and skyline from the garage. Architecture uses instanced geometry and cached sky/road resources. Clouds are photographic panoramas, not volumetric simulations. New environment systems are in `src/environment/`; assets are in `public/environment/`. Run `node tools/environment-check.mjs` against the development server to check all 12 city environments.
 - One-lap sprint, three-lap race, solo three-lap time trial, eight-lap endurance with fuel, tire wear and an eight-second service stop.
 - 120 Hz fixed-step approximate bicycle dynamics, grip-limited steering/braking, tire compounds and temperature, rain grip, adjustable downforce and brake balance, optional ABS/TCS abstractions.
 - Keyboard, simultaneous touch controls and standard gamepads; automatic pause on loss of focus. Fuel service: stop below 5 km/h in the first 4.5% of the circuit and hold P or the service button for eight seconds.

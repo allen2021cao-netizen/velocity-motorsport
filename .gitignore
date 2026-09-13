@@ -7,5 +7,6 @@ artifacts/
 original-live.html
 tools/migrate.mjs
 tools/upgrade.mjs
+tools/upgrade-environments.mjs
 ferrari.glb
 car-reference.html
