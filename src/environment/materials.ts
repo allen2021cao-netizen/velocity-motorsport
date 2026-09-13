@@ -40,5 +40,5 @@ export class RoadSurfaces {
   const manager=new T.LoadingManager(()=>{this.status=failed?'fallback':'ready';});manager.onError=()=>{failed=true;this.status='fallback';};const monitored=new T.TextureLoader(manager);
   this.maps=['Diffuse','nor_gl','Rough'].map(key=>monitored.load('/environment/asphalt-'+key+'.jpg',undefined,undefined,()=>{failed=true;this.status='fallback';}));this.maps.forEach(map=>{map.wrapS=map.wrapT=T.RepeatWrapping;map.repeat.set(4,1.35);map.anisotropy=8;});this.maps[0].colorSpace=T.SRGBColorSpace;
  }
- material(wet:boolean){return new T.MeshStandardMaterial({map:this.maps[0],normalMap:this.maps[1],roughnessMap:this.maps[2],normalScale:new T.Vector2(.22,.22),color:wet?0x888e94:0xaaaaaa,roughness:wet?.28:.96,metalness:wet?.1:.02,envMapIntensity:wet?.65:.3});}
+ material(wet:boolean){return new T.MeshStandardMaterial({polygonOffset:true,polygonOffsetFactor:-4,polygonOffsetUnits:-4,map:this.maps[0],normalMap:this.maps[1],roughnessMap:this.maps[2],normalScale:new T.Vector2(.22,.22),color:wet?0x888e94:0xaaaaaa,roughness:wet?.28:.96,metalness:wet?.1:.02,envMapIntensity:wet?.65:.3});}
 }

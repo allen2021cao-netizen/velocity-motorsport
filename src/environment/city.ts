@@ -17,6 +17,7 @@ export function buildCity(world:T.Group,points:T.Vector3[],normals:T.Vector3[],k
  while(distToRoad(anchor.x,anchor.z)<120){anchor.addScaledVector(normals[0],-15);}
  // Keep the landmark on land, even when the circuit's outward normal points into the bay.
  if(p.water&&anchor.x>maxX-70){anchor.x=maxX-110;while(distToRoad(anchor.x,anchor.z)<120)anchor.z+=20;}
+ if(key==='alps')anchor.set(0,0,0);
  const heroScale=key==='dubai'?.68:key==='shanghai'?.75:key==='paris'||key==='tokyo'?.78:1;
  a.at(anchor.x,0,anchor.z,Math.atan2(start.x-anchor.x,start.z-anchor.z),heroScale,()=>landmark(a,key,p));
  const tall=['tokyo','shanghai','hongkong','newyork','dubai','vegas','paris'].includes(key);
@@ -69,6 +70,7 @@ export function buildCity(world:T.Group,points:T.Vector3[],normals:T.Vector3[],k
  // District skyline behind the street blocks: different tower proportions, rather than a uniform ring.
  if(key!=='alps'){
   const street=a.material(0x414749,0,.98),paving=a.material(0x96938a,0,.98);
+  street.polygonOffset=paving.polygonOffset=true;street.polygonOffsetFactor=-2;street.polygonOffsetUnits=-2;paving.polygonOffsetFactor=-1;paving.polygonOffsetUnits=-1;
   const east=p.water?maxX+48:850,west=-850,width=east-west;
   for(let i=-12;i<=12;i++){
    const line=i*65+32.5;
