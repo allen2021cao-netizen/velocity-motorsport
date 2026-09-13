@@ -1206,9 +1206,9 @@ function toggleCam() {
   beep(880, .06, .12);
 }
 addEventListener('keydown', e => {
+  if(e.target.matches('input,select,button')&&e.code!=='Escape')return;
   keys[e.code] = true;
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) e.preventDefault();
-  if(e.target.matches('input,select,button')&&e.code!=='Escape')return;
   initAudio();
   if (state === 'menu') {
     if (e.code === 'KeyA' || e.code === 'ArrowLeft') switchCar(-1);
