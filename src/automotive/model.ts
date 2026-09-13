@@ -21,7 +21,7 @@ export function buildAutomobile(cfg:any){
  function width(z:number){const t=Math.abs(z)/front;const taper=(p.round?.22:.14)*Math.pow(t,5);const hips=.025*Math.exp(-Math.pow((z-p.rear)/.5,2));return p.width/2*(1-taper)+hips;}
  function crown(z:number){const t=(z+front)/p.length;const baseline=p.tail+(p.nose-p.tail)*t;const cabin=p.waist+.035;const blend=Math.exp(-Math.pow((z-(p.screen+p.backlight)/2)/(p.length*.29),4));return T.MathUtils.lerp(baseline+.045*Math.sin(Math.PI*t),cabin,blend);}
  const fender=(z:number)=>p.bulge*Math.max(Math.exp(-Math.pow((z-p.front)/.43,2)),Math.exp(-Math.pow((z-p.rear)/.45,2)));
- function top(x:number,z:number){const t=Math.abs(x)/width(z),base=crown(z)+fender(z)*Math.pow(t,2.6)-.055*Math.pow(t,8);return Math.max(base,lower(z)+.03-(1-t)*.7);}
+ function top(x:number,z:number){const t=Math.abs(x)/width(z),base=crown(z)+fender(z)*Math.pow(t,2.6)-.055*Math.pow(t,8);return Math.max(base,lower(z)+.04-Math.max(0,.73-t)*1.8);}
  const lower=(z:number)=>{let y=.19;for(const axle of [p.front,p.rear]){const d=z-axle;if(Math.abs(d)<p.wheel+.055)y=Math.max(y,p.wheel+Math.sqrt((p.wheel+.055)**2-d*d));}return y;};
  // Hood and rear deck are separate patches: the passenger compartment is hollow.
  for(const [z0,z1] of [[rear,p.backlight],[p.screen,front]])surface((u,v)=>{const z=z0+(z1-z0)*u,x=(v*2-1)*width(z);return V(x,top(x,z),z);},paint);
@@ -32,7 +32,7 @@ export function buildAutomobile(cfg:any){
   for(const axle of [p.front,p.rear]){
    const path=[];for(let i=0;i<=40;i++){const th=Math.PI*i/40,z=axle+(p.wheel+.057)*Math.cos(th);path.push(V(side*(width(z)+.004),p.wheel+(p.wheel+.057)*Math.sin(th),z));}tube(paint,path,.018);
    // Recessed wheelhouse prevents seeing through the opposite side of the vehicle.
-   const arch=add(new T.CylinderGeometry(p.wheel+.04,p.wheel+.04,.26,48,1,true,0,Math.PI),trim,side*(p.width/2-.13),p.wheel,axle);arch.rotation.z=Math.PI/2;arch.rotation.y=Math.PI/2;
+   const arch=add(new T.CircleGeometry(p.wheel+.025,48),trim,side*(p.width/2-.26),p.wheel,axle);arch.rotation.y=side*Math.PI/2;
   }
   box(carbon,side*(p.width/2-.06),.19,0,.12,.1,Math.max(.7,p.wheelbase-2*p.wheel-.16));
  }
