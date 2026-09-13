@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.netlify/
+.env*
+test-results/
+artifacts/
+original-live.html
+tools/migrate.mjs
+tools/upgrade.mjs
+ferrari.glb
+car-reference.html

@@ -1,0 +1,11 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {stepVehicle,gripFor,type Dynamics,type Setup} from '../src/physics.ts';
+const setup:Setup={tires:'sport',assist:'sport',downforce:.4,balance:55,weather:'clear',mode:'race'};
+const car={top:296,accel:.84,handling:.9};
+const fresh=():Dynamics=>({speed:0,heading:0,steer:0,drift:0,fuel:100,wear:0,temperature:75,longG:0,latG:0,traction:false,abs:false});
+test('throttle accelerates, braking stops without unintended reverse',()=>{const p=fresh();for(let i=0;i<1200;i++)stepVehicle(p,{throttle:1,brake:0,steer:0,handbrake:false},car,setup,1/120);assert.ok(p.speed>40&&p.speed<car.top/3.6);for(let i=0;i<1200;i++)stepVehicle(p,{throttle:0,brake:1,steer:0,handbrake:false},car,setup,1/120);assert.equal(p.speed,0);});
+test('wet tires outperform soft dry tires in rain; wear reduces grip',()=>{assert.ok(gripFor({...setup,tires:'wet'},0,75,1)>gripFor({...setup,tires:'soft'},0,75,1));assert.ok(gripFor(setup,1)<gripFor(setup,0));});
+test('combined braking and steering stay inside lateral grip budget',()=>{const p=fresh();p.speed=55;for(let i=0;i<100;i++)stepVehicle(p,{throttle:0,brake:1,steer:1,handbrake:false},car,setup,1/120);assert.ok(Number.isFinite(p.heading));assert.ok(Math.abs(p.latG)<1.5);assert.ok(p.speed<55);});
+test('fixed steps produce consistent trajectories at different rendering frame rates',()=>{function simulate(fps:number){const p=fresh();let remainder=0;for(let frame=0;frame<fps*10;frame++){remainder+=1/fps;while(remainder+1e-10>=1/120){stepVehicle(p,{throttle:1,brake:0,steer:.2,handbrake:false},car,setup,1/120);remainder-=1/120;}}return p;}const a=simulate(30),b=simulate(144);assert.ok(Math.abs(a.speed-b.speed)<.001);assert.ok(Math.abs(a.heading-b.heading)<.001);});
+test('endurance fuel runs out and prevents further acceleration',()=>{const p=fresh();p.fuel=0;stepVehicle(p,{throttle:1,brake:0,steer:0,handbrake:false},car,{...setup,mode:'endurance'},1/120);assert.equal(p.speed,0);assert.equal(p.fuel,0);});

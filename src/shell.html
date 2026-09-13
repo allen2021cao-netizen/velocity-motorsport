@@ -1,0 +1,179 @@
+
+<div id="game"></div>
+<div id="vignette"></div>
+<div id="flash"></div>
+<canvas id="speedlines"></canvas>
+
+<!-- 横屏提示 -->
+<div id="rotate">
+  <div class="ph"></div>
+  <div>请将手机横屏游玩<div class="en">PLEASE ROTATE YOUR DEVICE</div></div>
+</div>
+
+<!-- 菜单 -->
+<div id="menu">
+  <div id="title">
+    <div class="sub">CLASSIC STREET RACING · 致敬经典极品飞车</div>
+    <h1>地下<span>狂飙</span></h1>
+    <div class="en">UNDERGROUND VELOCITY · 手机版</div>
+  </div>
+  <div id="carPanel">
+    <div id="carHead">
+      <button class="arrowBtn" id="prevCar">‹</button>
+      <div id="carNameBox">
+        <div id="carName">保时捷 911 Turbo</div>
+        <div id="carNameEn">PORSCHE 911 TURBO (993)</div>
+      </div>
+      <button class="arrowBtn" id="nextCar">›</button>
+    </div>
+    <div class="statRow"><div class="lbl">极速 SPEED</div><div class="bar"><div class="fill" id="st0" style="width:80%"></div></div></div>
+    <div class="statRow"><div class="lbl">加速 ACCEL</div><div class="bar"><div class="fill" id="st1" style="width:80%"></div></div></div>
+    <div class="statRow"><div class="lbl">操控 HANDLE</div><div class="bar"><div class="fill" id="st2" style="width:80%"></div></div></div>
+    <div class="statRow"><div class="lbl">氮气 NITRO</div><div class="bar"><div class="fill" id="st3" style="width:80%"></div></div></div>
+    <div id="carDesc"></div>
+  </div>
+  <div id="selPanel">
+    <div class="selLabel">难度 DIFFICULTY</div>
+    <div id="diffRow"></div>
+    <div class="selLabel">赛道 TRACK</div>
+    <div id="trackGrid"></div>
+  </div>
+  <button id="startBtn">开始比赛 ›</button>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+  <div id="cockpit">
+    <div id="roof"></div><div id="pillarL"></div><div id="pillarR"></div>
+    <div id="mirror"></div>
+    <div id="dash"></div>
+    <canvas id="cluster" width="560" height="200"></canvas>
+    <div id="column"></div>
+    <div class="paddle" id="padL"></div>
+    <div class="paddle" id="padR"></div>
+    <div id="wheelWrap">
+      <svg id="wheelSvg" viewBox="0 0 300 300">
+        <defs>
+          <radialGradient id="rimShade" cx="50%" cy="36%" r="72%">
+            <stop offset="0%" stop-color="#3d414e"/>
+            <stop offset="65%" stop-color="#23252d"/>
+            <stop offset="100%" stop-color="#14151b"/>
+          </radialGradient>
+          <linearGradient id="spokeG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#3c3f4b"/>
+            <stop offset="100%" stop-color="#191b23"/>
+          </linearGradient>
+          <linearGradient id="gloveG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#2c2e37"/>
+            <stop offset="100%" stop-color="#131418"/>
+          </linearGradient>
+        </defs>
+        <!-- 轮辋(Alcantara 质感 + 缝线) -->
+        <circle cx="150" cy="150" r="112" fill="none" stroke="#0b0c10" stroke-width="42"/>
+        <circle cx="150" cy="150" r="112" fill="none" stroke="url(#rimShade)" stroke-width="33"/>
+        <circle cx="150" cy="150" r="127" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="2.5"/>
+        <circle cx="150" cy="150" r="97" fill="none" stroke="rgba(0,0,0,.55)" stroke-width="2.5"/>
+        <path d="M 136 39 A 112 112 0 0 1 164 39" fill="none" stroke="#c8202a" stroke-width="33"/>
+        <circle cx="150" cy="150" r="112" fill="none" stroke="#50556400" stroke-width="1"/>
+        <circle cx="150" cy="150" r="104" fill="none" stroke="#565b6a" stroke-width="1" stroke-dasharray="2.5 4.5" opacity=".7"/>
+        <circle cx="150" cy="150" r="120" fill="none" stroke="#565b6a" stroke-width="1" stroke-dasharray="2.5 4.5" opacity=".7"/>
+        <!-- 三辐条 -->
+        <polygon points="52,140 148,131 148,169 52,160" fill="url(#spokeG)" stroke="#0e1016" stroke-width="2"/>
+        <polygon points="248,140 152,131 152,169 248,160" fill="url(#spokeG)" stroke="#0e1016" stroke-width="2"/>
+        <polygon points="137,167 163,167 157,254 143,254" fill="url(#spokeG)" stroke="#0e1016" stroke-width="2"/>
+        <circle cx="96" cy="150" r="4" fill="#0d0f14" stroke="#3c4150" stroke-width="1"/>
+        <circle cx="204" cy="150" r="4" fill="#0d0f14" stroke="#3c4150" stroke-width="1"/>
+        <circle cx="150" cy="208" r="4" fill="#0d0f14" stroke="#3c4150" stroke-width="1"/>
+        <!-- 中心毂 -->
+        <circle cx="150" cy="150" r="41" fill="#161922" stroke="#2e3340" stroke-width="3"/>
+        <circle cx="150" cy="150" r="34" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="7"/>
+        <circle cx="122" cy="136" r="3" fill="#3c4150"/><circle cx="178" cy="136" r="3" fill="#3c4150"/>
+        <circle cx="122" cy="164" r="3" fill="#3c4150"/><circle cx="178" cy="164" r="3" fill="#3c4150"/>
+        <circle cx="150" cy="120" r="3" fill="#3c4150"/><circle cx="150" cy="180" r="3" fill="#3c4150"/>
+        <rect x="124" y="137" width="52" height="26" rx="5" fill="#0c0e13" stroke="#343948" stroke-width="1.5"/>
+        <rect x="124" y="158" width="52" height="5" rx="2.5" fill="#c8202a"/>
+        <text x="150" y="155" text-anchor="middle" fill="#b9ff00" font-size="16" font-style="italic" font-weight="bold" font-family="Arial Black, Arial">UV</text>
+        <!-- 左手(赛车手套) -->
+        <g id="gloveL">
+          <ellipse cx="36" cy="152" rx="30" ry="46" fill="rgba(0,0,0,.35)"/>
+          <g transform="rotate(14 40 196)">
+            <rect x="18" y="182" width="42" height="36" rx="11" fill="url(#gloveG)" stroke="#0a0b0f" stroke-width="2"/>
+            <rect x="18" y="193" width="42" height="9" rx="4.5" fill="#c8202a"/>
+            <rect x="23" y="186" width="20" height="5" rx="2.5" fill="#3c4150"/>
+          </g>
+          <ellipse cx="37" cy="150" rx="23" ry="39" fill="url(#gloveG)" stroke="#0a0b0f" stroke-width="2"/>
+          <ellipse cx="31" cy="146" rx="12" ry="27" fill="#2f323d"/>
+          <rect x="5" y="115" width="31" height="13.5" rx="6.7" fill="url(#gloveG)" stroke="#0a0b0f" stroke-width="1.5" transform="rotate(-10 20 121)"/>
+          <rect x="3" y="132" width="33" height="13.5" rx="6.7" fill="url(#gloveG)" stroke="#0a0b0f" stroke-width="1.5" transform="rotate(-4 19 138)"/>
+          <rect x="3" y="149" width="33" height="13.5" rx="6.7" fill="url(#gloveG)" stroke="#0a0b0f" stroke-width="1.5" transform="rotate(3 19 155)"/>
+          <rect x="5" y="166" width="31" height="13.5" rx="6.7" fill="url(#gloveG)" stroke="#0a0b0f" stroke-width="1.5" transform="rotate(10 20 172)"/>
+          <path d="M 11 130 Q 24 132 34 131 M 10 147 Q 24 149 35 148 M 10 164 Q 24 166 35 165" stroke="#0a0b0f" stroke-width="1.5" fill="none" opacity=".7"/>
+          <rect x="44" y="114" width="15" height="36" rx="7.5" fill="url(#gloveG)" stroke="#0a0b0f" stroke-width="1.5" transform="rotate(18 51 132)"/>
+          <path d="M 30 119 Q 19 150 30 181" stroke="#9aa0b0" stroke-width="1" stroke-dasharray="2.5 3" fill="none" opacity=".8"/>
+          <path d="M 47 121 Q 38 150 47 179" stroke="#c8202a" stroke-width="3" fill="none" opacity=".85"/>
+        </g>
+        <use href="#gloveL" transform="translate(300 0) scale(-1 1)"/>
+      </svg>
+    </div>
+  </div>
+  <div id="posBox">
+    <div><span id="posBig">4<small>/4</small></span><span id="lapTxt">圈 LAP 1/3</span></div>
+    <div id="diffTxt">难度 NORMAL</div>
+  </div>
+  <div id="timeBox">
+    <div class="row">总时间 <b id="tTotal">0:00.000</b></div>
+    <div class="row">本圈 <b id="tLap">0:00.000</b></div>
+    <div class="row">最快 <b class="rec" id="tBest">--:--.---</b></div>
+  </div>
+  <div id="wrongway">⚠ 逆行 WRONG WAY ⚠</div>
+  <div id="msg"></div>
+  <div id="submsg"></div>
+  <canvas id="speedo" width="280" height="320"></canvas>
+  <canvas id="minimap" width="170" height="170"></canvas>
+  <div id="touchUI">
+    <div id="nosBar"><div id="nosFill"></div><span id="nosLbl">N₂O</span></div>
+    <div class="tbtn" id="btnL"><span class="big">‹</span><span class="sm">左转</span></div>
+    <div class="tbtn" id="btnR"><span class="big">›</span><span class="sm">右转</span></div>
+    <div class="tbtn" id="btnGas"><span class="big">▲</span><span class="sm">油门</span></div>
+    <div class="tbtn" id="btnBrake"><span class="big">▼</span><span class="sm">刹车</span></div>
+    <div class="tbtn" id="btnNos"><span class="big">N₂O</span></div>
+    <div class="tbtn" id="btnDrift"><span class="sm" style="font-size:11px">漂移</span></div>
+    <div class="sbtn" id="btnCam">👁</div>
+    <div class="sbtn" id="btnPause">⏸</div>
+    <div class="sbtn" id="btnReset">↺</div>
+    <div class="sbtn" id="btnSound">🔊</div>
+  </div>
+</div>
+
+<!-- 结算 -->
+<div id="results">
+  <div id="resultsBox">
+    <div id="resTitle">比赛<span>结束</span></div>
+    <div id="resSub">RACE COMPLETE · 最终排名</div>
+    <div id="resRankBig"></div>
+    <div id="resList"></div>
+    <div id="bestLapRes"></div>
+    <button class="resBtn" id="againBtn">再来一局 ↻</button>
+    <button class="resBtn" id="garageBtn">返回车库</button>
+  </div>
+</div>
+
+<!-- 暂停 -->
+<div id="pause">
+  <div class="pbox">
+    <h2>已暂停 PAUSED</h2>
+    <div class="setLabel">转向灵敏度 STEERING</div>
+    <div class="setBtnRow" id="sensRow">
+      <button class="setBtn" data-s="0">舒适</button>
+      <button class="setBtn" data-s="1">标准</button>
+      <button class="setBtn" data-s="2">灵敏</button>
+    </div>
+    <div class="setLabel">声音 SOUND</div>
+    <div class="setBtnRow"><button class="setBtn" id="soundTog">开 ON</button></div>
+    <button class="resBtn" id="resumeBtn" style="background:linear-gradient(90deg,#b9ff00,#8fd400);color:#0a0c12;">继续比赛</button>
+    <button class="resBtn" id="quitBtn" style="background:#222a3e;color:#b9ff00;border:1px solid rgba(185,255,0,.4);">返回车库</button>
+  </div>
+</div>
+
+<div id="loadErr">3D 引擎初始化失败,请使用支持 WebGL 的浏览器打开。<br>Failed to initialize the 3D engine (WebGL required).</div>
+
