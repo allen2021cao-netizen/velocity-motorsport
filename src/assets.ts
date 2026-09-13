@@ -12,7 +12,7 @@ export async function loadDetailedCar(car:any){
   const scale=4.55/size.z;wrapper.scale.setScalar(scale);wrapper.position.y=-bounds.min.y*scale;
   wrapper.updateMatrixWorld(true);
   const paint=new T.MeshPhysicalMaterial({color:0xb31321,metalness:.65,roughness:.23,clearcoat:1,clearcoatRoughness:.1});
-  const glass=new T.MeshPhysicalMaterial({color:0xb3d5df,metalness:0,roughness:.08,transparent:true,opacity:.33,depthWrite:false});
+  const glass=new T.MeshPhysicalMaterial({color:0xb3d5df,metalness:.08,roughness:.07,transparent:true,opacity:.25,depthWrite:false});
   const brakeLight=new T.MeshStandardMaterial({color:0x8d0804,emissive:0xff1109,emissiveIntensity:.7});
   const wheels:T.Group[]=[],frontPivots:T.Group[]=[];
   const rubber=new T.MeshStandardMaterial({color:0x141617,roughness:.92});
@@ -28,6 +28,6 @@ export async function loadDetailedCar(car:any){
    const pos=wheel.getWorldPosition(new T.Vector3());car.group.worldToLocal(pos);
    const pivot=new T.Group();pivot.position.copy(pos);car.group.add(pivot);const spin=new T.Group();pivot.add(spin);spin.updateMatrixWorld(true);spin.attach(wheel);wheels.push(spin);if(name.includes('_f'))frontPivots.push(pivot);
   }
-  Object.assign(car,{bodyParts:body,wheels,frontPivots,flames:[],glowPlane:new T.Group(),brakeLight,detailed:true,steeringWheel:model.getObjectByName('steering_wheel')});
+  Object.assign(car,{bodyParts:body,wheels,frontPivots,flames:[],glowPlane:new T.Group(),brakeLight,detailed:true,modelKind:'imported-glb',wheelRadius:.34,cockpit:{x:.34,y:.98,z:-.1},steeringWheel:model.getObjectByName('steering_wheel')});
  }finally{draco.dispose();}
 }
