@@ -10,7 +10,6 @@ import {mountMenu} from './menu';
 import {DIFFICULTIES,aiTargetSpeed,stepOpponent} from './race-ai';
 import {buildAutomobile} from './automotive/model';
 import * as THREE from 'three';
-import {loadDetailedCar} from './assets';
 import {ensureDetailedCar,DETAILED_VEHICLES} from './detailed-vehicles';
 import {CARS} from './cars.js';
 import {TRACKS,timeIcon} from './tracks.js';
@@ -614,7 +613,6 @@ const plateTex = canvasTex(128, 32, (g, w, h) => {
 // 底盘轮廓:含前后轮拱
 const buildCar = buildAutomobile;
 const carObjs = CARS.map(c => {const car=buildCar({...c,type:c.type==='458'?'f40':c.type});car.cfg=c;return car;});
-try{await loadDetailedCar(carObjs[12]);}catch(error){console.warn('Detailed car unavailable; keeping procedural fallback',error);CARS[12].nameCn='GT 概念赛车（后备模型）';CARS[12].nameEn='GT CONCEPT / FALLBACK';}
 carObjs.forEach(c => { scene.add(c.group); c.group.visible = false; });
 
 const headlight = new THREE.SpotLight(0xcfe4ff, 120, 130, .48, .55, 1.2);
@@ -911,7 +909,7 @@ function switchCar(dir) {
 }
 function updateMenuCar() {
   const selectedCar=carObjs[selected];
-  if(DETAILED_VEHICLES[selectedCar.cfg.type]&&!selectedCar.assetStatus){
+  if(!selectedCar.assetStatus){
     ensureDetailedCar(selectedCar).then(()=>{if(carObjs[selected]===selectedCar){if(state==='vehicle')enterVehicle();else if(state==='menu')syncMenuScene();}});
   }
   carObjs.forEach((c, i) => {
@@ -924,6 +922,7 @@ function updateMenuCar() {
       c.group.rotation.set(0, camAngle + Math.PI / 2, 0);
     }
   });
+  const retry=document.getElementById('retryModel');if(retry)retry.hidden=selectedCar.assetStatus!=='fallback';
   const loading=selectedCar.assetStatus==='loading';
   document.getElementById('menuPreview')?.classList.toggle('vehicle-loading',loading&&menuTab!=='track');
   document.getElementById('vehicleOrbitSurface')?.classList.toggle('vehicle-loading',loading);
@@ -1779,6 +1778,10 @@ function showCityPreview(){
 }
 function syncMenuScene(){const city=menuTab==='track';if(!city&&cityShowcase)buildWorld(trackSel);document.getElementById('menuPreview')?.classList.toggle('vehicle-loading',!city&&carObjs[selected].assetStatus==='loading');worldGroup.visible=city;showroom.visible=!city;showLights.forEach(l=>l.visible=!city);if(city){carObjs.forEach(c=>c.group.visible=false);if(TRACKS[trackSel].circuit)showCityPreview();}else updateMenuCar();refreshMenuPreview();}
 graphics.quality(options.quality);qLevel=options.quality==='low'?3:options.quality==='balanced'?1:0;applyQuality();
+const retryModel=document.createElement('button');retryModel.id='retryModel';retryModel.textContent='重新加载精细模型';retryModel.hidden=true;retryModel.onclick=()=>{carObjs[selected].assetStatus=undefined;updateMenuCar();};document.getElementById('carPanel').append(retryModel);
+
+window.addEventListener('vehicle-model-ready',event=>{if(event.detail!==CARS[selected].type)return;if(state==='menu')syncMenuScene();else if(state==='vehicle')enterVehicle();});
+
 buildWorld(trackSel);menuUI.select('car');toMenu();loop();
 // Read-only diagnostics for performance and smoke testing.
 window.__velocity={snapshot:()=>({state,paused,track:TRACKS[trackSel].theme,trackLength:trackLen,roadWidth:ROAD_W*2,car:CARS[selected].type,speed:player.speed,heading:player.heading,position:player.pos.toArray(),lap:player.lap,laps:session.laps,mode:options.mode,wetness,ai:ais.length,fuel:player.fuel,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,fps:fpsEMA,physicsHz:120,quality:options.quality,qualityLevel:qLevel,audio:raceAudio?.snapshot(),detailed:!!carObjs[selected].detailed,modelKind:carObjs[selected].modelKind,dimensions:carObjs[selected].group.userData.dimensions,wheelCount:carObjs[selected].wheels.length,assetCredit:carObjs[selected].assetCredit,assetError:!!carObjs[selected].assetError,assetStatus:carObjs[selected].assetStatus,bodyLod:carObjs[selected].bodyLod?.getCurrentLevel(),aiLods:ais.map(a=>({car:a.car.cfg.type,level:a.car.bodyLod?.getCurrentLevel()})),steeringAngle:carObjs[selected].steeringWheel?.rotation.z,wheelPositions:carObjs[selected].wheels.map(w=>w.parent.position.toArray()),cockpit:carObjs[selected].cockpit,bonnet:carObjs[selected].bonnet,camera:camMode,cameraEye:camera.position.toArray(),cameraClip:[camera.near,camera.far],pixelRatio:renderer.getPixelRatio(),orbit:vehicleOrbit.snapshot(),pedals:{throttle:player.throttlePressure,brake:player.brakePressure},cornerBraking:!!player.cornerBraking,menuTab,difficulty:diffSel,aiSpeeds:ais.map(a=>a.speed),sceneVisibility:{world:worldGroup.visible,showroom:showroom.visible,cars:carObjs.filter(c=>c.group.visible).length},environment:{...cityReport,sky:atmosphere.snapshot(),surfaces:surfaces.status}})};

@@ -1,4 +1,6 @@
 import * as T from 'three';
+import {downloadModel} from './model-download';
+import {loadDetailedCar} from './assets';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {DRACOLoader} from 'three/addons/loaders/DRACOLoader.js';
 import {supplementPorscheCabin} from './porsche-cabin';
@@ -18,19 +20,20 @@ export const DETAILED_VEHICLES={
  m3:{file:'bmw',wheelbase:2.857,cockpit:{x:.37,y:1.13,z:-.18},hood:.95,paint:/body151/i,glass:/windows/i,brake:/redlight/i,author:'SRT Performance',name:'BMW M4 Competition M Package'},
  gt40:{file:'gt40',wheelbase:2.413,cockpit:{x:-.32,y:.84,z:-.45},hood:1.4,paint:/^Paint1/i,glass:/Meshpart14Mtl/,brake:/Meshpart12Mtl/,author:'vecarz',name:'Ford GT40 Mark II'},
 };
-const pending=new WeakMap<object,Promise<boolean>>();let queue=Promise.resolve();
+const pending=new WeakMap<object,Promise<boolean>>();
 export function ensureDetailedCar(car:any):Promise<boolean>{
- if(!DETAILED_VEHICLES[car.cfg.type as keyof typeof DETAILED_VEHICLES])return Promise.resolve(true);
+ if(car.cfg.type!=='458'&&!DETAILED_VEHICLES[car.cfg.type as keyof typeof DETAILED_VEHICLES])return Promise.resolve(true);
  const cached=pending.get(car);if(cached)return cached;
- car.assetStatus='loading';
- const task=queue.then(async()=>{await loadAdditionalCars([car]);car.assetStatus=car.assetError?'fallback':'ready';return !car.assetError;});
- queue=task.then(()=>{},()=>{});pending.set(car,task);return task;
+ car.assetStatus='loading';car.assetError=false;
+ // A stalled previous selection must not block the newly selected vehicle.
+ const task=(car.cfg.type==='458'?loadDetailedCar(car):loadAdditionalCars([car])).then(()=>{car.assetStatus=car.assetError?'fallback':'ready';if(car.assetError)pending.delete(car);return !car.assetError;},()=>{car.assetError=true;car.assetStatus='fallback';pending.delete(car);return false;});
+ pending.set(car,task);return task;
 }
 export async function loadAdditionalCars(cars:any[]){
  const decoder=new DRACOLoader().setDecoderPath('/draco/').setWorkerLimit(2),loader=new GLTFLoader().setDRACOLoader(decoder);
  try{for(const car of cars){const spec=DETAILED_VEHICLES[car.cfg.type as keyof typeof DETAILED_VEHICLES];if(!spec)continue;
   try{
-   const model=(await loader.loadAsync('/models/'+spec.file+'-detailed.glb')).scene;
+   const model=(await downloadModel(loader,'/models/'+spec.file+'-detailed.glb')).scene;
    const body=new T.Group();body.add(model);body.updateMatrixWorld(true);
    const bounds=new T.Box3().setFromObject(body),size=bounds.getSize(new T.Vector3());
    const materialCache=new Map<T.Material,T.Material>();const brakeMaterials:T.MeshStandardMaterial[]=[];
@@ -103,8 +106,12 @@ export async function loadAdditionalCars(cars:any[]){
     const box=new T.Box3();parts.forEach(p=>box.union(new T.Box3().setFromObject(p)));
     if(parts.length){const steering=new T.Group();steering.position.copy(box.getCenter(new T.Vector3()));steering.userData.steeringAxis='z';body.add(steering);body.updateMatrixWorld(true);parts.forEach(p=>steering.attach(p));car.steeringWheel=steering;}
    }
+   // Show the completed car immediately; the optional distance mesh must not
+   // keep the showroom blank on a slow connection.
+   car.assetStatus='ready';
+   if(typeof window!=='undefined')window.dispatchEvent(new CustomEvent('vehicle-model-ready',{detail:car.cfg.type}));
    try{
-    const low=(await loader.loadAsync('/models/'+spec.file+'-body-lod.glb')).scene;
+    const low=(await downloadModel(loader,'/models/'+spec.file+'-body-lod.glb')).scene;
     const shared=new Map<string,T.Material>();body.traverse(o=>{const m=o as T.Mesh;if(m.isMesh)(Array.isArray(m.material)?m.material:[m.material]).forEach(v=>shared.set(v.name,v));});
     low.traverse(o=>{const m=o as T.Mesh;if(!m.isMesh)return;m.castShadow=true;m.receiveShadow=true;const reuse=(v:T.Material)=>{const replacement=shared.get(v.name);if(replacement){v.dispose();return replacement;}return v;};m.material=Array.isArray(m.material)?m.material.map(reuse):reuse(m.material);});
     const high=new T.Group();for(const child of [...body.children])high.add(child);

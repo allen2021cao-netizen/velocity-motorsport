@@ -1,11 +1,12 @@
 import * as T from 'three';
+import {downloadModel} from './model-download';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {DRACOLoader} from 'three/addons/loaders/DRACOLoader.js';
 /** Separate compressed asset pipeline; all decoder files are served from the same site. */
 export async function loadDetailedCar(car:any){
  const draco=new DRACOLoader().setDecoderPath('/draco/');
  try{
-  const gltf=await new GLTFLoader().setDRACOLoader(draco).loadAsync('/models/ferrari-458.glb');
+  const gltf=await downloadModel(new GLTFLoader().setDRACOLoader(draco),'/models/ferrari-458.glb');
   const model=gltf.scene;model.rotation.y=Math.PI;
   const wrapper=new T.Group();wrapper.add(model);wrapper.updateMatrixWorld(true);
   const bounds=new T.Box3().setFromObject(wrapper);const size=bounds.getSize(new T.Vector3());
