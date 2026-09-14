@@ -51,3 +51,5 @@ Distribution and resource hashes: tools/classic-vehicle-sources.json.
 Modifications: dimensions, wheel/caliper separation, material calibration, Draco/WebP compression and distance body variant.
 
 Challenger is a customized 2006 Concept model with an exposed intake; its source carries NoAI. Used only for ordinary rendering and mechanical geometry processing. Veneno and SLR retain source interiors; Challenger and C7 interiors are less detailed than their exteriors. Source instrument faces and steering wheels are static; the HUD provides live telemetry. These are artist models, not manufacturer CAD or scans.
+
+Race sound effects: ElevenLabs Explore library. Seven source clips, IDs and adaptations are documented in public/audio/CREDITS.md. AI sound design, not exact manufacturer recordings. https://elevenlabs.io/sound-effects

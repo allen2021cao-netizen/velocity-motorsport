@@ -56,3 +56,5 @@ node tools/remaining-six-check.mjs
 ```
 
 Quality is always high on launch and when selecting a vehicle or track. The external top-right selector can lower it afterward; changing quality does not rebuild a running race. Replacement slots use distinct lap-record identifiers. See tools/vehicle-performance.md for specification sources and gameplay tuning.
+
+Race audio uses three ElevenLabs engine textures plus per-car combustion profiles, shift transients, traction-driven tire scrub, road/wind layers and spatial nearby rivals. Audio is silenced in menus, on pause and when the page is hidden; sample failures retain a synthesized fallback. Source credits: public/audio/CREDITS.md.

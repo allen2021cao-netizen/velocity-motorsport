@@ -1,3 +1,4 @@
+import {RaceAudio} from './race-audio';
 import {cameraPose} from './camera-rig';
 import {createVehicleOrbit} from './vehicle-orbit';
 import {mountDrivingHelp} from './driving-help';
@@ -667,11 +668,11 @@ const canVib = typeof navigator !== 'undefined' && typeof navigator.vibrate === 
 function vib(p) { if (canVib) { try { navigator.vibrate(p); } catch (e) {} } }
 
 // ---------------- 音频 ----------------
-let AC = null, master = null, musicGain = null, engineNodes = null, muted = SETS.muted;
-let noiseBuf = null, nosGain = null, skidGain = null;
+let AC = null, master = null, musicGain = null, raceAudio = null, muted = SETS.muted;
+let noiseBuf = null;
 function setMuted(m) {
   muted = m; SETS.muted = m; saveSets();
-  if (master) master.gain.value = m ? 0 : .6;
+  if (master) master.gain.setTargetAtTime(m ? 0 : .6,AC.currentTime,.015);
   const bs = document.getElementById('btnSound'); if (bs) bs.textContent = m ? '🔇' : '🔊';
   const st = document.getElementById('soundTog');
   if (st) { st.textContent = m ? '关 OFF' : '开 ON'; st.classList.toggle('sel', !m); }
@@ -680,25 +681,10 @@ function initAudio() {
   if (AC) { if (AC.state === 'suspended') AC.resume(); return; }
   AC = new (window.AudioContext || window.webkitAudioContext)();
   master = AC.createGain(); master.gain.value = muted ? 0 : .6; master.connect(AC.destination);
-  const o1 = AC.createOscillator(); o1.type = 'sawtooth';
-  const o2 = AC.createOscillator(); o2.type = 'square';
-  const eg = AC.createGain(); eg.gain.value = 0;
-  const ef = AC.createBiquadFilter(); ef.type = 'lowpass'; ef.frequency.value = 320; ef.Q.value = 2;
-  o1.connect(ef); o2.connect(ef); ef.connect(eg); eg.connect(master);
-  o1.start(); o2.start();
-  engineNodes = { o1, o2, eg, ef };
-  noiseBuf = AC.createBuffer(1, AC.sampleRate, AC.sampleRate);
-  const d = noiseBuf.getChannelData(0);
-  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-  const nSrc = AC.createBufferSource(); nSrc.buffer = noiseBuf; nSrc.loop = true;
-  const nF = AC.createBiquadFilter(); nF.type = 'bandpass'; nF.frequency.value = 2600; nF.Q.value = .8;
-  nosGain = AC.createGain(); nosGain.gain.value = 0;
-  nSrc.connect(nF); nF.connect(nosGain); nosGain.connect(master); nSrc.start();
-  const sSrc = AC.createBufferSource(); sSrc.buffer = noiseBuf; sSrc.loop = true;
-  const sF = AC.createBiquadFilter(); sF.type = 'bandpass'; sF.frequency.value = 900; sF.Q.value = 1.4;
-  skidGain = AC.createGain(); skidGain.gain.value = 0;
-  sSrc.connect(sF); sF.connect(skidGain); skidGain.connect(master); sSrc.start();
-  musicGain = AC.createGain(); musicGain.gain.value = .3; musicGain.connect(master);
+  raceAudio=new RaceAudio(AC,master);
+  noiseBuf=AC.createBuffer(1,AC.sampleRate,AC.sampleRate);
+  const d=noiseBuf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+  musicGain = AC.createGain(); musicGain.gain.value = .10; musicGain.connect(master);
   startMusic();
 }
 function beep(freq, dur, vol, type) {
@@ -710,16 +696,7 @@ function beep(freq, dur, vol, type) {
   o.connect(gn); gn.connect(master);
   o.start(); o.stop(AC.currentTime + (dur || .15) + .02);
 }
-function thud(vol) {
-  if (!AC) return;
-  const src = AC.createBufferSource(); src.buffer = noiseBuf;
-  const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 260;
-  const gn = AC.createGain();
-  gn.gain.setValueAtTime(clamp(vol, 0, .8), AC.currentTime);
-  gn.gain.exponentialRampToValueAtTime(.001, AC.currentTime + .22);
-  src.connect(f); f.connect(gn); gn.connect(master);
-  src.start(); src.stop(AC.currentTime + .25);
-}
+function thud(vol) {raceAudio?.impact(vol);}
 let musicStep = 0, nextNoteT = 0;
 const bassSeq = [45, 0, 45, 48, 0, 45, 0, 43, 45, 0, 45, 48, 50, 0, 43, 0];
 function midi(n) { return 440 * Math.pow(2, (n - 69) / 12); }
@@ -784,6 +761,7 @@ addEventListener('keydown', e => {
 });
 addEventListener('keyup', e => { keys[e.code] = false; });
 addEventListener('pointerdown', initAudio);
+document.addEventListener('visibilitychange',()=>{if(document.hidden){raceAudio?.silence();if(musicGain)musicGain.gain.setTargetAtTime(0,AC.currentTime,.02);}});
 addEventListener('touchstart', initAudio, { passive: true });
 addEventListener('contextmenu', e => e.preventDefault());
 // iOS 防误触:禁用双指缩放手势与双击缩放
@@ -863,9 +841,7 @@ document.getElementById('quitBtn').onclick = () => { paused = false; document.ge
 function togglePause() {
   paused = !paused;
   document.getElementById('pause').style.display = paused ? 'flex' : 'none';
-  if (engineNodes) engineNodes.eg.gain.value = 0; // 暂停立即静音引擎(恢复后下一帧自动复原)
-  if (paused && skidGain) skidGain.gain.value = 0;
-  if (paused && nosGain) nosGain.gain.value = 0;
+  if(paused)raceAudio?.silence();
 }
 
 // ---------------- 选择界面 ----------------
@@ -1152,7 +1128,6 @@ function updatePlayer(dt) {
     if(session.pit>=8){player.fuel=100;player.wear=0;player.temperature=65;session.pit=0;showMsg('补给完成','油量 100% · 全新轮胎',2);}
   }else session.pit=0;
   const slip = Math.abs(player.drift) * Math.abs(player.speed);
-  if (skidGain) skidGain.gain.value = clamp(slip * .045 - .04, 0, .22);
 
   // 漂移胎烟粒子(按画质系数节流)
   if (slip > 2.2 && Math.random() < pBudget * .8) {
@@ -1293,22 +1268,7 @@ function updatePlayer(dt) {
   headlight.position.copy(player.pos).add(tmpV.set(0, 1.1, 0)).addScaledVector(fwdV, 1.8);
   headlightTarget.position.copy(player.pos).addScaledVector(fwdV, 45);
   document.getElementById('wheelSvg').style.transform = 'rotate(' + (-player.steer * 100) + 'deg)';
-  if (nosGain) nosGain.gain.value = player.nosActive ? .16 : 0;
-  {
-    const kmh = Math.abs(player.speed) * 3.6;
-    const gear = kmh < 40 ? 0 : kmh < 80 ? 1 : kmh < 125 ? 2 : kmh < 172 ? 3 : kmh < 225 ? 4 : 5;
-    const lo = [0, 40, 80, 125, 172, 225][gear], hi = [40, 80, 125, 172, 225, 330][gear];
-    const rpm = .25 + .75 * clamp((kmh - lo) / (hi - lo), 0, 1);
-    player.gearDisp = gear + 1;
-    player.rpmDisp = .8 + rpm * 6.8;
-    if (engineNodes) {
-      const f = 34 + rpm * 120 + gear * 6;
-      engineNodes.o1.frequency.value = f;
-      engineNodes.o2.frequency.value = f * .5;
-      engineNodes.ef.frequency.value = 240 + rpm * 900;
-      engineNodes.eg.gain.value = muted ? 0 : (.045 + throttle * .075 + (player.nosActive ? .04 : 0));
-    }
-  }
+
 }
 
 // ---------------- AI ----------------
@@ -1712,14 +1672,13 @@ function loop() {
     const advisory=options.line&&sCurv[wrapIdx(player.trackIdx+35)]>.15&&player.speed>24?' • 弯道在前 / 建议减速':'';
     document.getElementById('telemetry').textContent=(options.mode==='time'?'TIME ATTACK':'MOTORSPORT')+'  /  '+(player.abs?'ABS ': '')+(player.traction?'TCS ': '')+(player.cornerBraking?'弯道辅助 ': '')+Math.abs(player.latG).toFixed(2)+' G'+advisory+'\n'+(wetness?'湿地':'干地')+' · 胎温 '+Math.round(player.temperature)+'°C · 最佳 '+fmt(session.best)+(session.invalid?' · 本圈无效':'')+(options.mode==='endurance'?'\n油量 '+Math.round(player.fuel)+'% · 胎耗 '+Math.round(player.wear*100)+'%'+(session.pit?' · 补给 '+session.pit.toFixed(1)+'/8 秒':''):'');
   }
-  if (state === 'countdown') {
-    const rev = (keys['KeyW'] || keys['ArrowUp'] || vk.gas) ? .8 : .3;
-    player.rpmDisp = .8 + rev * 6.8 + Math.random() * .15;
-    if (engineNodes) {
-      engineNodes.o1.frequency.value = 40 + rev * 90 + Math.random() * 6;
-      engineNodes.o2.frequency.value = (40 + rev * 90) * .5;
-      engineNodes.eg.gain.value = muted ? 0 : .05 + rev * .05;
-    }
+  if(raceAudio){
+    const active=!paused&&(state==='race'||state==='countdown');
+    const throttle=state==='countdown'?((keys.KeyW||keys.ArrowUp||vk.gas)?1:0):player.throttlePressure||0;
+    const heading=player.heading||0;
+    raceAudio.update({active,type:CARS[selected].type,top:CARS[selected].top,speed:player.speed,throttle,brake:player.brakePressure||0,slip:Math.abs(player.drift)*Math.abs(player.speed),wet:wetness,camera:camMode,countdown:state==='countdown',fuel:player.fuel,opponents:ais.map(a=>{const dx=a.car.group.position.x-player.pos.x,dz=a.car.group.position.z-player.pos.z;return {x:dx*Math.cos(heading)-dz*Math.sin(heading),z:dx*Math.sin(heading)+dz*Math.cos(heading),speed:a.speed,type:a.car.cfg.type};})},Math.min(rawDt,.1));
+    const audioState=raceAudio.snapshot();player.gearDisp=audioState.gear;player.rpmDisp=audioState.rpm/1000;
+    musicGain.gain.setTargetAtTime(document.hidden||paused?0:active?.035:.10,AC.currentTime,.15);
   }
   updateCamera(dt || .0001);
   document.getElementById('quickQuality')?.classList.toggle('in-race',state==='race'||state==='countdown');
@@ -1798,4 +1757,4 @@ function syncMenuScene(){const city=menuTab==='track';document.getElementById('m
 graphics.quality(options.quality);qLevel=options.quality==='low'?3:options.quality==='balanced'?1:0;applyQuality();
 buildWorld(trackSel);menuUI.select('car');toMenu();loop();
 // Read-only diagnostics for performance and smoke testing.
-window.__velocity={snapshot:()=>({state,paused,track:TRACKS[trackSel].theme,car:CARS[selected].type,speed:player.speed,heading:player.heading,position:player.pos.toArray(),lap:player.lap,laps:session.laps,mode:options.mode,wetness,ai:ais.length,fuel:player.fuel,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,fps:fpsEMA,physicsHz:120,quality:options.quality,qualityLevel:qLevel,detailed:!!carObjs[selected].detailed,modelKind:carObjs[selected].modelKind,dimensions:carObjs[selected].group.userData.dimensions,wheelCount:carObjs[selected].wheels.length,assetCredit:carObjs[selected].assetCredit,assetError:!!carObjs[selected].assetError,assetStatus:carObjs[selected].assetStatus,bodyLod:carObjs[selected].bodyLod?.getCurrentLevel(),aiLods:ais.map(a=>({car:a.car.cfg.type,level:a.car.bodyLod?.getCurrentLevel()})),steeringAngle:carObjs[selected].steeringWheel?.rotation.z,wheelPositions:carObjs[selected].wheels.map(w=>w.parent.position.toArray()),cockpit:carObjs[selected].cockpit,bonnet:carObjs[selected].bonnet,camera:camMode,cameraEye:camera.position.toArray(),cameraClip:[camera.near,camera.far],pixelRatio:renderer.getPixelRatio(),orbit:vehicleOrbit.snapshot(),pedals:{throttle:player.throttlePressure,brake:player.brakePressure},cornerBraking:!!player.cornerBraking,menuTab,difficulty:diffSel,aiSpeeds:ais.map(a=>a.speed),sceneVisibility:{world:worldGroup.visible,showroom:showroom.visible,cars:carObjs.filter(c=>c.group.visible).length},environment:{...cityReport,sky:atmosphere.snapshot(),surfaces:surfaces.status}})};
+window.__velocity={snapshot:()=>({state,paused,track:TRACKS[trackSel].theme,car:CARS[selected].type,speed:player.speed,heading:player.heading,position:player.pos.toArray(),lap:player.lap,laps:session.laps,mode:options.mode,wetness,ai:ais.length,fuel:player.fuel,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,fps:fpsEMA,physicsHz:120,quality:options.quality,qualityLevel:qLevel,audio:raceAudio?.snapshot(),detailed:!!carObjs[selected].detailed,modelKind:carObjs[selected].modelKind,dimensions:carObjs[selected].group.userData.dimensions,wheelCount:carObjs[selected].wheels.length,assetCredit:carObjs[selected].assetCredit,assetError:!!carObjs[selected].assetError,assetStatus:carObjs[selected].assetStatus,bodyLod:carObjs[selected].bodyLod?.getCurrentLevel(),aiLods:ais.map(a=>({car:a.car.cfg.type,level:a.car.bodyLod?.getCurrentLevel()})),steeringAngle:carObjs[selected].steeringWheel?.rotation.z,wheelPositions:carObjs[selected].wheels.map(w=>w.parent.position.toArray()),cockpit:carObjs[selected].cockpit,bonnet:carObjs[selected].bonnet,camera:camMode,cameraEye:camera.position.toArray(),cameraClip:[camera.near,camera.far],pixelRatio:renderer.getPixelRatio(),orbit:vehicleOrbit.snapshot(),pedals:{throttle:player.throttlePressure,brake:player.brakePressure},cornerBraking:!!player.cornerBraking,menuTab,difficulty:diffSel,aiSpeeds:ais.map(a=>a.speed),sceneVisibility:{world:worldGroup.visible,showroom:showroom.visible,cars:carObjs.filter(c=>c.group.visible).length},environment:{...cityReport,sky:atmosphere.snapshot(),surfaces:surfaces.status}})};

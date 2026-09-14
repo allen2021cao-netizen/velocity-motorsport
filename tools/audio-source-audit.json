@@ -1,0 +1,58 @@
+[
+  {
+    "name": "muscle",
+    "seconds": 3.51996875,
+    "peak": 0.4333383081737176,
+    "rms": 0.22,
+    "loopSeam": 0.003197055141606875,
+    "sourceSha256": "d3a2915582d5aaef221f24575d13d46f0824bf914b30f8a0a59979512fcf09e1"
+  },
+  {
+    "name": "exotic",
+    "seconds": 2.72,
+    "peak": 0.5111919478788252,
+    "rms": 0.22000000000000003,
+    "loopSeam": 0.051425286619252726,
+    "sourceSha256": "4d6cb663f84837f3954b21e5032b72f7ed747cc6ce29534eb88ce6731b592cde"
+  },
+  {
+    "name": "six",
+    "seconds": 4.92,
+    "peak": 0.85,
+    "rms": 0.21750178609032841,
+    "loopSeam": 0.014011928465673297,
+    "sourceSha256": "643348a2ec6d4ee2ea10317c5f542a537895095feb17447c1341fa57eb0025e8"
+  },
+  {
+    "name": "tire",
+    "seconds": 4.12,
+    "peak": 0.85,
+    "rms": 0.1796717523366404,
+    "loopSeam": 0.024736350950207407,
+    "sourceSha256": "92d580d15a132d8a984424b487704b90931f574402479bea0fbc74853bf1b60a"
+  },
+  {
+    "name": "road",
+    "seconds": 5.02,
+    "peak": 0.85,
+    "rms": 0.21044735394297556,
+    "loopSeam": 0.0006460781584412267,
+    "sourceSha256": "23df86f8e4715c2a392741095f28adc50364c643ac6e38990f2eb110d500f896"
+  },
+  {
+    "name": "impact",
+    "seconds": 0.64996875,
+    "peak": 0.5086166864985053,
+    "rms": 0.22000000000000003,
+    "loopSeam": 0,
+    "sourceSha256": "c8c7adbf8759d12916991db88d1c80f1be4b553ad3c0ac17f10d34c2552d0df8"
+  },
+  {
+    "name": "shift",
+    "seconds": 0.18,
+    "peak": 0.8500000000000001,
+    "rms": 0.17528676151749922,
+    "loopSeam": 0,
+    "sourceSha256": "f225534c1661d1642132ed3a530c8d6285b11e81a26b1f4643a2e8b0eb5b3a99"
+  }
+]
