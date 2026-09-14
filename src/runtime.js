@@ -7,7 +7,7 @@ import {cameraPose} from './camera-rig';
 import {createVehicleOrbit} from './vehicle-orbit';
 import {mountDrivingHelp} from './driving-help';
 import {mountMenu} from './menu';
-import {DIFFICULTIES,aiTargetSpeed,stepOpponent} from './race-ai';
+import {DIFFICULTIES,aiTargetSpeed,stepOpponent,freshDriver,roadCurvature,trafficPlan} from './race-ai';
 import {buildAutomobile} from './automotive/model';
 import * as THREE from 'three';
 import {ensureDetailedCar,DETAILED_VEHICLES} from './detailed-vehicles';
@@ -45,10 +45,10 @@ const rnd = () => { rndSeed = (rndSeed * 16807) % 2147483647; return rndSeed / 2
 // ---------------- 车辆 ----------------
 // ---------------- 难度 ----------------
 // 难度标定(第一名胜率):简单~99% / 普通~80% / 困难~50% / 传奇~15%
-// AI配速 = 玩家实时配速EMA × ratio(每场高斯抽取,已用蒙特卡洛模拟校准,对任意玩家水平稳定)
+// Difficulty changes driver decisions; vehicle performance never depends on player pace.
 const DIFFS = DIFFICULTIES;
 function gauss() { let u = 0, v = 0; while (!u) u = Math.random(); while (!v) v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(TAU * v); }
-let playerPaceEMA = 45;
+
 
 // ---------------- 赛道 ----------------
 // 12条赛道形状经旋转/镜像相关性优化,两两相似度≤0.83,条条独特
@@ -1007,7 +1007,7 @@ async function startRace() {
     if (i === selected) return;
     const d = gridDist[aiN], lat = gridLat[aiN];
     placeOnTrack(c, d, lat);
-    ais.push({ car: c, dist: d, speed: 0, ratio:1, slow: 0, latBase: lat * .9, latPhase: Math.random() * TAU, finished: false, finishTime: null, lat: lat * .9, weave:D.weave });
+    ais.push({ car: c, dist: d, speed: 0, driver:{...freshDriver(),temperature:60}, planTimer:0, slow: 0, finished: false, finishTime: null, lat: lat * .9 });
     aiN++;
   });
   player.car.bodyParts.visible = !camMode || player.car.detailed;
@@ -1021,7 +1021,7 @@ async function startRace() {
   player.nosMax = 30 + 70 * player.cfg.nos;
   player.nos = player.nosMax;
   player.lapStart = 0; player.best = null; player.finished = false; player.finishTime = null;
-  playerPaceEMA = 45;
+
   lastRank = 4;
   camPos.copy(player.pos).add(new THREE.Vector3(-Math.sin(player.heading) * 10, 4, -Math.cos(player.heading) * 10));
   updateHudStatic();
@@ -1230,7 +1230,7 @@ function updatePlayer(dt) {
         const sd = lt >= 0 ? 1 : -1;
         player.pos.x -= hz * sd * penLat * .5;
         player.pos.z += hx * sd * penLat * .5;
-        a.latOff = (a.latOff || 0) - sd * penLat * .55;
+        a.lat = clamp(a.lat - sd * penLat * .55, -(ROAD_W - 1.3), ROAD_W - 1.3);
         player.speed *= 1 - .35 * dt;
         a.speed *= 1 - .35 * dt;
         if (!(a.touch > 0)) { thud(.12); shake = Math.max(shake, .08); vib(28); spawnBurst(player.pos.x, .5, player.pos.z, 4, 1, .7, .3, 3, .3, 6); a.touch = .4; }
@@ -1285,16 +1285,20 @@ function updatePlayer(dt) {
 function updateAI(dt) {
   const D = DIFFS[diffSel];
   const playerTotal = (player.lap - 1) + player.s;
-  if (state === 'race') playerPaceEMA = damp(playerPaceEMA, clamp(Math.abs(player.speed), 10, 92), .3, dt);
-  const anchor = clamp(Math.max(playerPaceEMA, 45 - raceTime * 1.5), 18, 90); // 起步阶段有配速下限,AI全力发车
   const playerDist = playerTotal * trackLen;
+  const traffic=ais.filter(a=>!a.finished).map(a=>({dist:a.dist,lat:a.lat,speed:a.speed}));
+  traffic.push({dist:playerDist,lat:player.latOnTrack||0,speed:player.speed});
   for (const a of ais) {
     if (a.finished) continue;
     const idx = wrapIdx(Math.round(a.dist / SEG));
     const curvAhead = Math.max(sCurv[wrapIdx(idx + 30)], sCurv[wrapIdx(idx + 60)], sCurv[idx]);
-    let target=aiTargetSpeed(sCurv,SEG,idx,a.car.cfg,options,diffSel,wetness);
+    a.planTimer-=dt;
+    if(a.planTimer<=0){a.plannedSpeed=aiTargetSpeed(sCurv,SEG,idx,a.car.cfg,options,diffSel,wetness,a.driver);a.planTimer=.08;}
+    let target=a.plannedSpeed;
+    const avoid=trafficPlan(a,traffic.filter(o=>o.dist!==a.dist||o.lat!==a.lat),trackLen,ROAD_W,dt);
+    target=Math.min(target,avoid.target);
     if(a.slow>0){a.slow-=dt;target*=.84;}else if(Math.random()<D.mistake*dt&&curvAhead>.08)a.slow=1.1;
-    if(state==='race')a.speed=stepOpponent(a.speed,target,a.car.cfg,options,diffSel,dt,wetness);else a.speed=damp(a.speed,0,4,dt);
+    if(state==='race')a.speed=stepOpponent(a.speed,target,a.car.cfg,options,diffSel,dt,wetness,a.driver,roadCurvature(sCurv,SEG,idx));else a.speed=damp(a.speed,0,4,dt);
     a.dist += a.speed * dt;
     if (a.dist >= session.laps * trackLen + 5 && !a.finished) { a.finished = true; a.finishTime = raceTime; a.speed = 0; }
     // 采样点间连续插值,消除逐格跳动
@@ -1302,16 +1306,7 @@ function updateAI(dt) {
     const i0 = wrapIdx(Math.floor(fIdx)), i1 = wrapIdx(i0 + 1);
     const fr = fIdx - Math.floor(fIdx);
     const p0 = sPts[i0], p1 = sPts[i1], n0 = sNrm[i0], n1 = sNrm[i1];
-    // 超车意识:堵在玩家正后方时向空侧变线,其余时候缓慢回中
-    const gapM = playerDist - a.dist;
-    if (state === 'race' && gapM > 0 && gapM < 14 && Math.abs(a.lat - (player.latOnTrack || 0)) < 2.2) {
-      const side = (player.latOnTrack || 0) > 0 ? -1 : 1;
-      a.latOff = damp(a.latOff || 0, side * 2.6, 2.2, dt);
-    } else {
-      a.latOff = damp(a.latOff || 0, 0, 1.1, dt);
-    }
-    a.lat = a.latBase + Math.sin(a.dist * .012 + a.latPhase) * a.weave + a.latOff;
-    a.lat = clamp(a.lat, -(ROAD_W - 2.4), ROAD_W - 2.4);
+    a.lat = clamp(state==='race'?avoid.lat:a.lat, -(ROAD_W - 1.3), ROAD_W - 1.3);
     a.car.group.position.set(
       lerp(p0.x, p1.x, fr) + lerp(n0.x, n1.x, fr) * a.lat, 0,
       lerp(p0.z, p1.z, fr) + lerp(n0.z, n1.z, fr) * a.lat);
@@ -1323,6 +1318,8 @@ function updateAI(dt) {
     while (dh > Math.PI) dh -= TAU; while (dh < -Math.PI) dh += TAU;
     a.heading += dh * (1 - Math.exp(-10 * dt));
     a.car.group.rotation.y = a.heading;
+    const turnSign=Math.sign(tc.z*tn.x-tc.x*tn.z);
+    a.car.frontPivots.forEach(p=>p.rotation.y=a.driver.steer*turnSign);
     const spin = a.speed * dt / (a.car.wheelRadius||.34);
     a.car.wheels.forEach(w => w.rotation.x += spin);
   }
@@ -1369,8 +1366,8 @@ function updateCamera(dt) {
     camPos.z = damp(camPos.z, tmpV.z, 8, dt);
     camera.position.copy(camPos);
     if (shake > 0) camera.position.add(tmpV.set((Math.random() - .5) * shake, (Math.random() - .5) * shake, (Math.random() - .5) * shake));
-    const spdJit = clamp((spd - 42) / 50, 0, 1) * .05; // 高速路面微震,增强速度感
-    if (spdJit > 0 && state === 'race') camera.position.y += (Math.random() - .5) * spdJit;
+    const spdJit = clamp((spd - 42) / 50, 0, 1) * .014; // 高速路面微震,增强速度感
+    if (spdJit > 0 && state === 'race') camera.position.y += Math.sin(raceTime*37) * spdJit;
     tmpV.copy(player.pos).addScaledVector(fwdV, 5.5).add(new THREE.Vector3(0, 1.0, 0));
     camera.lookAt(tmpV);
   } else {
@@ -1379,7 +1376,7 @@ function updateCamera(dt) {
   }
 
   shake = Math.max(0, shake - dt * 1.6);
-  const targetFov = camMode===1?68:camMode===2?64:58+Math.min(spd/90,1)*8;
+  const targetFov = camMode===1?68:camMode===2?64:58+Math.pow(Math.min(spd/90,1),.8)*12;
   camera.fov = damp(camera.fov, targetFov, 5, dt);
   camera.updateProjectionMatrix();
 }

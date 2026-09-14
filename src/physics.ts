@@ -20,7 +20,7 @@ export function stepVehicle(p:Dynamics,c:Controls,car:{top:number;accel:number;h
  // Digital input requests usable grip at speed, with full steering lock for tight slow corners.
  const steeringLock=Math.min(.68,Math.atan(maxG*wheelbase/Math.max(v*v,1))*1.18);
  const steerGoal=clamp(clamp(c.steer,-1,1)*steeringLock*(s.steering??1),-.74,.74);
- p.steer+=(steerGoal-p.steer)*(1-Math.exp(-(Math.abs(steerGoal)<.001?16:12)*dt));
+ p.steer+=(steerGoal-p.steer)*(1-Math.exp(-(Math.abs(steerGoal)<.001?16:p.steer*steerGoal<0?15:12-4*clamp(v/70,0,1))*dt));
  const demanded=p.speed*p.speed/wheelbase*Math.tan(p.steer);
  const braking=c.brake*maxG*(s.assist==='off'?.79:1)*(1-Math.abs(s.balance-55)*.004);
  const lateralLimit=Math.sqrt(Math.max(0,maxG*maxG-braking*braking*.78));
@@ -30,7 +30,8 @@ export function stepVehicle(p:Dynamics,c:Controls,car:{top:number;accel:number;h
  const top=car.top/3.6*(1-s.downforce*.035);
  let power=c.throttle*(8+car.accel*4)*Math.max(0,1-Math.pow(v/top,2));
  if(p.fuel<=0)power=0;
- if(s.assist!=='off')power=Math.min(power,maxG*.94);
+ // Cornering and propulsion share grip; unwind steering to accelerate out.
+ if(s.assist!=='off')power=Math.min(power,Math.sqrt(Math.max(0,maxG*maxG-lateral*lateral))*.94);
  else if(p.traction)power*=.77;
  // Scrubbing excess front-tire demand sheds speed instead of endlessly pushing into the wall.
  const understeerDrag=s.assist==='off'?0:clamp((Math.abs(demanded)-maxG)/Math.max(maxG,1),0,1)*2.8;
