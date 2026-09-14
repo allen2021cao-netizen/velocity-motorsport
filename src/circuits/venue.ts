@@ -4,9 +4,11 @@ import * as T from 'three';
 import {Architecture} from '../environment/geometry';
 import {lettering} from '../environment/materials';
 import {CIRCUITS} from './circuit';
+import {CITY_PROFILES} from '../environment/profiles';
+import {CITY_PORTRAITS} from '../environment/city-icons';
 /** Dedicated venues: geography-derived route, hand-built architectural approximations. */
 export function buildCircuitVenue(world:T.Group,points:T.Vector3[],normals:T.Vector3[],key:string,resources:any[],length:number,width:number){
- const a=new Architecture(world,resources),meta=CIRCUITS[key],night=key==='vegas';
+ const a=new Architecture(world,resources),meta=CIRCUITS[key],night=CITY_PROFILES[key as CityKey].sky==='night';
  const concrete=a.material(0x929791),white=a.material(0xe8ece8),dark=a.material(0x263039,.45),glass=a.material(0x477e8a,.55,.25),red=a.material(0xc94337),green=a.material(0x438979),blue=a.material(0x319fb0),sand=a.material(0xc7b58e),light=a.material(0xffedd0,0,.4,0xffedd0,night?3:.2),asphalt=a.material(0x44494b),foliage=a.material(0x47754d),bark=a.material(0x74604a),pink=a.material(0xda6dbb,0,.5,0xf57bbb,night?1:0);
  const bounds=new T.Box3().setFromPoints(points),center=bounds.getCenter(new T.Vector3()),size=bounds.getSize(new T.Vector3());
  const distance=(x:number,z:number)=>{let d=Infinity;for(let i=0;i<points.length;i++){const q=points[i],r=points[(i+1)%points.length],dx=r.x-q.x,dz=r.z-q.z,t=T.MathUtils.clamp(((x-q.x)*dx+(z-q.z)*dz)/(dx*dx+dz*dz),0,1);d=Math.min(d,Math.hypot(x-q.x-t*dx,z-q.z-t*dz));}return d;};
@@ -45,13 +47,26 @@ export function buildCircuitVenue(world:T.Group,points:T.Vector3[],normals:T.Vec
  // Sphere-inspired LED dome at the northern loop, kept clear of both track branches.
  let off=-120;while(!reserve(.32,off,58))off-=25;at(.32,off,()=>{a.sphere(pink,0,50,0,52);for(let k=0;k<17;k++){const y=-40+k*5,r=Math.sqrt(52*52-y*y);const ring=a.shape('sphereRing'+k,()=>new T.TorusGeometry(r,.18,4,64));a.put(ring,light,0,50+y,0,1,1,1,new T.Quaternion().setFromAxisAngle(new T.Vector3(1,0,0),Math.PI/2),false);}buildings++;});
  for(let j=0;j<100;j++){const u=.50+j*.0044,side=j%2?1:-1,off=side*(75+j%4*22);if(!reserve(u,off,30))continue;at(u,off,()=>{const h=35+j%6*12;a.box(j%3?glass:concrete,0,h/2,0,42,h,32);for(let y=5;y<h;y+=5)a.box(j%2?pink:light,0,y,-16.05,40,.18,.15,false);a.box(white,0,h+.7,0,43,1.4,34);buildings++;});}
- }else{
+ }else if(key==='monaco'){
  // Harbor-side tunnel follows the same centreline; roof and lights do not intrude on the road.
  for(let m=length*.41;m<length*.54;m+=6){at(m/length,0,()=>{a.box(concrete,0,7,0,6.4,.7,width*2+2);a.box(concrete,0,3.4,-width-1,6.4,6.8,.45);a.box(light,0,6.5,-width*.6,3,.08,.18);});}
  for(let j=0;j<170;j++){const u=j/170;for(const side of [-1,1]){const off=side*(width+24+j%3*13);if(!reserve(u,off,12))continue;at(u,off,()=>{const h=14+j%5*5;a.box(j%3?concrete:sand,0,h/2,0,17,h,15);a.box(red,0,h+.35,0,18,.7,16);for(let y=3;y<h;y+=3.3)for(let x=-6;x<=6;x+=3){a.box(glass,x,y,-7.55,1.4,1.8,.1,false);a.box(white,x,y-1,-8,2,.15,1,false);}buildings++;});}}
  // Mosaic harbor water avoids painting over the tight return section.
  const water=a.material(0x327e91,.5,.21);for(let x=center.x-150;x<center.x+340;x+=25)for(let z=center.z-30;z<center.z+320;z+=25)if(distance(x,z)>40&&!reserved.some(b=>Math.hypot(x-b.x,z-b.z)<b.r+22)){a.box(water,x,-.015,z,24.9,.025,24.9,false);}
  for(const u of [.85,.87,.89]){const off=-60;if(!safe(u,off,18))continue;at(u,off,()=>{a.box(white,0,1,0,8,2,24);a.box(white,0,3,0,6,2,12);a.box(glass,0,4,0,5,.7,10);a.cylinder(dark,0,9,0,.07,10);});}
+ }
+ if(CITY_PORTRAITS[key as CityKey]){
+  // City furnishings stay on clear ground and never create continuous barriers.
+  const palms=['dubai','la'].includes(key);
+  for(let m=10;m<length;m+=43)for(const side of [-1,1]){
+   const off=side*(width+14);if(!reserve(m/length,off,4))continue;
+   at(m/length,off,()=>{a.cylinder(bark,0,3.5,0,.18,7);if(palms){for(let k=0;k<9;k++){const t=k*Math.PI*2/9;a.beam(foliage,new T.Vector3(0,8,0),new T.Vector3(Math.cos(t)*4,6.5,Math.sin(t)*4),.19);}}else a.sphere(foliage,0,7,0,3,1.3);});
+  }
+  // Quays and water pockets blend into the city without covering the racing surface.
+  if(!['dubai','paris'].includes(key)){
+   const water=a.material(night?0x1e4355:0x548c9c,.55,.24);
+   for(let m=0;m<length;m+=45){const u=m/length,off=-(width+85);if(!reserve(u,off,31))continue;at(u,off,()=>{a.box(water,0,-.08,0,43,.1,43,false);});}
+  }
  }
  // Venue landscaping and parking occupy only verified clear ground.
  const grass=a.material(key==='miami'?0x4e9157:0x648145),parking=a.material(0x5c6263);

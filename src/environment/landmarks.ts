@@ -6,6 +6,7 @@ const v=(x:number,y:number,z:number)=>new T.Vector3(x,y,z);
 /** Hand-built structural silhouettes. Dimensions are artistic scale; this is not a survey model. */
 export function landmark(a:Architecture,key:CityKey,p:CityProfile){
  const stone=a.material(0xc9b99a),dark=a.material(0x303a40,.55,.37),glass=a.material(0x648a9c,.68,.24),steel=a.material(key==='tokyo'?0xd84520:0x7e6e58,.7,.48),cream=a.material(0xe1d4bb),gold=a.material(0xc7a465,.65,.38),white=a.material(0xe3e8e7,.15,.55),lit=a.material(0xf1d9ae,.1,.5,0xffbf75,p.sky==='night'?2:.3);
+ if(key==='tokyo'&&p.sky==='night'){steel.emissive.set(0xf06426);steel.emissiveIntensity=.7;white.emissive.set(0xffdfb1);white.emissiveIntensity=.35;}
  function lattice(tokyo:boolean){
   const levels=tokyo?[[0,44],[56,22],[106,13],[152,7],[205,2]]:[[0,49],[52,26],[105,16],[177,6],[238,1.8]];
   for(let k=0;k<levels.length-1;k++){

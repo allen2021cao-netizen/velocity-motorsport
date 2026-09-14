@@ -10,20 +10,23 @@ export function lettering(a:Architecture,text:string,bg='#192e33',fg='#eee6cc',w
 export function facade(a:Architecture,p:CityProfile,index:number){
  const rand=seeded(830+index*99+p.label.charCodeAt(0)),c=document.createElement('canvas');c.width=c.height=512;const g=c.getContext('2d')!;
  const night=p.sky==='night';const color=new T.Color(p.palette[index%p.palette.length]);
+ const emission=document.createElement('canvas');emission.width=emission.height=512;const eg=emission.getContext('2d')!;eg.fillStyle='#000';eg.fillRect(0,0,512,512);
  g.fillStyle='#'+color.getHexString();g.fillRect(0,0,512,512);
  if(p.style==='brick')for(let row=0;row<64;row++){for(let col=0;col<22;col++){g.fillStyle=rand()>.5?'rgba(0,0,0,.11)':'rgba(255,240,210,.08)';g.fillRect(col*25+(row%2)*12,row*8,23,6);}}
  for(let floor=0;floor<4;floor++)for(let bay=0;bay<4;bay++){
   const x=bay*128,y=floor*128;g.fillStyle='rgba(0,0,0,.13)';g.fillRect(x,y+120,128,8);
   const glass=p.style==='glass',wx=x+(glass?5:28),wy=y+12,ww=glass?118:70,wh=glass?109:87;
   g.fillStyle='#1d262c';g.fillRect(wx-3,wy-3,ww+6,wh+6);
-  const gradient=g.createLinearGradient(wx,wy,wx+ww,wy+wh);const lit=night&&rand()>.37;
+  const gradient=g.createLinearGradient(wx,wy,wx+ww,wy+wh);const lit=night&&rand()>.62;
+  if(lit){eg.fillStyle=rand()>.4?'#bda57e':'#91a8b1';eg.fillRect(wx+2,wy+2,ww-4,wh-4);}
   gradient.addColorStop(0,lit?'#e4c88f':'#607b89');gradient.addColorStop(.35,lit?'#c7af7d':'#394f5a');gradient.addColorStop(1,lit?'#82785e':'#182c36');g.fillStyle=gradient;g.fillRect(wx,wy,ww,wh);
   if(rand()>.4){g.fillStyle=lit?'#c2b18c':'#7b8583';g.globalAlpha=.65;g.fillRect(wx+1,wy+1,ww*.3,wh);g.globalAlpha=1;}
   g.fillStyle=glass?'#81918f':'#bbb7a6';g.fillRect(wx+ww/2-1,wy,2,wh);if(!glass)g.fillRect(wx,wy+wh*.52,ww,3);
   g.fillStyle='rgba(231,226,205,.4)';g.fillRect(wx-5,wy+wh,ww+10,4);g.fillStyle='rgba(0,0,0,.22)';g.fillRect(wx-5,wy+wh+4,ww+10,4);
  }
  const map=a.keep(new T.CanvasTexture(c));map.colorSpace=T.SRGBColorSpace;map.wrapS=map.wrapT=T.RepeatWrapping;map.anisotropy=8;
- const mat=a.keep(new T.MeshStandardMaterial({map,roughness:p.style==='glass'?.34:.84,metalness:p.style==='glass'?.5:.04,emissive:night?0xffffff:0x000000,emissiveMap:night?map:null,emissiveIntensity:night?.34:0}));
+ const emissiveMap=night?a.keep(new T.CanvasTexture(emission)):null;if(emissiveMap){emissiveMap.colorSpace=T.SRGBColorSpace;emissiveMap.wrapS=emissiveMap.wrapT=T.RepeatWrapping;emissiveMap.anisotropy=8;}
+ const mat=a.keep(new T.MeshStandardMaterial({map,roughness:p.style==='glass'?.34:.84,metalness:p.style==='glass'?.5:.04,emissive:night?0xffffff:0x000000,emissiveMap,emissiveIntensity:night?.42:0}));
  // Four bays/floors per tile; instance scale determines metre-based repetition.
  mat.onBeforeCompile=shader=>{shader.vertexShader=shader.vertexShader.replace('#include <uv_vertex>',`#include <uv_vertex>
  #ifdef USE_INSTANCING

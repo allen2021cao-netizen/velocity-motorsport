@@ -529,7 +529,7 @@ function buildWorld(ti) {
   else { rainMat.color.setHex(0x6688aa); rainMat.size = .16; rainMat.opacity = .55; precipSpeed = 45; }
 
   skyOrb.visible=false;stars.visible=night&&!wetness&&!T.circuit;
-  atmosphere.set(T.circuit?{...CITY_PROFILES[T.theme],sky:T.time==='night'?'night':'day'}:CITY_PROFILES[T.theme],wetness>0);
+  atmosphere.set(T.circuit?{...CITY_PROFILES[T.theme],sky:T.time==='night'?'night':T.time==='dusk'?'sunset':'day'}:CITY_PROFILES[T.theme],wetness>0);
   if(T.circuit)scene.fog=new THREE.Fog(T.time==='night'?0x202a3a:0xc1d5dc,1800,11000);
   const roadMat=D_(surfaces.material(wetness>0));
   // Physical road/ground separation needs no bias: a negative bias hides distant kerbs.
