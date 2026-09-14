@@ -10,6 +10,10 @@ await MeshoptDecoder.ready;
 const io=new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({'draco3d.decoder':await draco3d.createDecoderModule(),'draco3d.encoder':await draco3d.createEncoderModule(),'meshopt.decoder':MeshoptDecoder});
 const specs=[{key:'porsche',length:4.49,wheel:/^Cylinder\.00[01]_[012]$/,caliper:/^Cylinder\.00[01]_3$/,remove:/^Plane_0$/},{key:'bmw',length:4.794,wheel:/^Object_3[34]$/,caliper:/^Object_32$/},{key:'gt40',length:4.183,wheel:/^Object_4[4-7]$/}];
 specs.push(
+ {key:'veneno',length:5.02,rotateY:-.03425,wheel:/^Object_(8|13|45|47)$/,caliper:/^Object_(29|39|49|51)$/},
+ {key:'slr',length:4.656,materialNames:true,wheel:/^SLR_(inner_rim|rim|tire)$/,caliper:/^SLR_caliper/},
+ {key:'challenger',length:5.029,remove:/^Object_5$/,wheel:/^Object_(19|24|25|29|4[1-9]|50)$/,caliper:/^Object_15$/},
+ {key:'c7',length:4.493,wheel:/^(Rim |Tire |Brake Disc )/,caliper:/^Brake Caliper /},
  {key:'r8',length:4.43,wheel:/^(front|back)_(left|right)_wheel_/},
  {key:'mcf1',length:4.365,wheel:/^Object_3[12]$/},
  {key:'f40',length:4.43,wheel:/^Object_(30|31|37|38|39|40)$/,caliper:/^Object_11$/},
@@ -20,8 +24,8 @@ for(const spec of specs.filter(s=>!process.argv[2]||process.argv.slice(2).includ
  const doc=await io.read(`artifacts/model-sources/${spec.key}.glb`);await doc.transform(dequantize());
  const scene=doc.getRoot().listScenes()[0],nodes=doc.getRoot().listNodes(),entries=[];
  for(const n of nodes){if(!n.getMesh()||spec.remove?.test(n.getName()))continue;const mesh=n.getMesh().clone();
-  for(const original of mesh.listPrimitives()){const p=original.clone();for(const semantic of p.listSemantics())p.setAttribute(semantic,p.getAttribute(semantic).clone());transformPrimitive(p,n.getWorldMatrix());mesh.removePrimitive(original).addPrimitive(p);}
-  entries.push({name:n.getName(),mesh});
+  for(const original of mesh.listPrimitives()){if(original.getMode()!==4){mesh.removePrimitive(original);continue;}const p=original.clone();for(const semantic of p.listSemantics())p.setAttribute(semantic,p.getAttribute(semantic).clone());transformPrimitive(p,n.getWorldMatrix());if(spec.rotateY)transformPrimitive(p,new Matrix4().makeRotationY(spec.rotateY).elements);mesh.removePrimitive(original).addPrimitive(p);}
+  if(mesh.listPrimitives().length)entries.push({name:spec.materialNames?mesh.listPrimitives()[0].getMaterial()?.getName()||n.getName():n.getName(),mesh});
  }
  for(const n of nodes)n.dispose();for(const e of entries)scene.addChild(doc.createNode(e.name).setMesh(e.mesh));
  const bounds=getBounds(scene),scale=spec.length/(bounds.max[2]-bounds.min[2]);
@@ -37,7 +41,7 @@ for(const spec of specs.filter(s=>!process.argv[2]||process.argv.slice(2).includ
   }n.dispose();
  }
  for(const ext of doc.getRoot().listExtensionsUsed())if(ext.extensionName==='EXT_meshopt_compression')ext.dispose();
- await doc.transform(prune(),dedup(),weld(),textureCompress({encoder:sharp,targetFormat:'webp',resize:[1024,1024],quality:88}),draco({method:'edgebreaker',quantizePosition:16,quantizeNormal:12}));
+ await doc.transform(prune(),dedup({keepUniqueNames:true}),weld(),textureCompress({encoder:sharp,targetFormat:'webp',resize:[1024,1024],quality:88}),draco({method:'edgebreaker',quantizePosition:16,quantizeNormal:12}));
  doc.getRoot().setExtras({...doc.getRoot().getExtras(),vehiclePreparation:{front:'+Z',up:'+Y',units:'metres',length:spec.length,changes:'Normalized dimensions; removed studio ground; split wheel/caliper assemblies; Draco geometry and WebP textures. Original attribution retained.'}});
  const out=`public/models/${spec.key}-detailed.glb`;await io.write(out,doc);console.log(out,fs.statSync(out).size,getBounds(scene));
 }

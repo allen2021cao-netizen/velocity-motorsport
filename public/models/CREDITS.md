@@ -74,4 +74,40 @@ Modifications: scale, wheel separation, paint/glass/interior materials, Draco an
 
 ## Original classic details
 
-Diablo SV, Viper GTS, CLK GTR and Corvette C5 use original approximate geometry, with model-specific vents, lamp housings, seams, cabin details and aero surfaces in src/automotive/classic-detail.ts. These are not imported high-fidelity scans and are not claimed to match the imported Ferrari 458. Low-poly candidate downloads were evaluated but are not included in the game.
+Legacy fallback geometry for the former Diablo SV, Viper GTS, CLK GTR and Corvette C5 slots uses original approximate geometry, with model-specific vents, lamp housings, seams, cabin details and aero surfaces in src/automotive/classic-detail.ts. These fallback meshes are hidden while their replacement GLBs load. They are not scans. Low-poly candidate downloads were evaluated but are not included in the game.
+
+## Four brand replacements
+
+### veneno-detailed.glb — Lamborghini venevo
+
+Credit: Jonrss (https://sketchfab.com/huy14320000006).
+Source: https://sketchfab.com/3d-models/lamborghini-venevo-5884f95259ff411c95510cdde5ede33e
+License: CC BY 4.0, https://creativecommons.org/licenses/by/4.0/ (embedded source metadata).
+Distribution and resource hashes: tools/classic-vehicle-sources.json.
+Modifications: dimensions, wheel/caliper separation, material calibration, Draco/WebP compression and distance body variant.
+
+### slr-detailed.glb — Mercedes-Benz SLR McLaren
+
+Credit: Car2022 (https://sketchfab.com/Car2022).
+Source: https://sketchfab.com/3d-models/mercedes-benz-slr-mclaren-4eb0a08f2c0c4c64b1a3299d5e3954ee
+License: CC BY 4.0, https://creativecommons.org/licenses/by/4.0/ (embedded source metadata).
+Distribution and resource hashes: tools/classic-vehicle-sources.json.
+Modifications: dimensions, wheel/caliper separation, material calibration, Draco/WebP compression and distance body variant.
+
+### challenger-detailed.glb — Dodge CHALLENGER
+
+Credit: Gesy (https://sketchfab.com/mrgesy).
+Source: https://sketchfab.com/3d-models/dodge-challenger-2c1f18d2f0214cb7a746fc5dd2baeebe
+License: CC BY 4.0, https://creativecommons.org/licenses/by/4.0/ (embedded source metadata).
+Distribution and resource hashes: tools/classic-vehicle-sources.json.
+Modifications: dimensions, wheel/caliper separation, material calibration, Draco/WebP compression and distance body variant.
+
+### c7-detailed.glb — Chevrolet Corvette (C7)
+
+Credit: Martin Trafas (https://sketchfab.com/Bexxie).
+Source: https://sketchfab.com/3d-models/chevrolet-corvette-c7-2b509d1bce104224b147c81757f6f43a
+License: CC BY 4.0, https://creativecommons.org/licenses/by/4.0/ (embedded source metadata).
+Distribution and resource hashes: tools/classic-vehicle-sources.json.
+Modifications: dimensions, wheel/caliper separation, material calibration, Draco/WebP compression and distance body variant.
+
+Challenger is a customized 2006 Concept model with an exposed intake; its source carries NoAI. Used only for ordinary rendering and mechanical geometry processing. Veneno and SLR retain source interiors; Challenger and C7 interiors are less detailed than their exteriors. Source instrument faces and steering wheels are static; the HUD provides live telemetry. These are artist models, not manufacturer CAD or scans.

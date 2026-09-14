@@ -196,5 +196,632 @@
         "sha256": "8b1cd0194afa53eb243dd5a0163d1e0b0eb320e4ac51ac189ad26c7c4b24bf6b"
       }
     ]
+  },
+  {
+    "key": "veneno",
+    "format": "gltf",
+    "credit": {
+      "author": "Jonrss (https://sketchfab.com/huy14320000006)",
+      "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "source": "https://sketchfab.com/3d-models/lamborghini-venevo-5884f95259ff411c95510cdde5ede33e",
+      "title": "Lamborghini venevo"
+    },
+    "files": [
+      {
+        "path": "scene.gltf",
+        "url": "https://raw.githubusercontent.com/gyseong/r3f-Car-Example/main/public/models/lamborghini_venevo/scene.gltf",
+        "canonicalJson": true,
+        "sha256": "dd8ce4f483cd77e209808dffa477d72a91bfe3a089fcf2c3420b9e5a06e5ce7b"
+      },
+      {
+        "path": "scene.bin",
+        "url": "https://raw.githubusercontent.com/gyseong/r3f-Car-Example/main/public/models/lamborghini_venevo/scene.bin",
+        "sha256": "2c54d7bcd817d7b66ecb450f3da68c4ebfd7671397581a6cb0637b559c9fe471"
+      },
+      {
+        "path": "textures/material_baseColor.png",
+        "url": "https://raw.githubusercontent.com/gyseong/r3f-Car-Example/main/public/models/lamborghini_venevo/textures/material_baseColor.png",
+        "sha256": "160adfae22b934024c185456edddb1ddfe74833430710432af2e56c0510e9373"
+      },
+      {
+        "path": "textures/wheel_baseColor.png",
+        "url": "https://raw.githubusercontent.com/gyseong/r3f-Car-Example/main/public/models/lamborghini_venevo/textures/wheel_baseColor.png",
+        "sha256": "32f2d8f3e55e7fb717325f7057ea0a2c2c8d5dafef685c797baaa6e866fa0a2a"
+      },
+      {
+        "path": "textures/material_5_baseColor.png",
+        "url": "https://raw.githubusercontent.com/gyseong/r3f-Car-Example/main/public/models/lamborghini_venevo/textures/material_5_baseColor.png",
+        "sha256": "b69a47a8939b7210ac50cc5d83d3ad81ea356cf543e7b945a80d83004bd7c09c"
+      },
+      {
+        "path": "textures/material_5_normal.png",
+        "url": "https://raw.githubusercontent.com/gyseong/r3f-Car-Example/main/public/models/lamborghini_venevo/textures/material_5_normal.png",
+        "sha256": "18b8704d620de8d7859550093a638fc0e285ec97a536d91d8037ad1b2080bf11"
+      },
+      {
+        "path": "textures/lamp_baseColor.png",
+        "url": "https://raw.githubusercontent.com/gyseong/r3f-Car-Example/main/public/models/lamborghini_venevo/textures/lamp_baseColor.png",
+        "sha256": "5b02bb0e3de3406b86c1f7be8961d32807759d800f064df98261d701175f614f"
+      },
+      {
+        "path": "textures/material_10_baseColor.png",
+        "url": "https://raw.githubusercontent.com/gyseong/r3f-Car-Example/main/public/models/lamborghini_venevo/textures/material_10_baseColor.png",
+        "sha256": "b69a47a8939b7210ac50cc5d83d3ad81ea356cf543e7b945a80d83004bd7c09c"
+      },
+      {
+        "path": "textures/material_10_normal.png",
+        "url": "https://raw.githubusercontent.com/gyseong/r3f-Car-Example/main/public/models/lamborghini_venevo/textures/material_10_normal.png",
+        "sha256": "18b8704d620de8d7859550093a638fc0e285ec97a536d91d8037ad1b2080bf11"
+      },
+      {
+        "path": "textures/material_11_baseColor.png",
+        "url": "https://raw.githubusercontent.com/gyseong/r3f-Car-Example/main/public/models/lamborghini_venevo/textures/material_11_baseColor.png",
+        "sha256": "229bb0341efb83a7880901cfa77dfc3ba942929a814543183f4c214740a4bc37"
+      },
+      {
+        "path": "textures/logo_baseColor.png",
+        "url": "https://raw.githubusercontent.com/gyseong/r3f-Car-Example/main/public/models/lamborghini_venevo/textures/logo_baseColor.png",
+        "sha256": "183a92790394ead4d2c34a4362c595b7dc6529e8e12720d332e96f69e70fc461"
+      },
+      {
+        "path": "textures/material_17_baseColor.png",
+        "url": "https://raw.githubusercontent.com/gyseong/r3f-Car-Example/main/public/models/lamborghini_venevo/textures/material_17_baseColor.png",
+        "sha256": "beca990b5a2c302a5d2b699474cfbc3111e7e1e8635f21860e406f27456a2b02"
+      },
+      {
+        "path": "textures/material_17_normal.png",
+        "url": "https://raw.githubusercontent.com/gyseong/r3f-Car-Example/main/public/models/lamborghini_venevo/textures/material_17_normal.png",
+        "sha256": "e61eb1a3b594359a6a38f68fe25a560b576c8a646a8350090aabebd372aecfa9"
+      }
+    ]
+  },
+  {
+    "key": "slr",
+    "format": "gltf",
+    "credit": {
+      "author": "Car2022 (https://sketchfab.com/Car2022)",
+      "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "source": "https://sketchfab.com/3d-models/mercedes-benz-slr-mclaren-4eb0a08f2c0c4c64b1a3299d5e3954ee",
+      "title": "Mercedes-Benz SLR McLaren"
+    },
+    "files": [
+      {
+        "path": "scene.gltf",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/scene.gltf",
+        "canonicalJson": true,
+        "sha256": "5c338f69b1692af6c782e10bfcdffd78d7997f463e6ecc3836405d6b2c869395"
+      },
+      {
+        "path": "scene.bin",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/scene.bin",
+        "sha256": "523e359891a37d5c47cf9f650f4882d7f5efd6c246059fe28373e03c4b27cd4a"
+      },
+      {
+        "path": "textures/SLR_gauge_emissive_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_gauge_emissive_baseColor.png",
+        "sha256": "32fa49f704d057c811ae764bd8fa40525fbd58bd17b7d56c72ddce1e283b2b32"
+      },
+      {
+        "path": "textures/SLR_cloth_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_cloth_baseColor.png",
+        "sha256": "32fa49f704d057c811ae764bd8fa40525fbd58bd17b7d56c72ddce1e283b2b32"
+      },
+      {
+        "path": "textures/SLR_plastic_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_plastic_baseColor.png",
+        "sha256": "32fa49f704d057c811ae764bd8fa40525fbd58bd17b7d56c72ddce1e283b2b32"
+      },
+      {
+        "path": "textures/SLR_plastic_specularf0.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_plastic_specularf0.png",
+        "sha256": "6d2c443ecf1f6e147f8c1b52f31624bf277a84e4fcb8860372de882861e3e9c6"
+      },
+      {
+        "path": "textures/SLR_plastic_0_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_plastic_0_baseColor.png",
+        "sha256": "524c79eb78ba141d78ca29ffb7739a895921a2e05a87777109943407d6de55a9"
+      },
+      {
+        "path": "textures/SLR_plastic_0_specularf0.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_plastic_0_specularf0.png",
+        "sha256": "a315fe0d24a9688b792cb953b98d0a453151471b92d143619b6284637c09aa10"
+      },
+      {
+        "path": "textures/SLR_plastic_1_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_plastic_1_baseColor.png",
+        "sha256": "015d8eb5a69cfea97577cd5eaea5878223d687401f0858c4bd001404a4fc22f2"
+      },
+      {
+        "path": "textures/SLR_misc_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_misc_baseColor.png",
+        "sha256": "8c1bdaab6a6635e68c00a5437544ababa94023eb1b618f56762d5bc38465fa81"
+      },
+      {
+        "path": "textures/SLR_headliner_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_headliner_baseColor.png",
+        "sha256": "32fa49f704d057c811ae764bd8fa40525fbd58bd17b7d56c72ddce1e283b2b32"
+      },
+      {
+        "path": "textures/SLR_tail_light_lod0_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_tail_light_lod0_baseColor.png",
+        "sha256": "7b7efb6373f4e4396b07e7357e7d8daa8e5187f18121992415213be1e2440335"
+      },
+      {
+        "path": "textures/SLR_gauge_needle_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_gauge_needle_baseColor.png",
+        "sha256": "32fa49f704d057c811ae764bd8fa40525fbd58bd17b7d56c72ddce1e283b2b32"
+      },
+      {
+        "path": "textures/SLR_bump_stitching_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_bump_stitching_baseColor.png",
+        "sha256": "32fa49f704d057c811ae764bd8fa40525fbd58bd17b7d56c72ddce1e283b2b32"
+      },
+      {
+        "path": "textures/SLR_bump_leather_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_bump_leather_baseColor.png",
+        "sha256": "d2c420e3c0f5486f97c008c4b27524b256818a03d345c7e71faa184648bc33ed"
+      },
+      {
+        "path": "textures/SLR_metal_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_metal_baseColor.png",
+        "sha256": "30a0eef5d822d602e67c7963fbc1a4566fddeb87619dc775963595593b295e10"
+      },
+      {
+        "path": "textures/SLR_metal_metallicRoughness.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_metal_metallicRoughness.png",
+        "sha256": "670cdc7b5e232e9d3fb02d0de671428b7ff7e46d1cda3fd573aec84873343cd6"
+      },
+      {
+        "path": "textures/SLR_metal_2_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_metal_2_baseColor.png",
+        "sha256": "a61e2630413892a21d7ab4279616034bb6c22cde4bbd6393181bbeb452292506"
+      },
+      {
+        "path": "textures/SLR_metal_3_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_metal_3_baseColor.png",
+        "sha256": "21f9c0bd5bc3321c4c18ed30f09b5d9ccff208c44c19d6649dbcbbb1b2f34f39"
+      },
+      {
+        "path": "textures/SLR_badge_cp_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_badge_cp_baseColor.png",
+        "sha256": "32fa49f704d057c811ae764bd8fa40525fbd58bd17b7d56c72ddce1e283b2b32"
+      },
+      {
+        "path": "textures/SLR_undercarriage_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_undercarriage_baseColor.png",
+        "sha256": "120d18cb59e0fb6ed3ef5b306df57706566bdb008091411751f335661ec5c282"
+      },
+      {
+        "path": "textures/SLR_leather_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_leather_baseColor.png",
+        "sha256": "d2c420e3c0f5486f97c008c4b27524b256818a03d345c7e71faa184648bc33ed"
+      },
+      {
+        "path": "textures/SLR_bump_plastic2_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_bump_plastic2_baseColor.png",
+        "sha256": "f7b711474fcb93aa28954d8886bd3d426dd6c739832403a1397bc7cca09f12ac"
+      },
+      {
+        "path": "textures/SLR_chrome_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_chrome_baseColor.png",
+        "sha256": "01479ac387981cb8b0a18394e5d71c1ac8de178e8b91f251b5c935d3beed4431"
+      },
+      {
+        "path": "textures/SLR_inner_rim_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_inner_rim_baseColor.png",
+        "sha256": "7d04891b884ac89541b85c015f1878cc084b0a7e97d40dc3181b79c3518829f2"
+      },
+      {
+        "path": "textures/SLR_rim_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_rim_baseColor.png",
+        "sha256": "762c6f32c691257ba57b3d25db11089cee8a30ff54230266d2e4f22981ed0c96"
+      },
+      {
+        "path": "textures/SLR_misc_4_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_misc_4_baseColor.png",
+        "sha256": "4a934c70c5c5a4beceb3aaf17ad6383a3d2f87ffe8a3f8430b2b62b5bc3369a2"
+      },
+      {
+        "path": "textures/SLR_misc_5_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_misc_5_baseColor.png",
+        "sha256": "816bc86dee29465b486b85f534dcb31138cf1dfca6f45bea6b2b6f8af7c6be6c"
+      },
+      {
+        "path": "textures/SLR_misc_6_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_misc_6_baseColor.png",
+        "sha256": "a5f25953e3eaf7ae738904a21a94de03240475184eaa5df3bddc9394ebcf6f67"
+      },
+      {
+        "path": "textures/SLR_tire_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_tire_baseColor.png",
+        "sha256": "2bab48d7d0bad883a8c995ef365c95ba8c8339cc28adf1ba340a47773fe3c2b1"
+      },
+      {
+        "path": "textures/SLR_misc_7_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_misc_7_baseColor.png",
+        "sha256": "831d4b24fc090a4ef46ce8f5056398ea10495c0afc786a60a1c422eb6033119d"
+      },
+      {
+        "path": "textures/SLR_plastic_8_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_plastic_8_baseColor.png",
+        "sha256": "6b3c29e8be0dff49a3a0428560369aaf768711d4acdca3f5991ce3da81d5acc8"
+      },
+      {
+        "path": "textures/SLR_plastic_9_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_plastic_9_baseColor.png",
+        "sha256": "dae61a2a48b961b6d0499d179b53cad1501dc7fa888a0af8c4f3023bd16199cc"
+      },
+      {
+        "path": "textures/SLR_plastic_10_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_plastic_10_baseColor.png",
+        "sha256": "9691a48acdeb36348e1fcfe0ac8e3b11fbea0c9156bda8d3e96db5ac75cc14cd"
+      },
+      {
+        "path": "textures/SLR_plastic_11_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_plastic_11_baseColor.png",
+        "sha256": "3beeb52c4834df41755443e8cdce4f112661db09be1075e25ef01c84ea6610cf"
+      },
+      {
+        "path": "textures/SLR_plastic_12_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_plastic_12_baseColor.png",
+        "sha256": "5362275fce4e683763c1e25a582a4c4ca18f8debbd542f9b9edfb37603d6f478"
+      },
+      {
+        "path": "textures/SLR_plastic_13_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_plastic_13_baseColor.png",
+        "sha256": "f88c927e45ca50f4fd864d727b3d77a7c70d157e42754600acbb7e7611488959"
+      },
+      {
+        "path": "textures/SLR_plastic_14_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_plastic_14_baseColor.png",
+        "sha256": "c2f8bdfd05220f069d6f2c8443d3e0267d2c817caf82d4af96e0c18175deee09"
+      },
+      {
+        "path": "textures/SLR_plastic_15_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_plastic_15_baseColor.png",
+        "sha256": "8c0047af32077c7d504f69a31d9b55e38b67a06939118aff8385c7d89496e36e"
+      },
+      {
+        "path": "textures/SLR_carbon_fiber_baseColor.jpeg",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_carbon_fiber_baseColor.jpeg",
+        "sha256": "c9701aa8c4ee8a8675781782216288c20d2299902fd81354223869e7681af103"
+      },
+      {
+        "path": "textures/SLR_mottled_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_mottled_baseColor.png",
+        "sha256": "a7448007bcaa87971eff36d559e12b02bb16f2bfc782121ad27f1043e2c1edd5"
+      },
+      {
+        "path": "textures/SLR_digital_gauge_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_digital_gauge_baseColor.png",
+        "sha256": "32fa49f704d057c811ae764bd8fa40525fbd58bd17b7d56c72ddce1e283b2b32"
+      },
+      {
+        "path": "textures/SLR_chrome_16_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_chrome_16_baseColor.png",
+        "sha256": "ad104ca802c078ad72a3e23f684dc323e9e06959182f918d7695b1ba23266c63"
+      },
+      {
+        "path": "textures/SLR_solid_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_solid_baseColor.png",
+        "sha256": "32fa49f704d057c811ae764bd8fa40525fbd58bd17b7d56c72ddce1e283b2b32"
+      },
+      {
+        "path": "textures/SLR_textured_reflector_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_textured_reflector_baseColor.png",
+        "sha256": "bc1b65388632ca87086eed792266ff10cf82eeef0ebcf7e017d595bbdb4a7c7c"
+      },
+      {
+        "path": "textures/SLR_chrome_17_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_chrome_17_baseColor.png",
+        "sha256": "eb035910173a759af46e07e9598342d982fe58664571317bc45c7a7473eea25c"
+      },
+      {
+        "path": "textures/SLR_reflector_cp_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_reflector_cp_baseColor.png",
+        "sha256": "32fa49f704d057c811ae764bd8fa40525fbd58bd17b7d56c72ddce1e283b2b32"
+      },
+      {
+        "path": "textures/SLR_rubber_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_rubber_baseColor.png",
+        "sha256": "32fa49f704d057c811ae764bd8fa40525fbd58bd17b7d56c72ddce1e283b2b32"
+      },
+      {
+        "path": "textures/SLR_rubber_trim_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_rubber_trim_baseColor.png",
+        "sha256": "8c1bdaab6a6635e68c00a5437544ababa94023eb1b618f56762d5bc38465fa81"
+      },
+      {
+        "path": "textures/SLR_rubber_trim_18_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_rubber_trim_18_baseColor.png",
+        "sha256": "2213d1f5f4b8ecc6baf624c278dc5a2f09e83bb842f13a4167039c02ff00e4c7"
+      },
+      {
+        "path": "textures/SLR_head_light_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_head_light_baseColor.png",
+        "sha256": "bc1b65388632ca87086eed792266ff10cf82eeef0ebcf7e017d595bbdb4a7c7c"
+      },
+      {
+        "path": "textures/SLR_matte_colors_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_matte_colors_baseColor.png",
+        "sha256": "01479ac387981cb8b0a18394e5d71c1ac8de178e8b91f251b5c935d3beed4431"
+      },
+      {
+        "path": "textures/SLR_detail_glass_clear_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_detail_glass_clear_baseColor.png",
+        "sha256": "7b7efb6373f4e4396b07e7357e7d8daa8e5187f18121992415213be1e2440335"
+      },
+      {
+        "path": "textures/SLR_grille1_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_grille1_baseColor.png",
+        "sha256": "69449f50a4e1ffcc6f088c60289dec128bf3dbe39f987167a5f6aae59b5c7be9"
+      },
+      {
+        "path": "textures/SLR_detail_glass_red_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_detail_glass_red_baseColor.png",
+        "sha256": "7b7efb6373f4e4396b07e7357e7d8daa8e5187f18121992415213be1e2440335"
+      },
+      {
+        "path": "textures/SLR_plastic2_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_plastic2_baseColor.png",
+        "sha256": "01479ac387981cb8b0a18394e5d71c1ac8de178e8b91f251b5c935d3beed4431"
+      },
+      {
+        "path": "textures/SLR_plastic2_specularf0.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_plastic2_specularf0.png",
+        "sha256": "94718a4f577bdf172d12d0bc661145a57aa436262747c9cd292c4c23c113b1ea"
+      },
+      {
+        "path": "textures/SLR_reflector_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_reflector_baseColor.png",
+        "sha256": "bc1b65388632ca87086eed792266ff10cf82eeef0ebcf7e017d595bbdb4a7c7c"
+      },
+      {
+        "path": "textures/SLR_bumper_frame_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_bumper_frame_baseColor.png",
+        "sha256": "60694aced61648a776bfc0f1f473f363066ca914a5e40f0c0964ad21e526e8f4"
+      },
+      {
+        "path": "textures/SLR_bumper_frame_specularf0.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_bumper_frame_specularf0.png",
+        "sha256": "9fb4c3527a5d9c7139bedb7dbfbfd8e1d0a20af401423c9dfda9a5602e6656f0"
+      },
+      {
+        "path": "textures/SLR_bumper_frame_19_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_bumper_frame_19_baseColor.png",
+        "sha256": "a35731bc624ab8456769f13c00efafd63ab7f34770ed2fab73f60c83937c64d3"
+      },
+      {
+        "path": "textures/SLR_reverse_light_lod0_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_reverse_light_lod0_baseColor.png",
+        "sha256": "bc1b65388632ca87086eed792266ff10cf82eeef0ebcf7e017d595bbdb4a7c7c"
+      },
+      {
+        "path": "textures/SLR_bumper_frame_20_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_bumper_frame_20_baseColor.png",
+        "sha256": "906ab266e046ec128ce65481cf1191d1dcc17db51023f4d2c2ab497e67befb87"
+      },
+      {
+        "path": "textures/SLR_badge_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_badge_baseColor.png",
+        "sha256": "8c1bdaab6a6635e68c00a5437544ababa94023eb1b618f56762d5bc38465fa81"
+      },
+      {
+        "path": "textures/SLR_caliper_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_caliper_baseColor.png",
+        "sha256": "8c1bdaab6a6635e68c00a5437544ababa94023eb1b618f56762d5bc38465fa81"
+      },
+      {
+        "path": "textures/SLR_caliper_21_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_caliper_21_baseColor.png",
+        "sha256": "875128d7511be8ffa9b38ddba8d26a7a4bd0c0c7a142de693030a51ad26b5076"
+      },
+      {
+        "path": "textures/SLR_frame_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_frame_baseColor.png",
+        "sha256": "8c1bdaab6a6635e68c00a5437544ababa94023eb1b618f56762d5bc38465fa81"
+      },
+      {
+        "path": "textures/SLR_grille2_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_grille2_baseColor.png",
+        "sha256": "e783eb5c794a7d0b1b2e5fafe5d686728f55978a619839fe70e1c03bfdafb894"
+      },
+      {
+        "path": "textures/SLR_plastic2_23_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_plastic2_23_baseColor.png",
+        "sha256": "89e52390751622bdb83f9aeaafb615652f533260b12a98f353c2c8f19d7a4ef4"
+      },
+      {
+        "path": "textures/SLR_plastic2_22_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_plastic2_22_baseColor.png",
+        "sha256": "fae533f0b35d334d4e2fe1b9056038058c46a2e506477657a2e8c3b34d44776a"
+      },
+      {
+        "path": "textures/SLR_plastic2_27_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_plastic2_27_baseColor.png",
+        "sha256": "7e297f08b82e01d2fca49e5593f002e46a1ce311152b135c862727118b2cd5a8"
+      },
+      {
+        "path": "textures/SLR_plastic2_28_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_plastic2_28_baseColor.png",
+        "sha256": "10975ea9167ecb968b1315962668dadc3588b1b10a25b50d436eb83ff86d4c0e"
+      },
+      {
+        "path": "textures/SLR_plastic2_29_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_plastic2_29_baseColor.png",
+        "sha256": "89e52390751622bdb83f9aeaafb615652f533260b12a98f353c2c8f19d7a4ef4"
+      },
+      {
+        "path": "textures/SLR_plastic2_24_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_plastic2_24_baseColor.png",
+        "sha256": "5964b77f6fb77fd508011c307560e6d0b24c1b1510e660580d71bc10dacd15aa"
+      },
+      {
+        "path": "textures/SLR_plastic2_25_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_plastic2_25_baseColor.png",
+        "sha256": "d61288bc67cb4b7323ce79ff1f2cdf68cb3dccd9ccdc21ffafd808c57494dedd"
+      },
+      {
+        "path": "textures/SLR_plastic2_26_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_plastic2_26_baseColor.png",
+        "sha256": "5a748361fd5099fc244a0d52f906939f03a2cd7b0d645a21acd40d84e14de043"
+      },
+      {
+        "path": "textures/SLR_plastic2_30_baseColor.png",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mercedes-benz_slr_mclaren/textures/SLR_plastic2_30_baseColor.png",
+        "sha256": "fae533f0b35d334d4e2fe1b9056038058c46a2e506477657a2e8c3b34d44776a"
+      }
+    ]
+  },
+  {
+    "key": "challenger",
+    "format": "gltf",
+    "credit": {
+      "author": "Gesy (https://sketchfab.com/mrgesy)",
+      "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "source": "https://sketchfab.com/3d-models/dodge-challenger-2c1f18d2f0214cb7a746fc5dd2baeebe",
+      "title": "Dodge CHALLENGER"
+    },
+    "files": [
+      {
+        "path": "scene.gltf",
+        "url": "https://raw.githubusercontent.com/jerzakm/threejs-kit/main/apps/playground/static/dodge_challenger/scene.gltf",
+        "canonicalJson": true,
+        "sha256": "1628c5d2a26e3f6434182bba068bb0153a97b48bd3a02613abf6602100802ee2"
+      },
+      {
+        "path": "scene.bin",
+        "url": "https://raw.githubusercontent.com/jerzakm/threejs-kit/main/apps/playground/static/dodge_challenger/scene.bin",
+        "sha256": "14316d94a796be72b2ae2e0a9a1ce061d296ad35b60631f0460be9911fea9c1e"
+      },
+      {
+        "path": "textures/Material__304_emissive.jpeg",
+        "url": "https://raw.githubusercontent.com/jerzakm/threejs-kit/main/apps/playground/static/dodge_challenger/textures/Material__304_emissive.jpeg",
+        "sha256": "2c29ff597d22700b5b0dc3c4b6e6d6f61b951deeda92a08e40adf3c17e9df42b"
+      }
+    ]
+  },
+  {
+    "key": "c7",
+    "format": "gltf",
+    "credit": {
+      "author": "Martin Trafas (https://sketchfab.com/Bexxie)",
+      "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "source": "https://sketchfab.com/3d-models/chevrolet-corvette-c7-2b509d1bce104224b147c81757f6f43a",
+      "title": "Chevrolet Corvette (C7)"
+    },
+    "files": [
+      {
+        "path": "scene.gltf",
+        "url": "https://raw.githubusercontent.com/Domenicobrz/R3F-in-practice/main/car-show/public/models/car/scene.gltf",
+        "canonicalJson": true,
+        "sha256": "12241b5788e47c0933a9ad6c03872766716a0a87b95e77e7905674ab10b25e5c"
+      },
+      {
+        "path": "scene.bin",
+        "url": "https://raw.githubusercontent.com/Domenicobrz/R3F-in-practice/main/car-show/public/models/car/scene.bin",
+        "sha256": "a6bf80fb6f6da4bf50f78e234088bc2f1b6d68a2cd7f099aea7e2dd14436bec2"
+      },
+      {
+        "path": "textures/CorvetteWingEmblem_baseColor.png",
+        "url": "https://raw.githubusercontent.com/Domenicobrz/R3F-in-practice/main/car-show/public/models/car/textures/CorvetteWingEmblem_baseColor.png",
+        "sha256": "6ed793b7afae3092ac15314d0362b40713294d94f4e19b450c5fed232ed4d584"
+      },
+      {
+        "path": "textures/CorvetteWingEmblem_metallicRoughness.png",
+        "url": "https://raw.githubusercontent.com/Domenicobrz/R3F-in-practice/main/car-show/public/models/car/textures/CorvetteWingEmblem_metallicRoughness.png",
+        "sha256": "097c703d8bb0a5ef815e9092858ab9e3660645a5c465a29ce5a32139e3768e80"
+      },
+      {
+        "path": "textures/Brake_Disc_baseColor.png",
+        "url": "https://raw.githubusercontent.com/Domenicobrz/R3F-in-practice/main/car-show/public/models/car/textures/Brake_Disc_baseColor.png",
+        "sha256": "5c23341d2a42f1ba573658180a7b5ef367c2b9d9d4702083335978f26c0e2d37"
+      },
+      {
+        "path": "textures/Brake_Disc_metallicRoughness.png",
+        "url": "https://raw.githubusercontent.com/Domenicobrz/R3F-in-practice/main/car-show/public/models/car/textures/Brake_Disc_metallicRoughness.png",
+        "sha256": "2bed588ade51f5cee30c37931c930cd2b4bfec4731015388d816d474ab5da277"
+      },
+      {
+        "path": "textures/Brake_Disc_normal.png",
+        "url": "https://raw.githubusercontent.com/Domenicobrz/R3F-in-practice/main/car-show/public/models/car/textures/Brake_Disc_normal.png",
+        "sha256": "1af4fd3de3ad2313527b820ca6d1e31b670c6c63babbe9511ed6666e8b31be87"
+      },
+      {
+        "path": "textures/TireMaterial_baseColor.png",
+        "url": "https://raw.githubusercontent.com/Domenicobrz/R3F-in-practice/main/car-show/public/models/car/textures/TireMaterial_baseColor.png",
+        "sha256": "5ec04e3653c69b53c05a9428f3a106fad784eed0e09817ed43ffb29aed44c770"
+      },
+      {
+        "path": "textures/TireMaterial_metallicRoughness.png",
+        "url": "https://raw.githubusercontent.com/Domenicobrz/R3F-in-practice/main/car-show/public/models/car/textures/TireMaterial_metallicRoughness.png",
+        "sha256": "9b7a8369a6088d90cce29213a73609e47604fa0d24b1c8a8ab5f3c9b4bd0cd76"
+      },
+      {
+        "path": "textures/TireMaterial_normal.png",
+        "url": "https://raw.githubusercontent.com/Domenicobrz/R3F-in-practice/main/car-show/public/models/car/textures/TireMaterial_normal.png",
+        "sha256": "5ade24ec1e4a7bdbed59be1270427edfaa7de48123f0a0934ec30319e1657121"
+      },
+      {
+        "path": "textures/Brake_Caliper_baseColor.png",
+        "url": "https://raw.githubusercontent.com/Domenicobrz/R3F-in-practice/main/car-show/public/models/car/textures/Brake_Caliper_baseColor.png",
+        "sha256": "4f7526b51bcf5759e988195648cacc4d03e18d38466936791d65dd186d15431f"
+      },
+      {
+        "path": "textures/Brake_Caliper_metallicRoughness.png",
+        "url": "https://raw.githubusercontent.com/Domenicobrz/R3F-in-practice/main/car-show/public/models/car/textures/Brake_Caliper_metallicRoughness.png",
+        "sha256": "93302c1371d04100d80dedb9ca7cdb41acf4b58fe8fc3f3f2f754d10cd13174f"
+      },
+      {
+        "path": "textures/Brake_Caliper_normal.png",
+        "url": "https://raw.githubusercontent.com/Domenicobrz/R3F-in-practice/main/car-show/public/models/car/textures/Brake_Caliper_normal.png",
+        "sha256": "6635fa5ef2fe39bc8914caa44a78848387a3b5c09ba7c57413fa0dfeccc1880a"
+      },
+      {
+        "path": "textures/Glossy_Plastic_metallicRoughness.png",
+        "url": "https://raw.githubusercontent.com/Domenicobrz/R3F-in-practice/main/car-show/public/models/car/textures/Glossy_Plastic_metallicRoughness.png",
+        "sha256": "eb40edf633f0901c11694825ef40c45588176ca029c33e5276b70b118555a786"
+      },
+      {
+        "path": "textures/Wipers_baseColor.png",
+        "url": "https://raw.githubusercontent.com/Domenicobrz/R3F-in-practice/main/car-show/public/models/car/textures/Wipers_baseColor.png",
+        "sha256": "e8757b56633235dd20e5b458c9e31c405ac8ccf3a10fa11550a3fdabaa35cbc5"
+      },
+      {
+        "path": "textures/Wipers_metallicRoughness.png",
+        "url": "https://raw.githubusercontent.com/Domenicobrz/R3F-in-practice/main/car-show/public/models/car/textures/Wipers_metallicRoughness.png",
+        "sha256": "d7c484214dd19d1e1a640c320ce4ade7137549279ae41fb135a27d369bdc79fc"
+      },
+      {
+        "path": "textures/Windows_metallicRoughness.png",
+        "url": "https://raw.githubusercontent.com/Domenicobrz/R3F-in-practice/main/car-show/public/models/car/textures/Windows_metallicRoughness.png",
+        "sha256": "c367a53c324d334a97f21ac3ec27cfee41b084447d39dd1d6824e8229460ebef"
+      },
+      {
+        "path": "textures/Exhaust_baseColor.png",
+        "url": "https://raw.githubusercontent.com/Domenicobrz/R3F-in-practice/main/car-show/public/models/car/textures/Exhaust_baseColor.png",
+        "sha256": "2dde3581969335ecd86b19d773653d7a75150184b2a0360a31dbad879bdc9b96"
+      },
+      {
+        "path": "textures/Exhaust_metallicRoughness.png",
+        "url": "https://raw.githubusercontent.com/Domenicobrz/R3F-in-practice/main/car-show/public/models/car/textures/Exhaust_metallicRoughness.png",
+        "sha256": "889f7f6838ed26534c1bb86cb50de54f8670d76265115a1a583c9ddab2529812"
+      },
+      {
+        "path": "textures/Exhaust_normal.png",
+        "url": "https://raw.githubusercontent.com/Domenicobrz/R3F-in-practice/main/car-show/public/models/car/textures/Exhaust_normal.png",
+        "sha256": "a13510b3237edc1715d9bfc78a160ce4de48bd5baca7e5590d02be07f8838fa0"
+      },
+      {
+        "path": "textures/License_Plate_baseColor.jpeg",
+        "url": "https://raw.githubusercontent.com/Domenicobrz/R3F-in-practice/main/car-show/public/models/car/textures/License_Plate_baseColor.jpeg",
+        "sha256": "1877e3f71c87de79d225743e327fa09680496bb04e7e0137af60524290ec04bd"
+      },
+      {
+        "path": "textures/License_Plate_normal.jpeg",
+        "url": "https://raw.githubusercontent.com/Domenicobrz/R3F-in-practice/main/car-show/public/models/car/textures/License_Plate_normal.jpeg",
+        "sha256": "90e9e0e57bc9f02cee304141780e424855c87d6f117833f6b836d21210288c9a"
+      }
+    ]
   }
 ]

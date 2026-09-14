@@ -5,6 +5,10 @@ import {supplementPorscheCabin} from './porsche-cabin';
 import {makeR34Cabin,makeF40Instruments} from './classic-cabins';
 
 export const DETAILED_VEHICLES={
+ diablo:{file:'veneno',wheelbase:2.7,cockpit:{x:.34,y:1.01,z:-.35},hood:1.22,paint:/^material_20$/,glass:/^glass$/,brake:/^Vt_Liu.001$/,author:'Jonrss',name:'Lamborghini Veneno'},
+ viper:{file:'challenger',wheelbase:2.946,cockpit:{x:.36,y:1.12,z:.05},hood:1.35,paint:/^01___Default$/,glass:/^Material__(288|296)$/,brake:/^Material__30[34]$/,author:'Gesy',name:'Dodge Challenger Concept'},
+ clk:{file:'slr',wheelbase:2.7,cockpit:{x:.36,y:1.06,z:-.55},hood:1.25,paint:/^SLR_body/,glass:/^SLR_(window|glass)$/,brake:/^SLR_tail_light_lod0$/,author:'Car2022',name:'Mercedes-Benz SLR McLaren'},
+ c5:{file:'c7',wheelbase:2.71,cockpit:{x:.34,y:1.04,z:-.25},hood:1.2,paint:/^Car_Paint/,glass:/^Windows$/,brake:/^(Tail_Lights_Red_Cover|Spoiler_Light_Cover)/,author:'Martin Trafas',name:'Chevrolet Corvette C7 Stingray'},
  r8:{file:'r8',wheelbase:2.65,cockpit:{x:.34,y:1.00,z:-.12},hood:1.15,paint:/^material$/,glass:/^glass$/,brake:/^Material.003$/,author:'IPfuentes',name:'Audi R8'},
  mcf1:{file:'mcf1',wheelbase:2.718,cockpit:{x:0,y:.94,z:-.10},hood:1.13,paint:/^11Mtl$/,glass:/^Meshpart11Mtl$/,brake:/^R2Mtl$/,author:'No Limits',name:'McLaren F1 LM'},
  f40:{file:'f40',wheelbase:2.45,cockpit:{x:.33,y:1.03,z:-.10},hood:1.15,paint:/^material$/,glass:/F40_(Glass|Window)/,brake:/^super_brakelight$/,author:'Black Snow',name:'Ferrari F40'},
@@ -51,6 +55,11 @@ export async function loadAdditionalCars(cars:any[]){
       if(/gauges|Display/.test(m.name)){m.metalness=0;m.roughness=.68;if(m.name==='super_gauges')m.color.set(0x10151a);}
       if(/Cockpit|Skin|Tappetini/.test(m.name)){m.metalness=0;m.roughness=.76;}
      }
+     if(spec.file==='challenger'&&spec.paint.test(m.name)){m.color.set(0xc94f15);m.metalness=.3;}
+     if(spec.file==='slr'&&/SLR_(leather|bump_leather|plastic|headliner|rubber|tire)/.test(m.name)){m.metalness=0;m.roughness=.8;}
+     if(spec.file==='c7'&&m.name==='Interior'){m.color.set(0x51565e);m.metalness=0;m.roughness=.8;m.emissive.set(0x272b32);m.emissiveIntensity=.4;}
+     if(spec.file==='veneno'){m.roughness=Math.max(m.roughness,.26);if(m.name==='wheel'){m.color.set(0x353535);m.metalness=0;m.roughness=.9;}if(/material_(10|11|12)/.test(m.name)){m.metalness=0;m.roughness=.7;}}
+     if(spec.file==='challenger'&&/Material__(287|298)/.test(m.name)){m.color.set(0x35383b);m.roughness=.8;m.metalness=0;m.emissive.set(0x181c20);m.emissiveIntensity=.25;}
      if(spec.file==='r34'&&spec.paint.test(m.name))m.side=T.FrontSide;
      if(spec.file==='supra-mk4'){
       if(m.name==='esta80'){m.color.set(0xc94e0d);m.metalness=.3;m.roughness=.27;}
