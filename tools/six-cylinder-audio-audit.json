@@ -1,0 +1,98 @@
+[
+  {
+    "name": "p911-mid-v4",
+    "source": "p911-mid-v4",
+    "start": 0.3,
+    "seconds": 2.3,
+    "envelopeVariation": 0.07340314686199623,
+    "rms": 0.17,
+    "peak": 0.5015729849609747,
+    "seam": 0.010417273357885696,
+    "sourceSha256": "1e8d31b0035371740550276919d712fb1dee33ae32e277867862b5f9142e335d",
+    "outputSha256": "e44a9d93c81cb9486b3ebc237e9003b463774d6972e5120e402eaabf660f4b4a"
+  },
+  {
+    "name": "p911-high-v4",
+    "source": "p911-high-v4",
+    "start": 0.8000000000000002,
+    "seconds": 2.3,
+    "envelopeVariation": 0.043367537101708764,
+    "rms": 0.17,
+    "peak": 0.4627280392221475,
+    "seam": 0.002155220696785198,
+    "sourceSha256": "8eb2ca2e57af52db76b545b240332ab0544d4604624376e96b027f44c2e165f2",
+    "outputSha256": "bb2ec4b1d732638f826e1c0c82b030b4fd5f77060a29dbe1b7fdf892f6923360"
+  },
+  {
+    "name": "r34-mid-v4",
+    "source": "r34-mid-v4",
+    "start": 1.3000000000000005,
+    "seconds": 2.3,
+    "envelopeVariation": 0.10536594918561232,
+    "rms": 0.17,
+    "peak": 0.5295056539159877,
+    "seam": 0.006243536467596138,
+    "sourceSha256": "d0e9d9b1df3ee450ed16f415f0b3e26c462b9e827ce57cc7a1ff552a3d8c4440",
+    "outputSha256": "c778954eaed9779c2a3e927094105afb253f20eb88e48e06126109934ed06b5d"
+  },
+  {
+    "name": "r34-high-v4",
+    "source": "r34-high-v4",
+    "start": 0.8500000000000002,
+    "seconds": 2.3,
+    "envelopeVariation": 0.08587551268691462,
+    "rms": 0.17000000000000004,
+    "peak": 0.6474685046798282,
+    "seam": 0.022153007194079345,
+    "sourceSha256": "137f6eb3060bfeeda2d5791ba623f5fae1080af11df088a88032db428a48287c",
+    "outputSha256": "c3f39ccb4c9f6801696e36deb42e14bf5900dedbf4e3ac97538b6305eb5e72c3"
+  },
+  {
+    "name": "supra-mid-v4",
+    "source": "supra-mid-v4",
+    "start": 0.2,
+    "seconds": 2.3,
+    "envelopeVariation": 0.22521251865557743,
+    "rms": 0.17,
+    "peak": 0.6842310446242276,
+    "seam": 0.0031134587012708256,
+    "sourceSha256": "43dd9a0df2bbdf175b499f385653306b9b5241ff0d9e365b63f99231ddd7b235",
+    "outputSha256": "3aeced3093aa5b7b89b88e48df73d8c0b5765a3c1ca80f78e161efcb8f6fbfd0"
+  },
+  {
+    "name": "supra-high-v4",
+    "source": "supra-high-v4",
+    "start": 0.7500000000000001,
+    "seconds": 2.3,
+    "envelopeVariation": 0.0670560236710843,
+    "rms": 0.17,
+    "peak": 0.44209636056855295,
+    "seam": 0.015320105885759154,
+    "sourceSha256": "ae59e93309c692d36189c4b911aec2314820c61112b1615c723bc3ec2a51c56f",
+    "outputSha256": "dd58d85a13d5c78fea9ec9e76794d8c260ce4f49bb10cd6bc1fecef5d299487f"
+  },
+  {
+    "name": "m4-mid-v4",
+    "source": "m4-mid-v4",
+    "start": 0.3,
+    "seconds": 2.3,
+    "envelopeVariation": 0.11963111553831993,
+    "rms": 0.17,
+    "peak": 0.6329561912369301,
+    "seam": 0.005538721333481424,
+    "sourceSha256": "d49ed67c9514ac4ccca64afe4007a7f18721c1602fcafb3d0c36861c7e2c8a93",
+    "outputSha256": "6cd13ae8310dab7bc79e8bc9ef36a7e5d7a1399559e7b94beadffadd44f7367e"
+  },
+  {
+    "name": "m4-high-v4",
+    "source": "m4-high-v4",
+    "start": 1.0500000000000003,
+    "seconds": 2.3,
+    "envelopeVariation": 0.1414765117778102,
+    "rms": 0.14295390801275826,
+    "peak": 0.7,
+    "seam": 0.01851190465606697,
+    "sourceSha256": "54f28dae1320a05973a293f7d18aa987726300abbd5b07cf308957275e60ca28",
+    "outputSha256": "93d0d5367513e564b56286224d960d38b3bd620088c736f45a83126299c6fed8"
+  }
+]

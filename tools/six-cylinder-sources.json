@@ -1,0 +1,39 @@
+{
+  "credits": 1280,
+  "source": "ElevenLabs Sound Effects, generated 2026-09-14, loop enabled, 4 seconds, prompt influence 30%",
+  "limitation": "AI-designed engine styles, not OEM recordings. Candidate selection uses waveform envelope stability, not a verified listening comparison.",
+  "files": [
+    [
+      "p911-mid-v4",
+      "Porsche_911_Carrera__#2-1789388115439.wav"
+    ],
+    [
+      "p911-high-v4",
+      "Porsche_911_Carrera__#3-1789388003211.wav"
+    ],
+    [
+      "r34-mid-v4",
+      "Nissan_Skyline_GT-R__#4-1789388239153.wav"
+    ],
+    [
+      "r34-high-v4",
+      "Nissan_Skyline_GT-R__#1-1789388248224.wav"
+    ],
+    [
+      "supra-mid-v4",
+      "Toyota_Supra_A80_tun_#2-1789388248221.wav"
+    ],
+    [
+      "supra-high-v4",
+      "Toyota_Supra_A80_mod_#3-1789388280267.wav"
+    ],
+    [
+      "m4-mid-v4",
+      "BMW_M4_Competition_S_#1-1789388315502.wav"
+    ],
+    [
+      "m4-high-v4",
+      "BMW_M4_Competition_S_#2-1789388315500.wav"
+    ]
+  ]
+}

@@ -31,7 +31,7 @@ export class RaceAudio {
   if(this.type!==frame.type||newRace){this.type=frame.type;this.train={gear:1,rpm:p.idle,shift:0,cooldown:.2};this.lastThrottle=frame.throttle;}
   this.running=true;this.smooth(this.bus.gain,1,.05);const change=advancePowertrain(this.train,frame.speed,frame.throttle,frame.top,p,dt,frame.countdown);
   if(change)this.oneShot('shift',change>0?.22:.15,change>0?1:.9,.16);
-  if(this.lastThrottle>.65&&frame.throttle<.2&&this.train.rpm>p.redline*.5&&p.turbo)this.oneShot('air',.10*p.turbo,1.7,.24);this.lastThrottle=frame.throttle;
+  if(this.lastThrottle>.65&&frame.throttle<.2&&this.train.rpm>p.redline*.5&&p.turbo){const release=frame.type==='r34'?[.12,1.9,.18]:frame.type==='supra'?[.15,1.35,.27]:frame.type==='m3'?[.06,1.65,.12]:[.10*p.turbo,1.7,.24];this.oneShot('air',release[0],release[1],release[2]);}this.lastThrottle=frame.throttle;
   const n=clamp((this.train.rpm-p.idle)/(p.redline-p.idle),0,1),speed=Math.abs(frame.speed),load=clamp(frame.throttle,0,1),alive=frame.fuel>0?1:0;
   this.smooth(this.filter.frequency,frame.camera===1?3600:frame.camera===2?8200:14000,.16);
   const bank=ENGINE_BANKS[p.family],blend=engineBlend(this.train.rpm,bank.rpm),high=highBlend(this.train.rpm,bank.high),highMix=bank.high&&this.samples.has(bank.high.file)?high.mix:0,available=this.samples.has(bank.file),shiftDip=this.train.shift>0?.45:1;
@@ -52,7 +52,7 @@ export class RaceAudio {
   this.rivals.forEach((v,i)=>{const other=near[i];if(!other){this.smooth(v.gain.gain,0);return;}const profile=ENGINE_PROFILES[other.type]||p,d=Math.hypot(other.x,other.z);const closing=(other.speed-frame.speed)*(-other.z/Math.max(d,1));const doppler=clamp(343/(343-closing),.8,1.25);this.tune(v,profile,(profile.idle+(profile.redline-profile.idle)*clamp(Math.abs(other.speed)/80,.15,.9))*doppler,.075/(1+(d/12)**2),clamp(other.x/14,-.9,.9));});
  }
  private tune(v:Voice,p:EngineProfile,rpm:number,gain:number,pan:number){
- if(v.waveKey!==p.family){const real=new Float32Array(24),imag=new Float32Array(24);for(let i=1;i<24;i++){const shape=p.family==='ferrari458'?(i%2?.85:.7):p.family==='ferrariF40'?(i%2?1:.32):p.family==='audiV10'?(i%3===0?.8:.48):p.family==='lamboV12'?(i%2?.7:.55):p.family==='mclarenV12'?(i<5?.9:.30):(i%2?.9:.55);imag[i]=shape/Math.pow(i,ENGINE_BANKS[p.family].designed?1.65:1.3);}v.osc.setPeriodicWave(this.ac.createPeriodicWave(real,imag));v.waveKey=p.family;}
+ if(v.waveKey!==p.family){const real=new Float32Array(24),imag=new Float32Array(24);for(let i=1;i<24;i++){const shape=p.family==='porscheBoxer'?(i%2?1:.65):p.family==='nissanRB26'?(i<4?.85:.5):p.family==='toyota2JZ'?(i%2?1:.38):p.family==='bmwS58'?(i<3?.8:.6):p.family==='ferrari458'?(i%2?.85:.7):p.family==='ferrariF40'?(i%2?1:.32):p.family==='audiV10'?(i%3===0?.8:.48):p.family==='lamboV12'?(i%2?.7:.55):p.family==='mclarenV12'?(i<5?.9:.30):(i%2?.9:.55);imag[i]=shape/Math.pow(i,ENGINE_BANKS[p.family].designed?1.65:1.3);}v.osc.setPeriodicWave(this.ac.createPeriodicWave(real,imag));v.waveKey=p.family;}
  const f=rpm/60*p.cylinders/2;this.smooth(v.osc.frequency,f,.06);this.smooth(v.sub.frequency,f*.5,.06);this.smooth(v.filter.frequency,800+rpm*.32);this.smooth(v.gain.gain,gain,.08);this.smooth(v.pan.pan,pan,.1);}
  snapshot(){return {loaded:[...this.loaded],failed:[...this.failed],active:this.running,gear:this.train.gear,rpm:this.train.rpm,shift:this.train.shift,family:ENGINE_PROFILES[this.type]?.family,camera:this.current?.camera};}
 }
