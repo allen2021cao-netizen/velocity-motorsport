@@ -932,10 +932,10 @@ function switchCar(dir) {
 function updateMenuCar() {
   const selectedCar=carObjs[selected];
   if(DETAILED_VEHICLES[selectedCar.cfg.type]&&!selectedCar.assetStatus){
-    ensureDetailedCar(selectedCar).then(()=>{if(carObjs[selected]===selectedCar){if(state==='vehicle')enterVehicle();else if(state==='menu')updateMenuCar();}});
+    ensureDetailedCar(selectedCar).then(()=>{if(carObjs[selected]===selectedCar){if(state==='vehicle')enterVehicle();else if(state==='menu')syncMenuScene();}});
   }
   carObjs.forEach((c, i) => {
-    c.group.visible = (i === selected);
+    c.group.visible = (i === selected && c.assetStatus !== 'loading');
     c.bodyParts.visible = true;c.bodyParts.rotation.set(0,0,0);
     c.wheels.forEach(w => {w.visible=true;});c.frontPivots.forEach(p=>p.rotation.y=0);
     c.glowPlane.visible = false;
@@ -944,6 +944,9 @@ function updateMenuCar() {
       c.group.rotation.set(0, camAngle + Math.PI / 2, 0);
     }
   });
+  const loading=selectedCar.assetStatus==='loading';
+  document.getElementById('menuPreview')?.classList.toggle('vehicle-loading',loading&&menuTab!=='track');
+  document.getElementById('vehicleOrbitSurface')?.classList.toggle('vehicle-loading',loading);
   const cfg = CARS[selected];
   document.getElementById('carName').textContent = cfg.nameCn;
   document.getElementById('carNameEn').textContent = cfg.nameEn;
@@ -1756,7 +1759,7 @@ for(const [id,step] of [['tourPrev',-1],['tourNext',1]])document.getElementById(
 const vehicleOrbit=createVehicleOrbit();let vehicleView='front';
 const vehicleButton=document.createElement('button');vehicleButton.id='vehicleBtn';vehicleButton.textContent='车辆鉴赏  ↗';document.getElementById('selPanel').append(vehicleButton);
 const vehicleOverlay=document.createElement('div');vehicleOverlay.id='vehicleOverlay';vehicleOverlay.className='hidden';vehicleOverlay.innerHTML='<small>AUTOMOTIVE ATELIER</small><h2 id="vehicleTitle"></h2><p id="vehicleInfo"></p><a href="/models/CREDITS.md" target="_blank" rel="noopener" style="color:#b8c9cc;font-size:11px">车模来源与许可</a><div class="vehicle-actions"><button data-view="front">前侧</button><button data-view="rear">后侧</button><button data-view="side">侧面</button><button data-view="wheel">轮组细节</button><button id="vehiclePrev">上一辆</button><button id="vehicleNext">下一辆</button><button id="vehicleBack">返回车库</button></div>';document.body.append(vehicleOverlay);
-function enterVehicle(){state='vehicle';paused=false;updateMenuCar();worldGroup.visible=false;showroom.visible=true;showLights.forEach(l=>l.visible=true);headlight.visible=false;document.getElementById('menu').classList.add('hidden');document.getElementById('hud').style.display='none';vehicleOverlay.classList.remove('hidden');document.getElementById('vehicleTitle').textContent=CARS[selected].nameCn;document.getElementById('vehicleInfo').textContent=carObjs[selected].modelKind==='imported-glb'?'精细 GLB 车模 · 分体轮组 · 多层车漆':'独立曲面车身 · 三维座舱 · 分体制动轮组';if(carObjs[selected].assetCredit)document.getElementById('vehicleInfo').textContent+=' · 模型：'+carObjs[selected].assetCredit;}
+function enterVehicle(){state='vehicle';paused=false;updateMenuCar();worldGroup.visible=false;showroom.visible=true;showLights.forEach(l=>l.visible=true);headlight.visible=false;document.getElementById('menu').classList.add('hidden');document.getElementById('hud').style.display='none';vehicleOverlay.classList.remove('hidden');document.getElementById('vehicleTitle').textContent=CARS[selected].nameCn;document.getElementById('vehicleInfo').textContent=carObjs[selected].assetStatus==='loading'?'正在载入精细车模…':carObjs[selected].modelKind==='imported-glb'?'精细 GLB 车模 · 分体轮组 · 多层车漆':'独立曲面车身 · 三维座舱 · 分体制动轮组';if(carObjs[selected].assetCredit)document.getElementById('vehicleInfo').textContent+=' · 模型：'+carObjs[selected].assetCredit;}
 vehicleButton.onclick=enterVehicle;document.getElementById('vehicleBack').onclick=toMenu;
 vehicleOverlay.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{vehicleView=b.dataset.view;vehicleOrbit.preset(vehicleView);});
 for(const [id,step] of [['vehiclePrev',-1],['vehicleNext',1]])document.getElementById(id).onclick=()=>{switchCar(step);enterVehicle();};
@@ -1782,7 +1785,7 @@ const orbitSurface=document.createElement('div');orbitSurface.id='vehicleOrbitSu
 function orbitToolbar(parent){const bar=document.createElement('div');bar.className='orbit-toolbar';bar.innerHTML='<button aria-label="放大车辆">＋</button><button aria-label="缩小车辆">−</button><button aria-label="复位车辆视角">复位</button><button aria-label="切换自动旋转">自动旋转</button>';const buttons=bar.querySelectorAll('button');buttons[0].onclick=()=>vehicleOrbit.scale(.8);buttons[1].onclick=()=>vehicleOrbit.scale(1.25);buttons[2].onclick=()=>{vehicleView='front';vehicleOrbit.reset();};buttons[3].onclick=()=>vehicleOrbit.toggle();parent.append(bar);}
 orbitToolbar(document.getElementById('menuPreview'));orbitToolbar(vehicleOverlay);
 function refreshMenuPreview(){if(!menuUI)return;document.getElementById('menuPreview').classList.toggle('city-preview',menuTab==='track');document.getElementById('previewKind').textContent=menuTab==='track'?'CIRCUIT PREVIEW':'360° VEHICLE STUDIO';document.getElementById('previewName').textContent=menuTab==='track'?CITY_PROFILES[TRACKS[trackSel].theme].label:CARS[selected].nameCn;document.getElementById('previewStatus').textContent=menuTab==='track'?cityReport?.landmark:'拖动旋转 · 滚轮 / 双指缩放';document.getElementById('raceSummary').textContent=CARS[selected].nameCn+' · '+TRACKS[trackSel].city+' / '+DIFFS[diffSel].name;}
-function syncMenuScene(){const city=menuTab==='track';worldGroup.visible=city;showroom.visible=!city;showLights.forEach(l=>l.visible=!city);if(city)carObjs.forEach(c=>c.group.visible=false);else updateMenuCar();refreshMenuPreview();}
+function syncMenuScene(){const city=menuTab==='track';document.getElementById('menuPreview')?.classList.toggle('vehicle-loading',!city&&carObjs[selected].assetStatus==='loading');worldGroup.visible=city;showroom.visible=!city;showLights.forEach(l=>l.visible=!city);if(city)carObjs.forEach(c=>c.group.visible=false);else updateMenuCar();refreshMenuPreview();}
 graphics.quality(options.quality);qLevel=options.quality==='low'?3:options.quality==='balanced'?1:0;applyQuality();
 buildWorld(trackSel);menuUI.select('car');toMenu();loop();
 // Read-only diagnostics for performance and smoke testing.
