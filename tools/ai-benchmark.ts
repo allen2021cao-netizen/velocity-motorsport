@@ -1,15 +1,15 @@
 import {gripFor} from '../src/physics';
 import {createTrackCurve,circuitCurvature} from '../src/circuits/circuit';
 import {TRACKS} from '../src/tracks.js';
-import {aiTargetSpeed,stepOpponent,freshDriver,roadCurvature} from '../src/race-ai';
+import {aiTargetSpeed,stepOpponent,freshDriver,roadCurvature,drivingCurvature} from '../src/race-ai';
 const setup={tires:'sport',assist:'sport',downforce:.4,balance:55,weather:'clear',mode:'race'},car={top:296,accel:.84,handling:.9};
 const results=[];
-for(const theme of ['shanghai','monaco','miami','vegas']){
+for(const theme of TRACKS.map(t=>t.theme)){
  const curve=createTrackCurve(TRACKS.find(t=>t.theme===theme)!),n=1400,length=curve.getLength(),seg=length/n;
- const curvature=circuitCurvature(Array.from({length:n},(_,i)=>curve.getTangentAt(i/n)));
+ const curvature=drivingCurvature(Array.from({length:n},(_,i)=>curve.getTangentAt(i/n)));
  const row:{city:string;tiers:unknown[]}={city:theme,tiers:[]};
  for(let difficulty=0;difficulty<3;difficulty++){
-  const driver=freshDriver();let distance=0,time=0,peak=0,maxCornerExcess=0;const dt=1/120;
+  const driver=freshDriver();driver.temperature=60;let distance=0,time=0,peak=0,maxCornerExcess=0;const dt=1/120;
   let target=0,timer=0;
   while(distance<length&&time<900){const idx=Math.floor(distance/seg)%n,k=roadCurvature(curvature,seg,idx);
    if(timer<=0){target=aiTargetSpeed(curvature,seg,idx,car,setup,difficulty,0,driver);timer=.08;}timer-=dt;

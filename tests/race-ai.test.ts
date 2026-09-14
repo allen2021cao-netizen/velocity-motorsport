@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {DIFFICULTIES,aiTargetSpeed,stepOpponent,freshDriver,roadCurvature,trafficPlan} from '../src/race-ai';
+import {DIFFICULTIES,aiTargetSpeed,stepOpponent,freshDriver,roadCurvature,trafficPlan,drivingCurvature,matchedOpponents} from '../src/race-ai';
 import {stepVehicle,type Dynamics,type Setup} from '../src/physics';
 const setup:Setup={tires:'sport',assist:'sport',downforce:.4,balance:55,weather:'clear',mode:'race'},car={top:296,accel:.84,handling:.9};
 test('exactly three distinct CPU levels, with acceleration within the player limit',()=>{
@@ -52,4 +52,21 @@ test('a same-car starting grid retains its launch pace without converging lanes'
   console.log('Launch tier',difficulty,'player/AI km/h',solo.speed*3.6,grid.map(a=>a.speed*3.6));
   assert.ok(grid.every(a=>a.speed>=solo.speed*.98));assert.ok(minGap>=6);assert.deepEqual(grid.map(a=>a.lat),[2.9,-2.9,2.9]);
  }
+});
+
+test('current steering curvature stays zero on the straight before a corner',()=>{
+ const tangents=Array.from({length:40},(_,i)=>({angle:i<20?0:(i-19)*.01,angleTo(other:any){return Math.abs(this.angle-other.angle);}}));
+ const k=drivingCurvature(tangents);assert.equal(k[10],0);assert.ok(k[20]>0);
+});
+test('nearby corners are never skipped by the braking planner',()=>{
+ const k=Array(1400).fill(0);k[6]=1.4;
+ const target=aiTargetSpeed(k,1,0,car,setup,2);assert.ok(target<12);
+});
+test('overtaking car does not merge back behind the same slower leader',()=>{
+ const result=trafficPlan({dist:100,lat:2.4,speed:40},[{dist:120,lat:0,speed:25}],1000,8,.1);
+ assert.equal(result.lat,2.4);assert.equal(result.target,Infinity);
+});
+test('expert keeps a strong field even when the player chooses the slowest car',()=>{
+ const fleet=[{top:240,accel:.6,handling:.7},{top:290,accel:.8,handling:.8},{top:330,accel:.9,handling:.9},{top:350,accel:1,handling:1},{top:310,accel:.85,handling:.85}];
+ assert.deepEqual(matchedOpponents(fleet,0,2),[3,2,4]);
 });

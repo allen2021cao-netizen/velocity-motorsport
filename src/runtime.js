@@ -8,7 +8,7 @@ import {cameraPose} from './camera-rig';
 import {createVehicleOrbit} from './vehicle-orbit';
 import {mountDrivingHelp} from './driving-help';
 import {mountMenu} from './menu';
-import {DIFFICULTIES,aiTargetSpeed,stepOpponent,freshDriver,roadCurvature,trafficPlan,matchedOpponents} from './race-ai';
+import {DIFFICULTIES,aiTargetSpeed,stepOpponent,freshDriver,roadCurvature,trafficPlan,matchedOpponents,drivingCurvature} from './race-ai';
 import {buildAutomobile} from './automotive/model';
 import * as THREE from 'three';
 import {ensureDetailedCar,DETAILED_VEHICLES} from './detailed-vehicles';
@@ -264,7 +264,7 @@ const checkerTex = canvasTex(256, 64, (g, w, h) => {
 let ROAD_W = 8;
 const SAMPLES = 1400;
 let curve = null, trackLen = 0, SEG = 1, avgCurveFac = .85;
-let sPts = [], sTan = [], sNrm = [], sCurv = [];
+let sPts = [], sTan = [], sNrm = [], sCurv = [], sDriveCurv = [];
 const wrapIdx = i => ((i % SAMPLES) + SAMPLES) % SAMPLES;
 
 function buildTrackData(T) {
@@ -285,6 +285,7 @@ function buildTrackData(T) {
   }
   if(T.circuit)sCurv=circuitCurvature(sTan);
   SEG = trackLen / SAMPLES;
+  sDriveCurv=drivingCurvature(sTan);
   // 全程平均过弯系数(用于AI路段节奏归一化,须与AI前瞻公式一致)
   let cfSum = 0;
   for (let i = 0; i < SAMPLES; i++) {
@@ -1288,12 +1289,14 @@ function updateAI(dt) {
     const idx = wrapIdx(Math.round(a.dist / SEG));
     const curvAhead = Math.max(sCurv[wrapIdx(idx + 30)], sCurv[wrapIdx(idx + 60)], sCurv[idx]);
     a.planTimer-=dt;
-    if(a.planTimer<=0){a.plannedSpeed=aiTargetSpeed(sCurv,SEG,idx,a.car.cfg,options,diffSel,wetness,a.driver);a.planTimer=.08;}
+    if(a.planTimer<=0){a.plannedSpeed=aiTargetSpeed(sDriveCurv,SEG,idx,a.car.cfg,options,diffSel,wetness,a.driver);a.planTimer=.08;}
     let target=a.plannedSpeed;
     const avoid=trafficPlan(a,traffic.filter(o=>o.dist!==a.dist||o.lat!==a.lat),trackLen,ROAD_W,dt,raceTime<5);
+    a.trafficTarget=avoid.target;
     target=Math.min(target,avoid.target);
+    a.commandTarget=target;
     if(a.slow>0){a.slow-=dt;target*=.84;}else if(Math.random()<D.mistake*dt&&curvAhead>.08)a.slow=1.1;
-    if(state==='race')a.speed=stepOpponent(a.speed,target,a.car.cfg,options,diffSel,dt,wetness,a.driver,roadCurvature(sCurv,SEG,idx));else a.speed=damp(a.speed,0,4,dt);
+    if(state==='race')a.speed=stepOpponent(a.speed,target,a.car.cfg,options,diffSel,dt,wetness,a.driver,roadCurvature(sDriveCurv,SEG,idx));else a.speed=damp(a.speed,0,4,dt);
     a.dist += a.speed * dt;
     if (a.dist >= session.laps * trackLen + 5 && !a.finished) { a.finished = true; a.finishTime = raceTime; a.speed = 0; }
     // 采样点间连续插值,消除逐格跳动
@@ -1784,4 +1787,4 @@ window.addEventListener('vehicle-model-ready',event=>{if(event.detail!==CARS[sel
 
 buildWorld(trackSel);menuUI.select('car');toMenu();loop();
 // Read-only diagnostics for performance and smoke testing.
-window.__velocity={snapshot:()=>({state,paused,track:TRACKS[trackSel].theme,trackLength:trackLen,roadWidth:ROAD_W*2,car:CARS[selected].type,speed:player.speed,heading:player.heading,position:player.pos.toArray(),lap:player.lap,laps:session.laps,mode:options.mode,wetness,ai:ais.length,fuel:player.fuel,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,fps:fpsEMA,physicsHz:120,quality:options.quality,qualityLevel:qLevel,audio:raceAudio?.snapshot(),detailed:!!carObjs[selected].detailed,modelKind:carObjs[selected].modelKind,dimensions:carObjs[selected].group.userData.dimensions,wheelCount:carObjs[selected].wheels.length,assetCredit:carObjs[selected].assetCredit,assetError:!!carObjs[selected].assetError,assetStatus:carObjs[selected].assetStatus,bodyLod:carObjs[selected].bodyLod?.getCurrentLevel(),aiLods:ais.map(a=>({car:a.car.cfg.type,level:a.car.bodyLod?.getCurrentLevel()})),steeringAngle:carObjs[selected].steeringWheel?.rotation.z,wheelPositions:carObjs[selected].wheels.map(w=>w.parent.position.toArray()),cockpit:carObjs[selected].cockpit,bonnet:carObjs[selected].bonnet,camera:camMode,cameraEye:camera.position.toArray(),cameraClip:[camera.near,camera.far],pixelRatio:renderer.getPixelRatio(),orbit:vehicleOrbit.snapshot(),pedals:{throttle:player.throttlePressure,brake:player.brakePressure},cornerBraking:!!player.cornerBraking,menuTab,difficulty:diffSel,aiSpeeds:ais.map(a=>a.speed),sceneVisibility:{world:worldGroup.visible,showroom:showroom.visible,cars:carObjs.filter(c=>c.group.visible).length},environment:{...cityReport,sky:atmosphere.snapshot(),surfaces:surfaces.status}})};
+window.__velocity={snapshot:()=>({state,paused,track:TRACKS[trackSel].theme,trackLength:trackLen,roadWidth:ROAD_W*2,car:CARS[selected].type,speed:player.speed,heading:player.heading,position:player.pos.toArray(),lap:player.lap,laps:session.laps,mode:options.mode,wetness,ai:ais.length,fuel:player.fuel,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,fps:fpsEMA,physicsHz:120,quality:options.quality,qualityLevel:qLevel,audio:raceAudio?.snapshot(),detailed:!!carObjs[selected].detailed,modelKind:carObjs[selected].modelKind,dimensions:carObjs[selected].group.userData.dimensions,wheelCount:carObjs[selected].wheels.length,assetCredit:carObjs[selected].assetCredit,assetError:!!carObjs[selected].assetError,assetStatus:carObjs[selected].assetStatus,bodyLod:carObjs[selected].bodyLod?.getCurrentLevel(),aiLods:ais.map(a=>({car:a.car.cfg.type,level:a.car.bodyLod?.getCurrentLevel()})),steeringAngle:carObjs[selected].steeringWheel?.rotation.z,wheelPositions:carObjs[selected].wheels.map(w=>w.parent.position.toArray()),cockpit:carObjs[selected].cockpit,bonnet:carObjs[selected].bonnet,camera:camMode,cameraEye:camera.position.toArray(),cameraClip:[camera.near,camera.far],pixelRatio:renderer.getPixelRatio(),orbit:vehicleOrbit.snapshot(),pedals:{throttle:player.throttlePressure,brake:player.brakePressure},cornerBraking:!!player.cornerBraking,menuTab,difficulty:diffSel,aiSpeeds:ais.map(a=>a.speed),aiDiagnostics:ais.map(a=>({car:a.car.cfg.type,speed:a.speed,planned:a.plannedSpeed,traffic:a.trafficTarget,target:a.commandTarget,throttle:a.driver.throttlePressure,brake:a.driver.brakePressure,distance:a.dist,lat:a.lat,latG:a.driver.latG})),sceneVisibility:{world:worldGroup.visible,showroom:showroom.visible,cars:carObjs.filter(c=>c.group.visible).length},environment:{...cityReport,sky:atmosphere.snapshot(),surfaces:surfaces.status}})};
