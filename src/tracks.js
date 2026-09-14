@@ -1,3 +1,4 @@
+import {CIRCUITS} from './circuits/circuit';
 const TRACKS = [
   { city: '拉斯维加斯', name: '赌城大道', en: 'VEGAS STRIP', time: 'night', theme: 'vegas', stars: 1,
     base: 300, modes: [[1, 44, 6.1], [2, 22, 5.91]] },
@@ -24,6 +25,7 @@ const TRACKS = [
   { city: '摩纳哥', name: '蒙特卡洛街道', en: 'MONACO MONTE CARLO', time: 'day', theme: 'monaco', stars: 5,
     base: 210, modes: [[4, 43, 2.66], [3, 36, 4.95], [6, 25, 1.17], [7, 17, 5.43]], sea: true },
 ];
+for(const track of TRACKS){const circuit=CIRCUITS[track.theme];if(circuit){Object.assign(track,{name:circuit.name,en:circuit.en,circuit});if(track.theme==='shanghai')track.time='day';}}
 const timeIcon = t => t === 'day' ? '☀' : t === 'dusk' ? '🌆' : '☾';
 
 
