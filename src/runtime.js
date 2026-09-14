@@ -6,6 +6,7 @@ import {DIFFICULTIES,aiTargetSpeed,stepOpponent} from './race-ai';
 import {buildAutomobile} from './automotive/model';
 import * as THREE from 'three';
 import {loadDetailedCar} from './assets';
+import {loadAdditionalCars} from './detailed-vehicles';
 import {CARS} from './cars.js';
 import {TRACKS,timeIcon} from './tracks.js';
 import {stepVehicle,readGamepad} from './physics';
@@ -608,6 +609,7 @@ const plateTex = canvasTex(128, 32, (g, w, h) => {
 const buildCar = buildAutomobile;
 const carObjs = CARS.map(c => {const car=buildCar({...c,type:c.type==='458'?'f40':c.type});car.cfg=c;return car;});
 try{await loadDetailedCar(carObjs[12]);}catch(error){console.warn('Detailed car unavailable; keeping procedural fallback',error);CARS[12].nameCn='GT 概念赛车（后备模型）';CARS[12].nameEn='GT CONCEPT / FALLBACK';}
+await loadAdditionalCars(carObjs);
 carObjs.forEach(c => { scene.add(c.group); c.group.visible = false; });
 
 const headlight = new THREE.SpotLight(0xcfe4ff, 120, 130, .48, .55, 1.2);
@@ -1267,7 +1269,7 @@ function updatePlayer(dt) {
   car.wheels.forEach(w => w.rotation.x += wheelSpin);
   car.frontPivots.forEach(p => p.rotation.y = player.steer);
   car.brakeLight.emissiveIntensity=brake?4:.5;
-  if(car.steeringWheel){if(car.modelKind==='imported-glb')car.steeringWheel.rotation.y=-player.steer*3.2;else car.steeringWheel.rotation.z=-player.steer*3.2;}
+  if(car.steeringWheel){if(car.modelKind==='imported-glb'&&car.steeringWheel.userData.steeringAxis!=='z')car.steeringWheel.rotation.y=-player.steer*3.2;else car.steeringWheel.rotation.z=-player.steer*3.2;}
   car.bodyParts.rotation.x=damp(car.bodyParts.rotation.x,player.longG*.028,5,dt);
   car.bodyParts.rotation.z=damp(car.bodyParts.rotation.z,-player.latG*.025,5,dt);
   car.flames.forEach(f => {
@@ -1743,8 +1745,8 @@ tourButton.onclick=enterTour;document.getElementById('tourBack').onclick=toMenu;
 for(const [id,step] of [['tourPrev',-1],['tourNext',1]])document.getElementById(id).onclick=()=>{trackSel=(trackSel+step+TRACKS.length)%TRACKS.length;[...trackGrid.children].forEach((c,j)=>c.classList.toggle('sel',j===trackSel));buildWorld(trackSel);enterTour();};
 const vehicleOrbit=createVehicleOrbit();let vehicleView='front';
 const vehicleButton=document.createElement('button');vehicleButton.id='vehicleBtn';vehicleButton.textContent='车辆鉴赏  ↗';document.getElementById('selPanel').append(vehicleButton);
-const vehicleOverlay=document.createElement('div');vehicleOverlay.id='vehicleOverlay';vehicleOverlay.className='hidden';vehicleOverlay.innerHTML='<small>AUTOMOTIVE ATELIER</small><h2 id="vehicleTitle"></h2><p id="vehicleInfo"></p><div class="vehicle-actions"><button data-view="front">前侧</button><button data-view="rear">后侧</button><button data-view="side">侧面</button><button data-view="wheel">轮组细节</button><button id="vehiclePrev">上一辆</button><button id="vehicleNext">下一辆</button><button id="vehicleBack">返回车库</button></div>';document.body.append(vehicleOverlay);
-function enterVehicle(){state='vehicle';paused=false;updateMenuCar();worldGroup.visible=false;showroom.visible=true;showLights.forEach(l=>l.visible=true);headlight.visible=false;document.getElementById('menu').classList.add('hidden');document.getElementById('hud').style.display='none';vehicleOverlay.classList.remove('hidden');document.getElementById('vehicleTitle').textContent=CARS[selected].nameCn;document.getElementById('vehicleInfo').textContent=carObjs[selected].modelKind==='imported-glb'?'独立 GLB 车模 · 完整座舱 · 多层车漆':'独立曲面车身 · 三维座舱 · 分体制动轮组';}
+const vehicleOverlay=document.createElement('div');vehicleOverlay.id='vehicleOverlay';vehicleOverlay.className='hidden';vehicleOverlay.innerHTML='<small>AUTOMOTIVE ATELIER</small><h2 id="vehicleTitle"></h2><p id="vehicleInfo"></p><a href="/models/CREDITS.md" target="_blank" rel="noopener" style="color:#b8c9cc;font-size:11px">车模来源与许可</a><div class="vehicle-actions"><button data-view="front">前侧</button><button data-view="rear">后侧</button><button data-view="side">侧面</button><button data-view="wheel">轮组细节</button><button id="vehiclePrev">上一辆</button><button id="vehicleNext">下一辆</button><button id="vehicleBack">返回车库</button></div>';document.body.append(vehicleOverlay);
+function enterVehicle(){state='vehicle';paused=false;updateMenuCar();worldGroup.visible=false;showroom.visible=true;showLights.forEach(l=>l.visible=true);headlight.visible=false;document.getElementById('menu').classList.add('hidden');document.getElementById('hud').style.display='none';vehicleOverlay.classList.remove('hidden');document.getElementById('vehicleTitle').textContent=CARS[selected].nameCn;document.getElementById('vehicleInfo').textContent=carObjs[selected].modelKind==='imported-glb'?'精细 GLB 车模 · 分体轮组 · 多层车漆':'独立曲面车身 · 三维座舱 · 分体制动轮组';if(carObjs[selected].assetCredit)document.getElementById('vehicleInfo').textContent+=' · 模型：'+carObjs[selected].assetCredit;}
 vehicleButton.onclick=enterVehicle;document.getElementById('vehicleBack').onclick=toMenu;
 vehicleOverlay.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{vehicleView=b.dataset.view;vehicleOrbit.preset(vehicleView);});
 for(const [id,step] of [['vehiclePrev',-1],['vehicleNext',1]])document.getElementById(id).onclick=()=>{switchCar(step);enterVehicle();};
@@ -1774,4 +1776,4 @@ function syncMenuScene(){const city=menuTab==='track';worldGroup.visible=city;sh
 graphics.quality(options.quality);qLevel=options.quality==='low'?3:options.quality==='balanced'?1:0;applyQuality();
 buildWorld(trackSel);menuUI.select('car');toMenu();loop();
 // Read-only diagnostics for performance and smoke testing.
-window.__velocity={snapshot:()=>({state,paused,track:TRACKS[trackSel].theme,car:CARS[selected].type,speed:player.speed,heading:player.heading,position:player.pos.toArray(),lap:player.lap,laps:session.laps,mode:options.mode,wetness,ai:ais.length,fuel:player.fuel,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,fps:fpsEMA,physicsHz:120,detailed:!!carObjs[selected].detailed,modelKind:carObjs[selected].modelKind,dimensions:carObjs[selected].group.userData.dimensions,wheelCount:carObjs[selected].wheels.length,cockpit:carObjs[selected].cockpit,bonnet:carObjs[selected].bonnet,camera:camMode,cameraEye:camera.position.toArray(),cameraClip:[camera.near,camera.far],pixelRatio:renderer.getPixelRatio(),orbit:vehicleOrbit.snapshot(),pedals:{throttle:player.throttlePressure,brake:player.brakePressure},cornerBraking:!!player.cornerBraking,menuTab,difficulty:diffSel,aiSpeeds:ais.map(a=>a.speed),sceneVisibility:{world:worldGroup.visible,showroom:showroom.visible,cars:carObjs.filter(c=>c.group.visible).length},environment:{...cityReport,sky:atmosphere.snapshot(),surfaces:surfaces.status}})};
+window.__velocity={snapshot:()=>({state,paused,track:TRACKS[trackSel].theme,car:CARS[selected].type,speed:player.speed,heading:player.heading,position:player.pos.toArray(),lap:player.lap,laps:session.laps,mode:options.mode,wetness,ai:ais.length,fuel:player.fuel,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,fps:fpsEMA,physicsHz:120,detailed:!!carObjs[selected].detailed,modelKind:carObjs[selected].modelKind,dimensions:carObjs[selected].group.userData.dimensions,wheelCount:carObjs[selected].wheels.length,assetCredit:carObjs[selected].assetCredit,assetError:!!carObjs[selected].assetError,wheelPositions:carObjs[selected].wheels.map(w=>w.parent.position.toArray()),cockpit:carObjs[selected].cockpit,bonnet:carObjs[selected].bonnet,camera:camMode,cameraEye:camera.position.toArray(),cameraClip:[camera.near,camera.far],pixelRatio:renderer.getPixelRatio(),orbit:vehicleOrbit.snapshot(),pedals:{throttle:player.throttlePressure,brake:player.brakePressure},cornerBraking:!!player.cornerBraking,menuTab,difficulty:diffSel,aiSpeeds:ais.map(a=>a.speed),sceneVisibility:{world:worldGroup.visible,showroom:showroom.visible,cars:carObjs.filter(c=>c.group.visible).length},environment:{...cityReport,sky:atmosphere.snapshot(),surfaces:surfaces.status}})};
