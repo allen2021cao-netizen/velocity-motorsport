@@ -2,7 +2,9 @@ import shell from './shell.html?raw';
 import './legacy.css';
 import './style.css';
 import './menu.css';
+import {startSplash} from './splash';
 document.querySelector('#app')!.innerHTML=shell;
+startSplash();
 import('./runtime.js').catch(error=>{
  console.error(error);
  const el=document.querySelector<HTMLElement>('#loadErr');

@@ -3,12 +3,12 @@ import {Architecture} from './geometry';
 import {facade,lettering} from './materials';
 import {landmark} from './landmarks';
 import {CITY_PROFILES,seeded,type CityKey} from './profiles';
-export interface CityReport {key:string;buildings:number;landmark:string;focus:T.Vector3;instances:number;batches:number;minimumBuildingClearance:number;}
+export interface CityReport {key:string;buildings:number;landmark:string;focus:T.Vector3;instances:number;batches:number;minimumBuildingClearance:number;minimumBuildingSeparation:number;}
 export function buildCity(world:T.Group,points:T.Vector3[],normals:T.Vector3[],key:CityKey,resources:any[],length:number){
  const p=CITY_PROFILES[key],rand=seeded(2309+key.charCodeAt(0)*71+key.length*829),night=p.sky==='night';
  const a=new Architecture(world,resources),concrete=a.material(0x92938b,0,.91),metal=a.material(0x434b50,.72,.42),stone=a.material(p.palette[0]),roof=a.material(key==='monaco'?0x98624a:0x505960,.15,.83),window=a.material(p.window,.65,.28),trim=a.material(0xc8c4b4,.1,.71),black=a.material(0x222929,.1,.84),white=a.material(0xd9d8cf,0,.8),accent=a.material(p.accent,.15,.6,p.accent,night?.65:.03),leaves=a.material(key==='alps'?0x39534a:0x46674a,0,.98),bark=a.material(0x605746,0,.96);
  const facades=[0,1,2].map(i=>facade(a,p,i)),shops=p.shops.map(t=>lettering(a,t)),lamplight=a.material(0xf8e1ab,0,.5,0xffd5a0,night?3:.2);
- let buildings=0,minClearance=Infinity;
+ let buildings=0,minClearance=Infinity,minSeparation=Infinity;const footprints:{x:number;z:number;radius:number}[]=[];
  const distToRoad=(x:number,z:number)=>{let dist=Infinity;for(let i=0;i<points.length;i+=4)dist=Math.min(dist,Math.hypot(x-points[i].x,z-points[i].z));return dist;};
  const start=points[0],forward=new T.Vector3(-normals[0].z,0,normals[0].x).negate();
  const maxX=Math.max(...points.map(q=>q.x)),maxZ=Math.max(...points.map(q=>q.z)),minX=Math.min(...points.map(q=>q.x));
@@ -24,7 +24,10 @@ export function buildCity(world:T.Group,points:T.Vector3[],normals:T.Vector3[],k
  const focus=anchor.clone();focus.y=tall?90:18;
  a.box(concrete,anchor.x,-.015,anchor.z,key==='shanghai'?200:110,.06,key==='shanghai'?160:95);
  function building(x:number,z:number,w:number,d:number,h:number,yaw:number,index:number,detail:boolean){
-  const radius=Math.hypot(w,d)/2;const clearance=distToRoad(x,z)-radius;if(clearance<12||(p.water&&x+radius>maxX+55)||Math.hypot(x-anchor.x,z-anchor.z)<(key==='shanghai'?135:75)+radius)return false;minClearance=Math.min(minClearance,clearance);buildings++;
+  const radius=Math.hypot(w,d)/2;const clearance=distToRoad(x,z)-radius;if(clearance<12||(p.water&&x+radius>maxX+55)||Math.hypot(x-anchor.x,z-anchor.z)<(key==='shanghai'?135:75)+radius)return false;
+  // Street blocks and district towers share one occupancy map: intersecting roofs shimmer in orbit.
+  const separation=footprints.reduce((gap,b)=>Math.min(gap,Math.hypot(x-b.x,z-b.z)-radius-b.radius),Infinity);
+  if(separation<2)return false;footprints.push({x,z,radius});minSeparation=Math.min(minSeparation,separation);minClearance=Math.min(minClearance,clearance);buildings++;
   a.at(x,0,z,yaw,1,()=>{
    const floors=Math.max(2,Math.round(h/3.4));h=floors*3.4;
    a.box(facades[index%3],0,h/2,0,w,h,d);a.box(concrete,0,.25,0,w+1,.5,d+1);
@@ -131,6 +134,6 @@ export function buildCity(world:T.Group,points:T.Vector3[],normals:T.Vector3[],k
    const snow=key==='alps'&&y>210+Math.sin(x*.012)*28;const c=new T.Color(snow?0xe6edef:key==='dubai'?0xbfa988:key==='alps'?0x656b68:0x727761);c.multiplyScalar(.83+Math.sin(x*.03+z*.02)*.12);colors.push(c.r,c.g,c.b);
   }geo.setAttribute('color',new T.Float32BufferAttribute(colors,3));geo.computeVertexNormals();const mesh=new T.Mesh(geo,a.keep(new T.MeshStandardMaterial({vertexColors:true,roughness:1})));mesh.receiveShadow=true;world.add(mesh);
  }
- const stats=a.finish();return{key,buildings,landmark:p.landmark,focus,...stats,minimumBuildingClearance:minClearance} satisfies CityReport;
+ const stats=a.finish();return{key,buildings,landmark:p.landmark,focus,...stats,minimumBuildingClearance:minClearance,minimumBuildingSeparation:minSeparation} satisfies CityReport;
 }
 export function animateCity(world:T.Group|null,dt:number){world?.children.forEach(o=>{if(o.userData.wave)o.userData.wave.value+=dt;});}
