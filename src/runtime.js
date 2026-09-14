@@ -7,7 +7,7 @@ import {cameraPose} from './camera-rig';
 import {createVehicleOrbit} from './vehicle-orbit';
 import {mountDrivingHelp} from './driving-help';
 import {mountMenu} from './menu';
-import {DIFFICULTIES,aiTargetSpeed,stepOpponent,freshDriver,roadCurvature,trafficPlan} from './race-ai';
+import {DIFFICULTIES,aiTargetSpeed,stepOpponent,freshDriver,roadCurvature,trafficPlan,matchedOpponents} from './race-ai';
 import {buildAutomobile} from './automotive/model';
 import * as THREE from 'three';
 import {ensureDetailedCar,DETAILED_VEHICLES} from './detailed-vehicles';
@@ -965,7 +965,7 @@ async function startRace() {
   const chosen=selected,chosenTrack=trackSel,chosenMode=options.mode,chosenDifficulty=diffSel;
   const pool=carObjs.map((c,i)=>i).filter(i=>i!==chosen);
   for(let i=pool.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[pool[i],pool[j]]=[pool[j],pool[i]];}
-  const aiIdx=options.mode==='time'?[]:pool.slice(0,3);
+  const aiIdx=options.mode==='time'?[]:chosenDifficulty===0?pool.slice(0,3):matchedOpponents(CARS,chosen,chosenDifficulty);
   const startButton=document.getElementById('startBtn'),label=startButton.innerHTML;
   startButton.disabled=true;startButton.textContent='准备赛车…';
   try{await Promise.all([chosen,...aiIdx].map(i=>ensureDetailedCar(carObjs[i])));}
@@ -1007,7 +1007,7 @@ async function startRace() {
     if (i === selected) return;
     const d = gridDist[aiN], lat = gridLat[aiN];
     placeOnTrack(c, d, lat);
-    ais.push({ car: c, dist: d, speed: 0, driver:{...freshDriver(),temperature:60}, planTimer:0, slow: 0, finished: false, finishTime: null, lat: lat * .9 });
+    ais.push({ car: c, dist: d, speed: 0, driver:{...freshDriver(),temperature:60}, planTimer:0, slow: 0, finished: false, finishTime: null, lat: lat });
     aiN++;
   });
   player.car.bodyParts.visible = !camMode || player.car.detailed;
@@ -1286,8 +1286,8 @@ function updateAI(dt) {
   const D = DIFFS[diffSel];
   const playerTotal = (player.lap - 1) + player.s;
   const playerDist = playerTotal * trackLen;
-  const traffic=ais.filter(a=>!a.finished).map(a=>({dist:a.dist,lat:a.lat,speed:a.speed}));
-  traffic.push({dist:playerDist,lat:player.latOnTrack||0,speed:player.speed});
+  const traffic=ais.filter(a=>!a.finished).map(a=>({dist:a.dist,lat:a.lat,speed:a.speed,acceleration:a.driver.longG*9.81}));
+  traffic.push({dist:playerDist,lat:player.latOnTrack||0,speed:player.speed,acceleration:player.longG*9.81});
   for (const a of ais) {
     if (a.finished) continue;
     const idx = wrapIdx(Math.round(a.dist / SEG));
@@ -1295,7 +1295,7 @@ function updateAI(dt) {
     a.planTimer-=dt;
     if(a.planTimer<=0){a.plannedSpeed=aiTargetSpeed(sCurv,SEG,idx,a.car.cfg,options,diffSel,wetness,a.driver);a.planTimer=.08;}
     let target=a.plannedSpeed;
-    const avoid=trafficPlan(a,traffic.filter(o=>o.dist!==a.dist||o.lat!==a.lat),trackLen,ROAD_W,dt);
+    const avoid=trafficPlan(a,traffic.filter(o=>o.dist!==a.dist||o.lat!==a.lat),trackLen,ROAD_W,dt,raceTime<5);
     target=Math.min(target,avoid.target);
     if(a.slow>0){a.slow-=dt;target*=.84;}else if(Math.random()<D.mistake*dt&&curvAhead>.08)a.slow=1.1;
     if(state==='race')a.speed=stepOpponent(a.speed,target,a.car.cfg,options,diffSel,dt,wetness,a.driver,roadCurvature(sCurv,SEG,idx));else a.speed=damp(a.speed,0,4,dt);

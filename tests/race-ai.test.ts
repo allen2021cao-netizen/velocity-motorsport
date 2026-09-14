@@ -32,3 +32,24 @@ test('expert acceleration is exactly shared player physics, including wet grip a
  for(let i=0;i<1000;i++){a.speed=stepOpponent(a.speed,100,car,setup,2,1/120,1,a);stepVehicle(p,{throttle:1,brake:0,steer:0,handbrake:false},car,setup,1/120,1);}
  assert.ok(Math.abs(a.speed-p.speed)<1e-9);
 });
+
+test('both race tiers use exactly the same launch physics and selected tires as the player',()=>{
+ for(const tires of ['sport','soft','wet'])for(const difficulty of [1,2]){
+  const s={...setup,tires},a=freshDriver(),p=freshDriver();a.temperature=p.temperature=60;
+  for(let i=0;i<1200;i++){a.speed=stepOpponent(a.speed,150,car,s,difficulty,1/120,.3,a);stepVehicle(p,{throttle:1,brake:0,steer:0,handbrake:false},car,s,1/120,.3);assert.ok(Math.abs(a.speed-p.speed)<1e-9);}
+ }
+});
+test('a same-car starting grid retains its launch pace without converging lanes',()=>{
+ for(const difficulty of [1,2]){
+  const grid=[26,19,12].map((dist,i)=>({dist,lat:i%2?-2.9:2.9,speed:0,driver:freshDriver()}));const solo=freshDriver();let minGap=Infinity;
+  for(let i=0;i<600;i++){
+   const snapshot=grid.map(a=>({dist:a.dist,lat:a.lat,speed:a.speed,acceleration:a.driver.longG*9.81}));
+   for(let j=0;j<grid.length;j++){const a=grid[j],plan=trafficPlan(a,snapshot.filter((_,k)=>k!==j),5000,8,1/120,true);
+    a.speed=stepOpponent(a.speed,Math.min(150,plan.target),car,setup,difficulty,1/120,0,a.driver);a.dist+=a.speed/120;a.lat=plan.lat;
+   }
+   stepVehicle(solo,{throttle:1,brake:0,steer:0,handbrake:false},car,setup,1/120);minGap=Math.min(minGap,grid[0].dist-grid[2].dist);
+  }
+  console.log('Launch tier',difficulty,'player/AI km/h',solo.speed*3.6,grid.map(a=>a.speed*3.6));
+  assert.ok(grid.every(a=>a.speed>=solo.speed*.98));assert.ok(minGap>=6);assert.deepEqual(grid.map(a=>a.lat),[2.9,-2.9,2.9]);
+ }
+});

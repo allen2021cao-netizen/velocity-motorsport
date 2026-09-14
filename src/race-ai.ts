@@ -1,7 +1,7 @@
 import {clamp,gripFor,stepVehicle,type Dynamics,type Setup} from './physics';
 export const DIFFICULTIES=[
  {name:'休闲',en:'CLUB',pace:.72,throttle:.76,braking:.72,mistake:.035,weave:.3,description:'提前制动、温和出弯，适合熟悉路线。'},
- {name:'竞技',en:'SPORT',pace:.94,throttle:.96,braking:.91,mistake:.009,weave:.08,description:'充分利用直道，主动超车，稳定控制制动点与出弯。'},
+ {name:'竞技',en:'SPORT',pace:.94,throttle:1,braking:.91,mistake:.009,weave:.08,description:'充分利用直道，主动超车，稳定控制制动点与出弯。'},
  {name:'专家',en:'EXPERT',pace:.985,throttle:1,braking:.98,mistake:.002,weave:.025,description:'接近抓地极限，精确制动与连续进攻，失误极少。'},
 ] as const;
 export type OpponentCar={top:number;accel:number;handling:number;wheelbase?:number};
@@ -39,17 +39,31 @@ export function stepOpponent(speed:number,target:number,car:OpponentCar,setup:Se
  stepVehicle(p,{throttle,brake,steer,handbrake:false},car,setup,dt,wet);
  return p.speed;
 }
-export type TrafficCar={dist:number;lat:number;speed:number};
+export type TrafficCar={dist:number;lat:number;speed:number;acceleration?:number};
 /** Snapshot-based decisions consider all cars, including lapped traffic, without rubber banding. */
-export function trafficPlan(self:TrafficCar,others:TrafficCar[],length:number,halfWidth:number,dt:number){
+export function trafficPlan(self:TrafficCar,others:TrafficCar[],length:number,halfWidth:number,dt:number,holdLane=false){
  const ahead=others.map(o=>({...o,gap:((o.dist-self.dist+length/2)%length+length)%length-length/2}));
  const lead=ahead.filter(o=>o.gap>0&&o.gap<Math.max(20,self.speed*.9)&&Math.abs(o.lat-self.lat)<2.3).sort((a,b)=>a.gap-b.gap)[0];
  let lane=self.lat,target=Infinity;
  if(lead){
   const candidates=[lead.lat-2.8,lead.lat+2.8].filter(lat=>Math.abs(lat)<=halfWidth-1.3&&ahead.every(o=>Math.abs(o.lat-lat)>2.3||o.gap>Math.max(12,self.speed*.55)||o.gap< -Math.max(9,o.speed*.4)));
-  if(candidates.length)lane=candidates.sort((a,b)=>Math.abs(a-self.lat)-Math.abs(b-self.lat))[0];
-  if(Math.abs(lead.lat-self.lat)<2.3)target=Math.max(0,lead.speed+(lead.gap-6-self.speed*.3)*.65);
- }else if(ahead.every(o=>Math.abs(o.lat)>2.3||Math.abs(o.gap)>12))lane=0;
+  if(candidates.length&&!holdLane)lane=candidates.sort((a,b)=>Math.abs(a-self.lat)-Math.abs(b-self.lat))[0];
+  if(Math.abs(lead.lat-self.lat)<2.3){
+   const closing=Math.max(0,self.speed-lead.speed);
+   const desiredGap=6+self.speed*.18+closing*.55;
+   // Predict an accelerating lead car, but never extrapolate through an emergency stop.
+   const prediction=closing<2?clamp(lead.acceleration??0,0,10)*.35:0;
+   target=Math.max(0,lead.speed+prediction+(lead.gap-desiredGap)*1.2);
+  }
+ }else if(!holdLane&&ahead.every(o=>Math.abs(o.lat)>2.3||Math.abs(o.gap)>12))lane=0;
  // Limit lane changes to 1.4 m/s: no lateral snapping during overtaking.
  return{lat:self.lat+clamp(lane-self.lat,-1.4*dt,1.4*dt),target};
+}
+
+/** Match the field to the selected car; never modify an opponent's real specification. */
+export function matchedOpponents(cars:OpponentCar[],selected:number,difficulty:number){
+ const performance=(c:OpponentCar)=>c.top/300*.45+c.accel*.35+c.handling*.2;
+ const reference=performance(cars[selected]);
+ const score=(i:number)=>Math.abs(performance(cars[i])-reference)+Math.max(0,reference-performance(cars[i]))*(difficulty===2?2:1);
+ return cars.map((_,i)=>i).filter(i=>i!==selected).sort((a,b)=>score(a)-score(b)).slice(0,3);
 }
