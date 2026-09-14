@@ -1,3 +1,4 @@
+import {mountRaceTiming} from './race-timing';
 import {mountExperience} from './experience';
 import {createCityShowcase} from './environment/showcase';
 import {createTrackCurve,CIRCUITS,circuitCurvature} from './circuits/circuit';
@@ -1562,6 +1563,7 @@ function drawCluster() {
 function updateHudStatic() {
   document.getElementById('lapTxt').textContent = '圈 LAP ' + Math.min(player.lap, session.laps) + '/' + session.laps;
 }
+const renderRaceTiming=mountRaceTiming(document.getElementById('raceTimingRows'));
 let hudTick = 0, lastRank = 4;
 function updateHud(dt) {
   drawSpeedo();
@@ -1574,8 +1576,10 @@ function updateHud(dt) {
   if (hudTick > .1) {
     hudTick = 0;
     const playerTotal = (player.lap - 1) + player.s;
-    let rank = 1;
-    ais.forEach(a => { if (a.dist / trackLen > playerTotal) rank++; });
+    const rank=renderRaceTiming([
+      {id:'player',name:player.cfg.nameCn,distance:playerTotal*trackLen,finishTime:player.finishTime,me:true},
+      ...ais.map(a=>({id:a.car.cfg.type,name:a.car.cfg.nameCn,distance:a.dist,finishTime:a.finishTime}))
+    ],raceTime,fmt);
     if (state === 'race' && raceTime > 6 && rank !== lastRank) { // 超车/被超即时提示
       if (rank < lastRank) { showMsg('', '↑ 超车!P' + rank, 1.2); beep(980, .1, .16, 'triangle'); vib(16); }
       else { showMsg('', '↓ 被超 P' + rank, 1); }
