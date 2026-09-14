@@ -55,3 +55,23 @@ Modifications: normalized dimensions, split wheels and stationary calipers, arti
 ## Distance variants
 
 Each `*-body-lod.glb` is a decimated adaptation of the corresponding detailed asset and uses the same author credit and license. The Porsche adaptation remains CC BY-SA 4.0. Wheels remain articulated high-detail assemblies; rigid bodies switch at distance with hysteresis. Original cabin supplements are only shown at close range. Reproduction scripts and SHA-256 manifests are in `tools/` in the source repository.
+
+## r8-detailed.glb — Audi R8
+
+Credit: IPfuentes (https://sketchfab.com/IPfuentes).
+Source: https://sketchfab.com/3d-models/audi-r8-3d-model-d999506c52cf4313aad5220f4af2da6c
+Distribution: https://github.com/mohammedz00/VM-Tints-Wraps-3D-Website/tree/main/public/audi_r8_3d_model
+License: CC BY 4.0, https://creativecommons.org/licenses/by/4.0/ (embedded source metadata).
+Modifications: normalization, separate wheels, rubber/paint/glass calibration, Draco and WebP, rigid-body LOD. A left-hand-drive cabin is an original approximate supplement derived from our cabin geometry, not an Audi scan. Speed/RPM dials and steering animate.
+
+## mcf1-detailed.glb — McLaren F1 LM
+
+Credit: No Limits (https://sketchfab.com/nolimitsofficial).
+Source: https://sketchfab.com/3d-models/mclaren-f1-lm-e8aa53610e5047a98bfca98726e670c0
+Distribution: https://github.com/abdullahriaz1/temujin/tree/main/public/3d-assets/mclaren_f1_lm
+License: CC BY 4.0, https://creativecommons.org/licenses/by/4.0/ (source page and embedded metadata).
+Modifications: scale, wheel separation, paint/glass/interior materials, Draco and WebP, rigid-body LOD. The LM wing and bodywork are retained and identified in the menu. The original central cockpit is retained; its wheel and instrument faces are static. The HUD supplies live telemetry.
+
+## Original classic details
+
+Diablo SV, Viper GTS, CLK GTR and Corvette C5 use original approximate geometry, with model-specific vents, lamp housings, seams, cabin details and aero surfaces in src/automotive/classic-detail.ts. These are not imported high-fidelity scans and are not claimed to match the imported Ferrari 458. Low-poly candidate downloads were evaluated but are not included in the game.

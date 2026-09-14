@@ -135,5 +135,66 @@
         "sha256": "e1e6311120139294224948fe2c528a1eca96b0c129b8be8054322b1fccd9d6f3"
       }
     ]
+  },
+  {
+    "key": "r8",
+    "format": "gltf",
+    "credit": {
+      "author": "IPfuentes (https://sketchfab.com/IPfuentes)",
+      "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "source": "https://sketchfab.com/3d-models/audi-r8-3d-model-d999506c52cf4313aad5220f4af2da6c",
+      "title": "Audi R8 3D model"
+    },
+    "files": [
+      {
+        "path": "scene.gltf",
+        "url": "https://raw.githubusercontent.com/mohammedz00/VM-Tints-Wraps-3D-Website/main/public/audi_r8_3d_model/scene.gltf",
+        "canonicalJson": true,
+        "sha256": "93da6c0ffe0cfaed7109af21ec4e8c099808d8416744d7ee7e54ec6f6f67aa57"
+      },
+      {
+        "path": "scene.bin",
+        "url": "https://raw.githubusercontent.com/mohammedz00/VM-Tints-Wraps-3D-Website/main/public/audi_r8_3d_model/scene.bin",
+        "sha256": "727ae040769764d62909fee702e67a80dc4435b38301dcd1ff9dfea4f4bf9759"
+      },
+      {
+        "path": "textures/Material.002_baseColor.png",
+        "url": "https://raw.githubusercontent.com/mohammedz00/VM-Tints-Wraps-3D-Website/main/public/audi_r8_3d_model/textures/Material.002_baseColor.png",
+        "sha256": "d06877a8be3d1e41a70269e5116290074627bf586e7bf69ca7223599138b282e"
+      },
+      {
+        "path": "textures/Material.002_normal.png",
+        "url": "https://raw.githubusercontent.com/mohammedz00/VM-Tints-Wraps-3D-Website/main/public/audi_r8_3d_model/textures/Material.002_normal.png",
+        "sha256": "f63c49bc2e61deb079326ac87639ecd5501e6ce596481cdb3f4ec274058858f7"
+      },
+      {
+        "path": "textures/license_plate_baseColor.png",
+        "url": "https://raw.githubusercontent.com/mohammedz00/VM-Tints-Wraps-3D-Website/main/public/audi_r8_3d_model/textures/license_plate_baseColor.png",
+        "sha256": "e4ebea23f1f5104d31f283f2b0eefd04f33f522a11cda573cf68cfdb239904b5"
+      }
+    ]
+  },
+  {
+    "key": "mcf1",
+    "format": "gltf",
+    "credit": {
+      "author": "No Limits (https://sketchfab.com/nolimitsofficial)",
+      "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "source": "https://sketchfab.com/3d-models/mclaren-f1-lm-e8aa53610e5047a98bfca98726e670c0",
+      "title": "Mclaren F1 LM"
+    },
+    "files": [
+      {
+        "path": "scene.gltf",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mclaren_f1_lm/scene.gltf",
+        "canonicalJson": true,
+        "sha256": "2961dec2e97cc213926140a85828dfbe795d8c93324d37230e34616756f8a7b5"
+      },
+      {
+        "path": "scene.bin",
+        "url": "https://raw.githubusercontent.com/abdullahriaz1/temujin/main/public/3d-assets/mclaren_f1_lm/scene.bin",
+        "sha256": "8b1cd0194afa53eb243dd5a0163d1e0b0eb320e4ac51ac189ad26c7c4b24bf6b"
+      }
+    ]
   }
 ]

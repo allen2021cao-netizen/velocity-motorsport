@@ -1,11 +1,12 @@
 import * as T from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+import {detailClassics} from './classic-detail';
 import {SHAPES} from './profiles';
 const V=(x:number,y:number,z:number)=>new T.Vector3(x,y,z);
 /** Continuous coachwork patches, cut wheel arches, glazed cabin and independent wheel assemblies. */
 export function buildAutomobile(cfg:any){
- const p=SHAPES[cfg.type]||SHAPES.f40,id=cfg.type,g=new T.Group(),body=new T.Group();g.add(body);
+ const p=SHAPES[cfg.type]||SHAPES.f40,id=cfg.type,classic=['diablo','viper','clk','c5'].includes(id),g=new T.Group(),body=new T.Group();g.add(body);
  const paint=new T.MeshPhysicalMaterial({color:cfg.color,metalness:.72,roughness:.24,clearcoat:1,clearcoatRoughness:.12});
  const rubber=new T.MeshStandardMaterial({color:0x101113,roughness:.94,side:T.DoubleSide}),carbon=new T.MeshStandardMaterial({color:0x222629,roughness:.62,metalness:.2}),trim=new T.MeshStandardMaterial({color:0x111619,roughness:.5}),alloy=new T.MeshStandardMaterial({color:0xb5bec4,roughness:.24,metalness:1});
  const glass=new T.MeshPhysicalMaterial({color:0xa6bfc6,roughness:.09,metalness:.12,transparent:true,opacity:.29,depthWrite:false,side:T.DoubleSide});
@@ -21,7 +22,7 @@ export function buildAutomobile(cfg:any){
  function width(z:number){const t=Math.abs(z)/front;const taper=(p.round?.22:.14)*Math.pow(t,5);const hips=.025*Math.exp(-Math.pow((z-p.rear)/.5,2));return p.width/2*(1-taper)+hips;}
  function crown(z:number){const t=(z+front)/p.length;const baseline=p.tail+(p.nose-p.tail)*t;const cabin=p.waist+.035;const blend=Math.exp(-Math.pow((z-(p.screen+p.backlight)/2)/(p.length*.29),4));return T.MathUtils.lerp(baseline+.045*Math.sin(Math.PI*t),cabin,blend);}
  const fender=(z:number)=>p.bulge*Math.max(Math.exp(-Math.pow((z-p.front)/.43,2)),Math.exp(-Math.pow((z-p.rear)/.45,2)));
- function top(x:number,z:number){const t=Math.abs(x)/width(z),base=crown(z)+fender(z)*Math.pow(t,2.6)-.055*Math.pow(t,8);return Math.max(base,lower(z)+.04-Math.max(0,.73-t)*1.8);}
+ function top(x:number,z:number){const t=Math.abs(x)/width(z),base=crown(z)+fender(z)*Math.pow(t,2.6)-.055*Math.pow(t,8);if(classic){const blend=T.MathUtils.smoothstep(t,.25,1);return T.MathUtils.lerp(base,Math.max(base,lower(z)+.035),blend);}return Math.max(base,lower(z)+.04-Math.max(0,.73-t)*1.8);}
  const lower=(z:number)=>{let y=.19;for(const axle of [p.front,p.rear]){const d=z-axle;if(Math.abs(d)<p.wheel+.055)y=Math.max(y,p.wheel+Math.sqrt((p.wheel+.055)**2-d*d));}return y;};
  // Hood and rear deck are separate patches: the passenger compartment is hollow.
  for(const [z0,z1] of [[rear,p.backlight],[p.screen,front]])surface((u,v)=>{const z=z0+(z1-z0)*u,x=(v*2-1)*width(z);return V(x,top(x,z),z);},paint);
@@ -78,6 +79,20 @@ export function buildAutomobile(cfg:any){
  for(const side of [-1,1]){
   const hx=side*p.width*.32;
   if(roundFront){ellipsoid(paint,hx,headY+.035,headZ-.18,.17,.085,.15);const m=ellipsoid(trim,hx,headY+.045,headZ-.09,.139,.116,.026);m.rotation.x=-.65;const l=ellipsoid(lens,hx,headY+.05,headZ-.07,.124,.103,.019);l.rotation.x=-.65;}
+  else if(classic){
+   if(id==='clk'||id==='viper'){
+    const zz=front-.23,yy=top(hx,zz)+.023;
+    const housing=ellipsoid(trim,hx,yy,zz,id==='clk'?.20:.23,.035,.17);housing.rotation.z=side*.10;
+    for(let j=0;j<2;j++){
+     const x=hx+(j-.5)*.13;ellipsoid(alloy,x,yy+.015,zz+.035,.057,.018,.085);
+     ellipsoid(light,x,yy+.028,zz+.055,.041,.012,.054);
+    }
+    ellipsoid(glass,hx,yy+.034,zz,.205,.008,.145);
+   }else{
+    box(trim,hx,.30,headZ-.026,.29,.065,.028,.012);
+    box(lens,hx,.30,headZ-.007,.255,.045,.011,.009);
+   }
+  }
   else{
    const housing=box(trim,hx,headY,headZ-.01,p.width*.23,.105,.065,.035);housing.rotation.z=side*(p.round?.09:0);
    for(let j=-1;j<=1;j++){ellipsoid(alloy,hx+j*.092,headY,headZ+.027,.036,.035,.016);ellipsoid(light,hx+j*.092,headY,headZ+.039,.024,.025,.013);}
@@ -107,7 +122,7 @@ export function buildAutomobile(cfg:any){
  if(p.wing){const wingZ=rear+.26;for(const side of [-1,1])box(id==='f40'?paint:alloy,side*p.width*.35,(p.tail+p.wing)/2,wingZ,.055,p.wing-p.tail,.22,.016);box(id==='f40'||id==='p911'?paint:carbon,0,p.wing,wingZ,p.width*.91,.055,id==='p911'?.5:.34,.026);}
  if(['f40','diablo','mcf1','clk','gt40'].includes(id))for(let i=0;i<7;i++){const z=p.backlight-.12-i*.105;box(trim,0,top(0,z)+.008,z,p.width*.45,.012,.042,.004);}
  if(id==='m3')for(const side of [-1,1])for(let i=0;i<5;i++){const z=p.screen+.14+i*.1;box(trim,side*.32,top(side*.32,z)+.014,z,.25,.013,.038,.003);}
- if(['mcf1','clk','diablo'].includes(id)){box(paint,0,p.height+.045,p.roofRear+.02,.22,.09,.35,.035);box(trim,0,p.height+.047,p.roofRear+.20,.155,.045,.012,.009);}
+ if(['mcf1','clk'].includes(id)){box(paint,0,p.height+.045,p.roofRear+.02,.22,.09,.35,.035);box(trim,0,p.height+.047,p.roofRear+.20,.155,.045,.012,.009);}
  if(['viper','gt40','m3'].includes(id))for(const side of [-1,1])for(const [z0,z1] of [[rear,p.backlight],[p.screen,front]])surface((u,v)=>{const z=z0+(z1-z0)*u,x=side*.17+(v-.5)*.15;return V(x,top(x,z)+.003,z);},new T.MeshStandardMaterial({color:id==='gt40'?0xe77928:id==='m3'?0x224aa0:0xe9e7df,roughness:.28,metalness:.45}),48,4);
  const exhausts=id==='f40'?[-.14,0,.14]:id==='c5'?[-.21,-.07,.07,.21]:id==='r34'?[-.55]:id==='supra'?[.52]:[-.48,.48];
  for(const x of exhausts){const pipe=add(new T.CylinderGeometry(.062,.062,.16,24,1,true),alloy,x,.285,rear-.035);pipe.rotation.x=Math.PI/2;const hole=add(new T.CircleGeometry(.05,24),trim,x,.285,rear-.12);hole.rotation.y=Math.PI;}
@@ -129,9 +144,11 @@ export function buildAutomobile(cfg:any){
   for(let j=0;j<3;j++){const line=add(new T.TorusGeometry(p.wheel+.0006,.0025,4,80),trim,(j-1)*.064,0,0,spin);line.rotation.y=Math.PI/2;}
   for(let i=0;i<64;i++){const th=i*Math.PI*2/64;for(const band of [-1,1]){const tread=box(trim,band*.09,Math.sin(th)*(p.wheel+.001),Math.cos(th)*(p.wheel+.001),.055,.003,.013,.001,spin);tread.rotation.x=-th;}}
  }
+ const crafted=['diablo','viper','clk','c5'].includes(id);
+ if(crafted)detailClassics(id,p,{box,tube,add,surface,ellipsoid,top,width,body,mats});
  // Merge only rigid opaque assemblies. Preserve glass and articulated steering/brakes.
  function batch(root:T.Group){root.updateMatrixWorld(true);const inverse=root.matrixWorld.clone().invert(),bins=new Map<T.Material,T.Mesh[]>();root.traverse(o=>{const m=o as T.Mesh;if(m.isMesh&&!Array.isArray(m.material)&&!m.material.transparent){const list=bins.get(m.material)||[];list.push(m);bins.set(m.material,list);}});for(const [mat,list]of bins){if(list.length<2)continue;const source=list.map(m=>(m.geometry.index?m.geometry.toNonIndexed():m.geometry.clone()).applyMatrix4(inverse.clone().multiply(m.matrixWorld)));const geo=mergeGeometries(source);source.forEach(x=>x.dispose());if(geo){const mesh=add(geo,mat,0,0,0,root);mesh.name='batched-'+mat.uuid;list.forEach(m=>{m.removeFromParent();m.geometry.dispose();});}}}
  steeringWheel.removeFromParent();batch(body);body.add(steeringWheel);for(const w of wheels)batch(w);
- g.name=cfg.nameEn;g.userData.modelKind='procedural-coachwork';g.userData.dimensions={length:p.length,width:p.width,height:p.height,wheelbase:p.wheelbase};
- return{group:g,bodyParts:body,wheels,frontPivots,flames:[],glowPlane:new T.Group(),cfg,brakeLight:red,steeringWheel,detailed:true,cockpit:{x:p.cockpit,y:p.height-.12,z:p.screen-.95},bonnet:{x:0,y:top(0,p.screen+.25)+.19,z:p.screen+.25},wheelRadius:p.wheel,modelKind:'procedural-coachwork',materials:mats};
+ g.name=cfg.nameEn;g.userData.modelKind=crafted?'original-classic-detail':'procedural-coachwork';g.userData.dimensions={length:p.length,width:p.width,height:p.height,wheelbase:p.wheelbase};
+ return{group:g,bodyParts:body,wheels,frontPivots,flames:[],glowPlane:new T.Group(),cfg,brakeLight:red,steeringWheel,detailed:true,cockpit:{x:p.cockpit,y:p.height-.12,z:p.screen-.95},bonnet:{x:0,y:top(0,p.screen+.25)+.19,z:p.screen+.25},wheelRadius:p.wheel,modelKind:crafted?'original-classic-detail':'procedural-coachwork',materials:mats};
 }

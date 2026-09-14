@@ -12,8 +12,8 @@ function dial(radius:number,max:number,label:string){
  const needle=new T.Group();const hand=new T.Mesh(new T.BoxGeometry(radius*.025,radius*.7,.002),new T.MeshBasicMaterial({color:0xff6038}));hand.position.y=radius*.33;needle.add(hand);needle.position.z=-.003;g.add(needle);
  return {group:g,set(value:number){needle.rotation.z=(135+T.MathUtils.clamp(value/max,0,1)*270+90)*Math.PI/180;}};
 }
-export function makeR34Cabin(body:T.Group){
- const cabin=new T.Group();cabin.name='original-r34-cabin';body.add(cabin);
+export function makeR34Cabin(body:T.Group,variant='r34'){
+ const cabin=new T.Group();cabin.name='original-'+variant+'-cabin';body.add(cabin);
  const leather=new T.MeshStandardMaterial({color:0x202329,roughness:.84}),trim=new T.MeshStandardMaterial({color:0x080b10,roughness:.65}),metal=new T.MeshStandardMaterial({color:0x788087,metalness:.65,roughness:.32});
  function box(x:number,y:number,z:number,w:number,h:number,d:number,mat=leather,r=.025,parent:T.Object3D=cabin){const m=new T.Mesh(new RoundedBoxGeometry(w,h,d,3,Math.min(r,w/3,h/3,d/3)),mat);m.position.set(x,y,z);parent.add(m);return m;}
  box(0,.79,.59,1.46,.27,.43);box(-.36,.925,.49,.56,.17,.22,trim,.06);
@@ -21,10 +21,10 @@ export function makeR34Cabin(body:T.Group){
  for(const side of [-1,1]){box(side*.74,.63,-.2,.045,.48,1.3);box(side*.7,.55,-.18,.075,.095,.55,trim);box(side*.69,.7,-.2,.012,.026,.16,metal);box(side*.36,.39,-.57,.48,.16,.56);const seat=box(side*.36,.7,-.82,.46,.58,.14);seat.rotation.x=-.14;box(side*.36,1.03,-.87,.24,.21,.12);}
  box(0,1.235,-.28,1.21,.025,1.1); // dark headlining inside the source roof
  const speed=dial(.083,320,'km/h'),rpm=dial(.083,10,'x1000 RPM'),fuel=dial(.05,100,'FUEL');
- for(const [d,x] of [[speed,-.26],[rpm,-.46],[fuel,-.095]] as const){d.group.position.set(x,.91,.368);cabin.add(d.group);}fuel.set(85);
+ for(const [d,x] of [[speed,-.26],[rpm,-.46],[fuel,-.095]] as const){d.group.position.set(x,.91,.368);cabin.add(d.group);}fuel.set(85);if(variant==='r8')for(const d of [speed,rpm,fuel])d.group.scale.x=-1;
  for(const x of [-.65,.12,.3,.63]){box(x,.79,.355,.13,.058,.027,trim,.006);for(let i=0;i<4;i++)box(x,.772+i*.011,.336,.11,.003,.003,metal,.001);}
  const cv=document.createElement('canvas');cv.width=512;cv.height=256;const ctx=cv.getContext('2d')!;const tex=new T.CanvasTexture(cv);tex.colorSpace=T.SRGBColorSpace;
- box(.18,.97,.58,.31,.16,.10,trim,.018);const screen=new T.Mesh(new T.PlaneGeometry(.278,.13),new T.MeshBasicMaterial({map:tex}));screen.rotation.y=Math.PI;screen.position.set(.18,.97,.526);cabin.add(screen);
+ const displayCase=box(.18,.97,.58,.31,.16,.10,trim,.018);if(variant==='r8')displayCase.visible=false;const screen=new T.Mesh(new T.PlaneGeometry(.278,.13),new T.MeshBasicMaterial({map:tex}));screen.rotation.y=Math.PI;screen.position.set(.18,.97,.526);cabin.add(screen);if(variant==='r8')screen.visible=false;
  box(.15,.625,.32,.22,.18,.06,trim);for(const x of [.075,.15,.225]){const knob=new T.Mesh(new T.CylinderGeometry(.02,.02,.015,24),metal);knob.rotation.x=Math.PI/2;knob.position.set(x,.615,.279);cabin.add(knob);}
  box(.05,.60,-.06,.018,.16,.018,metal);box(.05,.689,-.06,.05,.04,.05,trim);
  const steering=new T.Group();steering.position.set(-.36,.79,.055);steering.userData.steeringAxis='z';cabin.add(steering);

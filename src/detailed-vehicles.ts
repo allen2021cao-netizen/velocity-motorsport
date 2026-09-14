@@ -5,6 +5,8 @@ import {supplementPorscheCabin} from './porsche-cabin';
 import {makeR34Cabin,makeF40Instruments} from './classic-cabins';
 
 export const DETAILED_VEHICLES={
+ r8:{file:'r8',wheelbase:2.65,cockpit:{x:.34,y:1.00,z:-.12},hood:1.15,paint:/^material$/,glass:/^glass$/,brake:/^Material.003$/,author:'IPfuentes',name:'Audi R8'},
+ mcf1:{file:'mcf1',wheelbase:2.718,cockpit:{x:0,y:.94,z:-.10},hood:1.13,paint:/^11Mtl$/,glass:/^Meshpart11Mtl$/,brake:/^R2Mtl$/,author:'No Limits',name:'McLaren F1 LM'},
  f40:{file:'f40',wheelbase:2.45,cockpit:{x:.33,y:1.03,z:-.10},hood:1.15,paint:/^material$/,glass:/F40_(Glass|Window)/,brake:/^super_brakelight$/,author:'Black Snow',name:'Ferrari F40'},
  r34:{file:'r34',wheelbase:2.665,cockpit:{x:-.36,y:1.10,z:-.30},hood:1.1,paint:/^Material\.001$/,glass:/^Material\.006$/,brake:/^Material\.009$/,author:'Lexyc16',name:'Nissan Skyline GT-R R34'},
  supra:{file:'supra-mk4',wheelbase:2.55,cockpit:{x:.35,y:1.04,z:-.31},hood:1.15,paint:/^esta80$/,glass:/esta80_glass/,brake:/^esta80_(brake|chmsl)$/,author:'Black Snow',name:'Toyota Supra Mk4 A80'},
@@ -40,6 +42,10 @@ export async function loadAdditionalCars(cars:any[]){
      if(spec.file==='bmw'&&/Meshes(interior71|chrome51)Mtl/i.test(m.name)){m.color.set(0x25282b);m.metalness=0;m.roughness=.68;}
      if(spec.file==='porsche'&&/^(full_black|rubber)$/.test(m.name)){m.color.set(0x242529);m.metalness=0;m.roughness=.85;}
      if(spec.file==='porsche'&&m.name==='lights'){m.transmission=0;m.opacity=.45;m.depthWrite=false;}
+     if(spec.file==='mcf1'&&spec.glass.test(m.name)){m.opacity=.08;m.color.set(0x6e8993);}
+     if(spec.file==='mcf1'&&/Meshpart[247]Mtl/.test(m.name)){m.color.set(0x24262a);m.metalness=0;m.roughness=.78;}
+     if(spec.file==='mcf1'&&m.name==='11Mtl'){m.color.set(0xe95d0c);m.metalness=.18;m.roughness=.29;}
+     if(spec.file==='r8'&&m.name==='Material.002'){m.color.set(0x17191c);m.metalness=0;m.roughness=.92;}
      if(spec.file==='f40'){
       if(m.name==='material'){m.color.set(0xc91812);m.metalness=.12;m.roughness=.27;}
       if(/gauges|Display/.test(m.name)){m.metalness=0;m.roughness=.68;if(m.name==='super_gauges')m.color.set(0x10151a);}
@@ -80,6 +86,7 @@ export async function loadAdditionalCars(cars:any[]){
    Object.assign(car,{bodyParts:body,wheels,frontPivots,flames:[],glowPlane:new T.Group(),brakeLight,detailed:true,modelKind:'imported-glb',wheelRadius:radii.reduce((a,b)=>a+b)/4,cockpit:spec.cockpit,bonnet:{x:0,y:(hit?.point.y??size.y*.6)+.19,z:spec.hood},steeringWheel:null,assetCredit:spec.author,assetName:spec.name});
    car.group.userData.dimensions={length:size.z,width:size.x,height:size.y,wheelbase:(axles[0]+axles[1]-axles[2]-axles[3])/2};
    if(spec.file==='porsche')car.steeringWheel=supplementPorscheCabin(body);
+   if(spec.file==='r8'){const holder=new T.Group();body.add(holder);holder.scale.set(-1,.90,1);const cabin=makeR34Cabin(holder,'r8');car.steeringWheel=cabin.steering;car.updateInstruments=cabin.update;}
    if(spec.file==='r34'){const cabin=makeR34Cabin(body);car.steeringWheel=cabin.steering;car.updateInstruments=cabin.update;}
    if(spec.file==='f40')car.updateInstruments=makeF40Instruments(body);
    if(spec.file==='supra-mk4'){

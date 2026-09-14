@@ -10,6 +10,8 @@ await MeshoptDecoder.ready;
 const io=new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({'draco3d.decoder':await draco3d.createDecoderModule(),'draco3d.encoder':await draco3d.createEncoderModule(),'meshopt.decoder':MeshoptDecoder});
 const specs=[{key:'porsche',length:4.49,wheel:/^Cylinder\.00[01]_[012]$/,caliper:/^Cylinder\.00[01]_3$/,remove:/^Plane_0$/},{key:'bmw',length:4.794,wheel:/^Object_3[34]$/,caliper:/^Object_32$/},{key:'gt40',length:4.183,wheel:/^Object_4[4-7]$/}];
 specs.push(
+ {key:'r8',length:4.43,wheel:/^(front|back)_(left|right)_wheel_/},
+ {key:'mcf1',length:4.365,wheel:/^Object_3[12]$/},
  {key:'f40',length:4.43,wheel:/^Object_(30|31|37|38|39|40)$/,caliper:/^Object_11$/},
  {key:'r34',length:4.6,wheel:/^Object_(13|14)$/},
  {key:'supra-mk4',length:4.52,wheel:/^(esta80_wheel_|3_Wheel|wheel pl.*(1disk|tormoz1))/,caliper:/^wheel pl.*(tormoz2|023|glossBlack)/},
