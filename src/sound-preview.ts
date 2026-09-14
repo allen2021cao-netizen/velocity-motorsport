@@ -1,7 +1,7 @@
 import {RaceAudio} from './race-audio';
 import {AUDIO_ASSETS} from './engine-banks';
 import {CARS} from './cars.js';
-const cars=CARS.map(car=>[car.type,car.nameCn]);let selected='458',mode='',audio:RaceAudio,ac:AudioContext,master:GainNode,started=0,last=performance.now();
+const cars=CARS.map(car=>[car.type,car.nameCn]);let selected=cars.find(c=>c[0]===new URLSearchParams(location.search).get('car'))?.[0]||'458',mode='',audio:RaceAudio,ac:AudioContext,master:GainNode,started=0,last=performance.now();
 const status=document.querySelector('#status')!,rpm=document.querySelector('#rpm')!;
 function choose(){document.querySelector('#name')!.textContent=cars.find(c=>c[0]===selected)![1];document.querySelectorAll<HTMLButtonElement>('[data-car]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.car===selected)));}
 for(const [id,name]of cars){const b=document.createElement('button');b.textContent=name;b.dataset.car=id;b.onclick=()=>{selected=id;started=performance.now();choose();};document.querySelector('#cars')!.append(b);}choose();

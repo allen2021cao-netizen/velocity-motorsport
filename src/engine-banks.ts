@@ -1,7 +1,7 @@
 import type {EngineFamily} from './audio-dynamics';
 export const ENGINE_BANKS:Record<EngineFamily,{file:string;rpm:number;cutoff:number;designed?:boolean;high?:{file:string;rpm:number;start:number;end:number}}>={
  muscle:{file:'muscle',rpm:2500,cutoff:9000},
- porscheBoxer:{file:'p911-mid-v4',rpm:3500,cutoff:4100,designed:true,high:{file:'p911-high-v4',rpm:6200,start:4200,end:5600}},
+ porscheBoxer:{file:'p911-mid-v5',rpm:3500,cutoff:3200,designed:true,high:{file:'p911-high-v5',rpm:6200,start:4000,end:5900}},
  nissanRB26:{file:'r34-mid-v4',rpm:3500,cutoff:4400,designed:true,high:{file:'r34-high-v4',rpm:6500,start:4300,end:5700}},
  toyota2JZ:{file:'supra-mid-v4',rpm:3500,cutoff:3700,designed:true,high:{file:'supra-high-v4',rpm:6200,start:4200,end:5500}},
  bmwS58:{file:'m4-mid-v4',rpm:3500,cutoff:3900,designed:true,high:{file:'m4-high-v4',rpm:6200,start:4100,end:5400}},

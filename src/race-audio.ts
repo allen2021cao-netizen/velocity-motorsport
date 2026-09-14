@@ -37,7 +37,7 @@ export class RaceAudio {
   const bank=ENGINE_BANKS[p.family],blend=engineBlend(this.train.rpm,bank.rpm),high=highBlend(this.train.rpm,bank.high),highMix=bank.high&&this.samples.has(bank.high.file)?high.mix:0,available=this.samples.has(bank.file),shiftDip=this.train.shift>0?.45:1;
   this.smooth(this.engineBus.gain,alive*(frame.camera===1?.82:1)*shiftDip,.025);
   const sampleMix=bank.designed?blend.sample:1;
-  this.tune(this.synth,p,this.train.rpm,(available?(bank.designed?.045*(1-highMix*.75)+(1-sampleMix)*.055:.025):.15)*(.4+load*.6),0);
+  this.tune(this.synth,p,this.train.rpm,(available?(bank.designed?(p.family==='porscheBoxer'?.015:.045)*(1-highMix*.75)+(1-sampleMix)*.055:.025):.15)*(.4+load*.6),0);
   for(const [name,v]of this.samples){if(name==='tire'||name==='road')continue;
    const isHigh=name===bank.high?.file;
    const idle=name==='mclaren-idle-v2'&&p.family==='mclarenV12';
