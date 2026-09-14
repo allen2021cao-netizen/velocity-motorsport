@@ -1,0 +1,139 @@
+[
+  {
+    "key": "f40",
+    "format": "glb",
+    "files": [
+      {
+        "path": "f40.glb",
+        "url": "https://raw.githubusercontent.com/sceneview/sceneview/main/samples/web-demo/site/models/ferrari_f40.glb",
+        "sha256": "a1ec281f1c219c049ecd07e4ef20c69d26c233b6270614743ca015a7f5713674"
+      }
+    ]
+  },
+  {
+    "key": "r34",
+    "format": "gltf",
+    "credit": {
+      "author": "Lexyc16 (https://sketchfab.com/Lexyc16)",
+      "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "source": "https://sketchfab.com/3d-models/nissan-skyline-r34-gt-r-ff8fb2251dfa4bb9979e7022c5a6666c",
+      "title": "Nissan Skyline R34 GT-R"
+    },
+    "files": [
+      {
+        "path": "scene.gltf",
+        "url": "https://raw.githubusercontent.com/GigaSmurf/DS/master/src/assets/nissan_skyline_r34_gt-r/scene.gltf",
+        "canonicalJson": true,
+        "sha256": "345de4e2fbf8e54368b8d814d17f5a8a02f875e47dfc27664593a85a9db7bc65"
+      },
+      {
+        "path": "scene.bin",
+        "url": "https://raw.githubusercontent.com/GigaSmurf/DS/master/src/assets/nissan_skyline_r34_gt-r/scene.bin",
+        "sha256": "6be3e8c391dadcaccab79734380cf5de3567c22c357a57d23baca77d242d3343"
+      },
+      {
+        "path": "textures/Material.008_baseColor.png",
+        "url": "https://raw.githubusercontent.com/GigaSmurf/DS/master/src/assets/nissan_skyline_r34_gt-r/textures/Material.008_baseColor.png",
+        "sha256": "f4d0421c855c1c0f032a8ebb10b487b3a2834240b18b20cdc6db1282b29e7de5"
+      },
+      {
+        "path": "textures/Material.009_baseColor.png",
+        "url": "https://raw.githubusercontent.com/GigaSmurf/DS/master/src/assets/nissan_skyline_r34_gt-r/textures/Material.009_baseColor.png",
+        "sha256": "ee845c186f33a8fed368904aabfbb46f7956346be682c166d19fde3567e938c3"
+      },
+      {
+        "path": "textures/Material.010_baseColor.png",
+        "url": "https://raw.githubusercontent.com/GigaSmurf/DS/master/src/assets/nissan_skyline_r34_gt-r/textures/Material.010_baseColor.png",
+        "sha256": "77c2c2ddbd45809ac99c7e96361ff8934fcc93ca91d2b85d573a26472d8bf0a2"
+      },
+      {
+        "path": "textures/Material.011_baseColor.png",
+        "url": "https://raw.githubusercontent.com/GigaSmurf/DS/master/src/assets/nissan_skyline_r34_gt-r/textures/Material.011_baseColor.png",
+        "sha256": "96ce42317ccb269149146a84a403700db042551623f58a628cb7d89c4deba80b"
+      },
+      {
+        "path": "textures/Material.011_normal.png",
+        "url": "https://raw.githubusercontent.com/GigaSmurf/DS/master/src/assets/nissan_skyline_r34_gt-r/textures/Material.011_normal.png",
+        "sha256": "bc9d43dbf2a8eda56f5bfb93ca064e041e83318c6cf8d04199a404f39e1d385a"
+      },
+      {
+        "path": "textures/Material.032_baseColor.png",
+        "url": "https://raw.githubusercontent.com/GigaSmurf/DS/master/src/assets/nissan_skyline_r34_gt-r/textures/Material.032_baseColor.png",
+        "sha256": "58767cf96cab39760629c059eba4da859fc9d3a9bf66ff9d39ace46891b178ac"
+      }
+    ]
+  },
+  {
+    "key": "supra-mk4",
+    "format": "gltf",
+    "credit": {
+      "author": "Black Snow (https://sketchfab.com/BlackSnow02)",
+      "license": "CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)",
+      "source": "https://sketchfab.com/3d-models/toyota-supra-mk4-8bebdee25b774067929bb33e648533ac",
+      "title": "Toyota Supra mk4"
+    },
+    "files": [
+      {
+        "path": "scene.gltf",
+        "url": "https://raw.githubusercontent.com/raquellopes3/Trabalho-de-A-FRAME/main/toyota_supra_mk4/scene.gltf",
+        "canonicalJson": true,
+        "sha256": "59db38b7e1c93a3e9128790ba7df749b3999711323b4ee4a436bf0b3f7becd06"
+      },
+      {
+        "path": "scene.bin",
+        "url": "https://raw.githubusercontent.com/raquellopes3/Trabalho-de-A-FRAME/main/toyota_supra_mk4/scene.bin",
+        "sha256": "3b063e5521215133d5b43c5984faaaadeba5b4b207547030b114e49364a5193e"
+      },
+      {
+        "path": "textures/esta80_carbon_baseColor.png",
+        "url": "https://raw.githubusercontent.com/raquellopes3/Trabalho-de-A-FRAME/main/toyota_supra_mk4/textures/esta80_carbon_baseColor.png",
+        "sha256": "9f392f97cc037de3066e78cb60efcbef086bd1f55eaad603c8fb98119576b98b"
+      },
+      {
+        "path": "textures/sdd_mk4_gauges_baseColor.png",
+        "url": "https://raw.githubusercontent.com/raquellopes3/Trabalho-de-A-FRAME/main/toyota_supra_mk4/textures/sdd_mk4_gauges_baseColor.png",
+        "sha256": "54ce8b3792204e6d21906dec930cd333e25dd8aa68303fd60dbfb93053e74692"
+      },
+      {
+        "path": "textures/sdd_leather_normal.png",
+        "url": "https://raw.githubusercontent.com/raquellopes3/Trabalho-de-A-FRAME/main/toyota_supra_mk4/textures/sdd_leather_normal.png",
+        "sha256": "f4efbd5fe133455fea392e2160ead2b188a65f8fbe151359db8a22306c51f39e"
+      },
+      {
+        "path": "textures/esta80_mats_baseColor.png",
+        "url": "https://raw.githubusercontent.com/raquellopes3/Trabalho-de-A-FRAME/main/toyota_supra_mk4/textures/esta80_mats_baseColor.png",
+        "sha256": "a4c8f99b442accb2869be75e1e43bba41feb0383a6bf8cc51f1adc49a7e57a20"
+      },
+      {
+        "path": "textures/coupe_engine_baseColor.png",
+        "url": "https://raw.githubusercontent.com/raquellopes3/Trabalho-de-A-FRAME/main/toyota_supra_mk4/textures/coupe_engine_baseColor.png",
+        "sha256": "35545989ec4f2b874305c903a5ff9a698ed62288e3dda3e38c2c3c1664552b32"
+      },
+      {
+        "path": "textures/coupe_engine_metallicRoughness.png",
+        "url": "https://raw.githubusercontent.com/raquellopes3/Trabalho-de-A-FRAME/main/toyota_supra_mk4/textures/coupe_engine_metallicRoughness.png",
+        "sha256": "a1d42e90d66eaa92452c2d5d562dcfa16c05394ef953170d58807fd3ac096fa2"
+      },
+      {
+        "path": "textures/sdd_mk4_symbols_baseColor.png",
+        "url": "https://raw.githubusercontent.com/raquellopes3/Trabalho-de-A-FRAME/main/toyota_supra_mk4/textures/sdd_mk4_symbols_baseColor.png",
+        "sha256": "f978fd79099a8069cb37e66bc276fa7c885d33709564e99d6953922ce6c27a44"
+      },
+      {
+        "path": "textures/esta80_signal_R_baseColor.png",
+        "url": "https://raw.githubusercontent.com/raquellopes3/Trabalho-de-A-FRAME/main/toyota_supra_mk4/textures/esta80_signal_R_baseColor.png",
+        "sha256": "9105e1c930003dc9053bbc3577946cc349383715ef8ab622534ea482a72b41ef"
+      },
+      {
+        "path": "textures/esta80_chargespeed_wheel_baseColor.png",
+        "url": "https://raw.githubusercontent.com/raquellopes3/Trabalho-de-A-FRAME/main/toyota_supra_mk4/textures/esta80_chargespeed_wheel_baseColor.png",
+        "sha256": "6fea188dd799d03e34f581f4b0f36810b2ab7ac3e51fe043faf93f09c7294fa1"
+      },
+      {
+        "path": "textures/sdd_mk4_symbols2_baseColor.png",
+        "url": "https://raw.githubusercontent.com/raquellopes3/Trabalho-de-A-FRAME/main/toyota_supra_mk4/textures/sdd_mk4_symbols2_baseColor.png",
+        "sha256": "e1e6311120139294224948fe2c528a1eca96b0c129b8be8054322b1fccd9d6f3"
+      }
+    ]
+  }
+]

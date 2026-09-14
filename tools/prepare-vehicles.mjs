@@ -9,7 +9,12 @@ import fs from 'node:fs';
 await MeshoptDecoder.ready;
 const io=new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({'draco3d.decoder':await draco3d.createDecoderModule(),'draco3d.encoder':await draco3d.createEncoderModule(),'meshopt.decoder':MeshoptDecoder});
 const specs=[{key:'porsche',length:4.49,wheel:/^Cylinder\.00[01]_[012]$/,caliper:/^Cylinder\.00[01]_3$/,remove:/^Plane_0$/},{key:'bmw',length:4.794,wheel:/^Object_3[34]$/,caliper:/^Object_32$/},{key:'gt40',length:4.183,wheel:/^Object_4[4-7]$/}];
-for(const spec of specs){
+specs.push(
+ {key:'f40',length:4.43,wheel:/^Object_(30|31|37|38|39|40)$/,caliper:/^Object_11$/},
+ {key:'r34',length:4.6,wheel:/^Object_(13|14)$/},
+ {key:'supra-mk4',length:4.52,wheel:/^(esta80_wheel_|3_Wheel|wheel pl.*(1disk|tormoz1))/,caliper:/^wheel pl.*(tormoz2|023|glossBlack)/},
+);
+for(const spec of specs.filter(s=>!process.argv[2]||process.argv.slice(2).includes(s.key))){
  const doc=await io.read(`artifacts/model-sources/${spec.key}.glb`);await doc.transform(dequantize());
  const scene=doc.getRoot().listScenes()[0],nodes=doc.getRoot().listNodes(),entries=[];
  for(const n of nodes){if(!n.getMesh()||spec.remove?.test(n.getName()))continue;const mesh=n.getMesh().clone();

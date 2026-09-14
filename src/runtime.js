@@ -6,7 +6,7 @@ import {DIFFICULTIES,aiTargetSpeed,stepOpponent} from './race-ai';
 import {buildAutomobile} from './automotive/model';
 import * as THREE from 'three';
 import {loadDetailedCar} from './assets';
-import {loadAdditionalCars} from './detailed-vehicles';
+import {ensureDetailedCar,DETAILED_VEHICLES} from './detailed-vehicles';
 import {CARS} from './cars.js';
 import {TRACKS,timeIcon} from './tracks.js';
 import {stepVehicle,readGamepad} from './physics';
@@ -609,7 +609,6 @@ const plateTex = canvasTex(128, 32, (g, w, h) => {
 const buildCar = buildAutomobile;
 const carObjs = CARS.map(c => {const car=buildCar({...c,type:c.type==='458'?'f40':c.type});car.cfg=c;return car;});
 try{await loadDetailedCar(carObjs[12]);}catch(error){console.warn('Detailed car unavailable; keeping procedural fallback',error);CARS[12].nameCn='GT 概念赛车（后备模型）';CARS[12].nameEn='GT CONCEPT / FALLBACK';}
-await loadAdditionalCars(carObjs);
 carObjs.forEach(c => { scene.add(c.group); c.group.visible = false; });
 
 const headlight = new THREE.SpotLight(0xcfe4ff, 120, 130, .48, .55, 1.2);
@@ -931,6 +930,10 @@ function switchCar(dir) {
   beep(660, .07, .15, 'triangle');
 }
 function updateMenuCar() {
+  const selectedCar=carObjs[selected];
+  if(DETAILED_VEHICLES[selectedCar.cfg.type]&&!selectedCar.assetStatus){
+    ensureDetailedCar(selectedCar).then(()=>{if(carObjs[selected]===selectedCar){if(state==='vehicle')enterVehicle();else if(state==='menu')updateMenuCar();}});
+  }
   carObjs.forEach((c, i) => {
     c.group.visible = (i === selected);
     c.bodyParts.visible = true;c.bodyParts.rotation.set(0,0,0);
@@ -944,7 +947,7 @@ function updateMenuCar() {
   const cfg = CARS[selected];
   document.getElementById('carName').textContent = cfg.nameCn;
   document.getElementById('carNameEn').textContent = cfg.nameEn;
-  document.getElementById('carDesc').textContent = cfg.desc;
+  document.getElementById('carDesc').textContent = selectedCar.assetStatus==='loading'?'正在载入精细车模… 载入后可直接鉴赏与驾驶。':selectedCar.assetStatus==='fallback'?'精细模型暂未载入，当前显示简化后备车型。':cfg.desc;
   const st = [(cfg.top - 240) / 100, cfg.accel, cfg.handling, cfg.nos];
   st.forEach((v, i) => document.getElementById('st' + i).style.width = clamp(v * 100, 8, 100) + '%');
 }
@@ -971,7 +974,19 @@ function placeOnTrack(carObj, distAhead, lat) {
   carObj.group.rotation.set(0, Math.atan2(t.x, t.z), 0);
   return idx;
 }
-function startRace() {
+let preparingRace=false;
+async function startRace() {
+  if(preparingRace)return;
+  preparingRace=true;
+  const chosen=selected,chosenTrack=trackSel,chosenMode=options.mode,chosenDifficulty=diffSel;
+  const pool=carObjs.map((c,i)=>i).filter(i=>i!==chosen);
+  for(let i=pool.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[pool[i],pool[j]]=[pool[j],pool[i]];}
+  const aiIdx=options.mode==='time'?[]:pool.slice(0,3);
+  const startButton=document.getElementById('startBtn'),label=startButton.innerHTML;
+  startButton.disabled=true;startButton.textContent='准备赛车…';
+  try{await Promise.all([chosen,...aiIdx].map(i=>ensureDetailedCar(carObjs[i])));}
+  finally{preparingRace=false;startButton.disabled=false;startButton.innerHTML=label;}
+  if(selected!==chosen||trackSel!==chosenTrack||options.mode!==chosenMode||diffSel!==chosenDifficulty)return;
   document.activeElement?.blur();
   const T = TRACKS[trackSel], D = DIFFS[diffSel];
   session.start(T.theme,CARS[selected].type);
@@ -997,13 +1012,6 @@ function startRace() {
   let aiN = 0;
   const gridLat = [2.9, -2.9, 2.9, -2.9];
   const gridDist = [26, 19, 12, 5];
-  // 从其余车辆中随机抽3辆作为AI对手
-  const pool = carObjs.map((c, i) => i).filter(i => i !== selected);
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = (Math.random() * (i + 1)) | 0;
-    const t = pool[i]; pool[i] = pool[j]; pool[j] = t;
-  }
-  const aiIdx = options.mode==='time'?[]:pool.slice(0,3);
   carObjs.forEach((c, i) => {
     const inRace = (i === selected) || aiIdx.indexOf(i) >= 0;
     c.group.visible = inRace;
@@ -1709,6 +1717,8 @@ function loop() {
     }
   }
   updateCamera(dt || .0001);
+  const parked=state==='menu'||state==='vehicle';
+  (parked?carObjs[selected]:player.car)?.updateInstruments?.(parked?0:Math.abs(player.speed)*3.6,parked?.8:player.rpmDisp||.8);
   updateRain(dt || .001);
   updateParticles(dt || .001);
   animateCity(worldGroup,dt);
@@ -1776,4 +1786,4 @@ function syncMenuScene(){const city=menuTab==='track';worldGroup.visible=city;sh
 graphics.quality(options.quality);qLevel=options.quality==='low'?3:options.quality==='balanced'?1:0;applyQuality();
 buildWorld(trackSel);menuUI.select('car');toMenu();loop();
 // Read-only diagnostics for performance and smoke testing.
-window.__velocity={snapshot:()=>({state,paused,track:TRACKS[trackSel].theme,car:CARS[selected].type,speed:player.speed,heading:player.heading,position:player.pos.toArray(),lap:player.lap,laps:session.laps,mode:options.mode,wetness,ai:ais.length,fuel:player.fuel,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,fps:fpsEMA,physicsHz:120,detailed:!!carObjs[selected].detailed,modelKind:carObjs[selected].modelKind,dimensions:carObjs[selected].group.userData.dimensions,wheelCount:carObjs[selected].wheels.length,assetCredit:carObjs[selected].assetCredit,assetError:!!carObjs[selected].assetError,wheelPositions:carObjs[selected].wheels.map(w=>w.parent.position.toArray()),cockpit:carObjs[selected].cockpit,bonnet:carObjs[selected].bonnet,camera:camMode,cameraEye:camera.position.toArray(),cameraClip:[camera.near,camera.far],pixelRatio:renderer.getPixelRatio(),orbit:vehicleOrbit.snapshot(),pedals:{throttle:player.throttlePressure,brake:player.brakePressure},cornerBraking:!!player.cornerBraking,menuTab,difficulty:diffSel,aiSpeeds:ais.map(a=>a.speed),sceneVisibility:{world:worldGroup.visible,showroom:showroom.visible,cars:carObjs.filter(c=>c.group.visible).length},environment:{...cityReport,sky:atmosphere.snapshot(),surfaces:surfaces.status}})};
+window.__velocity={snapshot:()=>({state,paused,track:TRACKS[trackSel].theme,car:CARS[selected].type,speed:player.speed,heading:player.heading,position:player.pos.toArray(),lap:player.lap,laps:session.laps,mode:options.mode,wetness,ai:ais.length,fuel:player.fuel,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,fps:fpsEMA,physicsHz:120,detailed:!!carObjs[selected].detailed,modelKind:carObjs[selected].modelKind,dimensions:carObjs[selected].group.userData.dimensions,wheelCount:carObjs[selected].wheels.length,assetCredit:carObjs[selected].assetCredit,assetError:!!carObjs[selected].assetError,assetStatus:carObjs[selected].assetStatus,bodyLod:carObjs[selected].bodyLod?.getCurrentLevel(),aiLods:ais.map(a=>({car:a.car.cfg.type,level:a.car.bodyLod?.getCurrentLevel()})),steeringAngle:carObjs[selected].steeringWheel?.rotation.z,wheelPositions:carObjs[selected].wheels.map(w=>w.parent.position.toArray()),cockpit:carObjs[selected].cockpit,bonnet:carObjs[selected].bonnet,camera:camMode,cameraEye:camera.position.toArray(),cameraClip:[camera.near,camera.far],pixelRatio:renderer.getPixelRatio(),orbit:vehicleOrbit.snapshot(),pedals:{throttle:player.throttlePressure,brake:player.brakePressure},cornerBraking:!!player.cornerBraking,menuTab,difficulty:diffSel,aiSpeeds:ais.map(a=>a.speed),sceneVisibility:{world:worldGroup.visible,showroom:showroom.visible,cars:carObjs.filter(c=>c.group.visible).length},environment:{...cityReport,sky:atmosphere.snapshot(),surfaces:surfaces.status}})};

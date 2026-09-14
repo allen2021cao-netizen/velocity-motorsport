@@ -27,3 +27,31 @@ License: **CC BY 4.0**, https://creativecommons.org/licenses/by/4.0/ .
 Modifications: normalized dimensions, separate articulated wheels, Draco geometry, WebP textures, revised glass and opaque-material sorting, camera anchors. Interior details remain limited by the source model.
 
 Ferrari 458 and library credits: /THIRD_PARTY_NOTICES.md.
+
+## f40-detailed.glb — Ferrari F40
+
+Credit: Black Snow (https://sketchfab.com/BlackSnow02).
+Source: https://sketchfab.com/3d-models/ferrari-f40-52a66c41cfcd4f999fb1b1c49bf24d70
+Distribution: https://github.com/sceneview/sceneview/blob/main/samples/web-demo/site/models/ferrari_f40.glb
+License: **CC BY 4.0**, https://creativecommons.org/licenses/by/4.0/ . Source metadata and SceneView's asset catalog retain this credit and license.
+Modifications: dimensions, separated wheels/brakes, Draco geometry, WebP textures, glass/paint/leather calibration, original live speed/RPM dial overlays. Source steering geometry is retained; it is not independently animated.
+
+## r34-detailed.glb — Nissan Skyline GT-R R34
+
+Credit: Lexyc16 (https://sketchfab.com/Lexyc16).
+Source: https://sketchfab.com/3d-models/nissan-skyline-r34-gt-r-ff8fb2251dfa4bb9979e7022c5a6666c
+Distribution: https://github.com/GigaSmurf/DS/tree/master/src/assets/nissan_skyline_r34_gt-r
+License: **CC BY 4.0**, https://creativecommons.org/licenses/by/4.0/ . The source page also carries a NoAI label; this asset is used for ordinary rendering and mechanical geometry processing, not training or image/model generation.
+Modifications: normalized size, separated wheels, Draco geometry, WebP textures, material calibration. The source does not provide a complete cabin: a new original, approximate right-hand-drive interior supplies seats, dashboard, vents, steering and live speed/RPM dials. Auxiliary screen values are illustrative, not a mechanical simulation of oil/water/boost.
+
+## supra-mk4-detailed.glb — Toyota Supra Mk4 A80, tuned bodywork
+
+Credit: Black Snow (https://sketchfab.com/BlackSnow02).
+Source: https://sketchfab.com/3d-models/toyota-supra-mk4-8bebdee25b774067929bb33e648533ac
+Distribution: https://github.com/raquellopes3/Trabalho-de-A-FRAME/tree/main/toyota_supra_mk4
+License: **CC BY 4.0**, https://creativecommons.org/licenses/by/4.0/ . License and author are embedded in the distributed glTF metadata.
+Modifications: normalized dimensions, split wheels and stationary calipers, articulated original steering wheel, orange paint and dark interior materials, Draco geometry and WebP textures. This source represents modified A80 bodywork and interior, not a factory-stock Supra. Original textured instruments are decorative; the HUD provides live telemetry.
+
+## Distance variants
+
+Each `*-body-lod.glb` is a decimated adaptation of the corresponding detailed asset and uses the same author credit and license. The Porsche adaptation remains CC BY-SA 4.0. Wheels remain articulated high-detail assemblies; rigid bodies switch at distance with hysteresis. Original cabin supplements are only shown at close range. Reproduction scripts and SHA-256 manifests are in `tools/` in the source repository.
