@@ -53,9 +53,9 @@ export function buildCircuitVenue(world:T.Group,points:T.Vector3[],normals:T.Vec
  }
  // Venue landscaping and parking occupy only verified clear ground.
  const grass=a.material(key==='miami'?0x4e9157:0x648145),parking=a.material(0x5c6263);
- if(key==='shanghai'||key==='miami')for(let x=bounds.min.x-100;x<bounds.max.x+100;x+=55)for(let z=bounds.min.z-100;z<bounds.max.z+100;z+=55){const d=distance(x,z);if(d<50||reserved.some(b=>Math.hypot(x-b.x,z-b.z)<b.r+42))continue;const park=((Math.round(x/55)+Math.round(z/55))%7===0)&&d>90;
- a.box(park?parking:grass,x,-.023,z,54.9,.025,54.9,false);
+ if(key==='shanghai'||key==='miami')for(let x=bounds.min.x-100;x<bounds.max.x+100;x+=55)for(let z=bounds.min.z-100;z<bounds.max.z+100;z+=55){const d=distance(x,z);if(d<50||reserved.some(b=>Math.hypot(x-b.x,z-b.z)<b.r+42))continue;const park=(Math.sin(x*12.31+z*4.17)>.94)&&d>90;
+ if(park)a.box(parking,x,-.023,z,48,.025,48,false);
  if(park){for(let lane=0;lane<10;lane++)a.box(white,x-24+lane*5,.002,z,.08,.015,34,false);}else if(d<220){for(let k=0;k<3;k++){a.cylinder(bark,x+(k-1)*12,2.5,z,.16,5);a.sphere(foliage,x+(k-1)*12,5.5,z,3,1.2);}}
  }
- const stats=a.finish();return{key,buildings,landmark:meta.name+' · '+meta.description+'｜地理轮廓改编',focus:center,previewRadius:Math.max(size.x,size.z)*.85,instances:stats.instances,batches:stats.batches,minimumBuildingClearance:Math.min(...reserved.map(b=>distance(b.x,b.z)-b.r)),minimumBuildingSeparation:reserved.length>1?Math.min(...reserved.flatMap((b,i)=>reserved.slice(i+1).map(c=>Math.hypot(b.x-c.x,b.z-c.z)-b.r-c.r))):0};
+ const stats=a.finish();return{key,buildings,landmark:meta.name+' · '+meta.description+'｜地理轮廓改编',focus:center,previewRadius:Math.max(size.x,size.z)*1.04,instances:stats.instances,batches:stats.batches,minimumBuildingClearance:Math.min(...reserved.map(b=>distance(b.x,b.z)-b.r)),minimumBuildingSeparation:reserved.length>1?Math.min(...reserved.flatMap((b,i)=>reserved.slice(i+1).map(c=>Math.hypot(b.x-c.x,b.z-c.z)-b.r-c.r))):0};
 }

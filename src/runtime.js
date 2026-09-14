@@ -546,9 +546,9 @@ function buildWorld(ti) {
   let maxR = T.base; for (const m of T.modes) maxR += Math.abs(m[1]);
   // 地面材质纹理(噪点细节)
   const groundTexC = D_(canvasTex(128, 128, (g, w, h) => {
-    g.fillStyle = hex6(T.theme==='alps'?0xd9e1e3:T.theme==='dubai'?0xb6a785:0x6e746b); g.fillRect(0, 0, w, h);
+    g.fillStyle = hex6(T.theme==='alps'?0xd9e1e3:T.theme==='dubai'?0xb6a785:T.circuit&&(T.theme==='shanghai'||T.theme==='miami')?0x648145:0x6e746b); g.fillRect(0, 0, w, h);
     for (let i = 0; i < 500; i++) {
-      g.fillStyle = hex6(shadeCol(T.theme==='alps'?0xd9e1e3:T.theme==='dubai'?0xb6a785:0x6e746b, .85 + Math.random() * .3));
+      g.fillStyle = hex6(shadeCol(T.theme==='alps'?0xd9e1e3:T.theme==='dubai'?0xb6a785:T.circuit&&(T.theme==='shanghai'||T.theme==='miami')?0x648145:0x6e746b, .85 + Math.random() * .3));
       g.fillRect(Math.random() * w, Math.random() * h, 2 + Math.random() * 3, 2 + Math.random() * 3);
     }
   }, true));
