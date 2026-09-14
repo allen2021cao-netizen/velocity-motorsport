@@ -4,13 +4,13 @@ const CACHE='velocity-offline-v1',entries=new Map(MANIFEST.entries.map(e=>[e.url
 const key=e=>new URL('/__game_cache__/'+e.hash,self.location.origin).href;
 let saving=false,cancelled=false;
 async function notify(data){for(const client of await self.clients.matchAll({includeUncontrolled:true}))client.postMessage({type:'GAME_CACHE',...data});}
-async function obtain(e){
+async function obtain(e,background=false){
  const cache=await caches.open(CACHE),cached=await cache.match(key(e));if(cached)return cached;
  if(pending.has(e.hash))return (await pending.get(e.hash)).clone();
  const task=(async()=>{
   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),90000);
   try{
-   const response=await fetch(e.url,{cache:'no-cache',signal:controller.signal});if(!response.ok)throw Error('下载失败：'+e.url);
+   const response=await fetch(e.url,{cache:'no-cache',signal:controller.signal,priority:background?'low':'auto'});if(!response.ok)throw Error('下载失败：'+e.url);
    const bytes=await response.arrayBuffer();
    const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),v=>v.toString(16).padStart(2,'0')).join('');
    if(hash!==e.hash)throw Error('资源版本已更新，请刷新页面后重试');
@@ -43,9 +43,11 @@ self.addEventListener('message',event=>{
   saving=true;cancelled=false;
   try{
    await notify({...await status(),saving:true});
-   let next=0;const ordered=[...MANIFEST.entries].sort((a,b)=>Number(!a.url.startsWith('/models/'))-Number(!b.url.startsWith('/models/')));
-   const work=async()=>{while(next<ordered.length&&!cancelled){const e=ordered[next++];await obtain(e);if(!await (await caches.open(CACHE)).match(key(e)))throw Error('本机存储不足，无法保存完整游戏');await notify({...await status(),saving:true});}};
-   const results=await Promise.allSettled([work(),work()]);const failed=results.find(r=>r.status==='rejected');if(failed)throw failed.reason;
+   const background=!!event.data.background;
+   const priority=e=>e.url==='/models/ferrari-458.glb'?0:e.url.startsWith('/draco/')?1:e.url.startsWith('/models/')?2:3;
+   let next=0;const ordered=[...MANIFEST.entries].sort((a,b)=>priority(a)-priority(b));
+   const work=async()=>{while(next<ordered.length&&!cancelled){const e=ordered[next++];await obtain(e,background);if(!await (await caches.open(CACHE)).match(key(e)))throw Error('本机存储不足，无法保存完整游戏');if(!background)await notify({...await status(),saving:true});}};
+   const results=await Promise.allSettled(background?[work()]:[work(),work()]);const failed=results.find(r=>r.status==='rejected');if(failed)throw failed.reason;
    await notify({...await status(),saving:false,paused:cancelled});
   }catch(error){await notify({...await status(),saving:false,error:String(error.message||error)});}
   finally{saving=false;}

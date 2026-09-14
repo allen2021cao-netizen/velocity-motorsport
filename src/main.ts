@@ -3,9 +3,9 @@ import './legacy.css';
 import './style.css';
 import './menu.css';
 import {startSplash} from './splash';
-import {mountOffline} from './offline';
+import {startOfflineCache} from './offline';
 document.querySelector('#app')!.innerHTML=shell;
-mountOffline();
+startOfflineCache();
 const runtimeReady=import('./runtime.js').catch(error=>{
  console.error(error);
  const el=document.querySelector<HTMLElement>('#loadErr');
