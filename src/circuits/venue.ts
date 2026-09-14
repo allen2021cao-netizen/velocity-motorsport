@@ -1,3 +1,5 @@
+import {urbanDistrict} from './urban';
+import type {CityKey} from '../environment/profiles';
 import * as T from 'three';
 import {Architecture} from '../environment/geometry';
 import {lettering} from '../environment/materials';
@@ -13,15 +15,15 @@ export function buildCircuitVenue(world:T.Group,points:T.Vector3[],normals:T.Vec
  function safe(u:number,offset:number,radius:number){const i=idx(u),p=points[i],n=normals[i];return distance(p.x+n.x*offset,p.z+n.z*offset)>width+radius+3;}
  let buildings=0;const reserved:{x:number;z:number;r:number}[]=[];
  function reserve(u:number,offset:number,r:number){if(!safe(u,offset,r))return false;const i=idx(u),p=points[i],n=normals[i],x=p.x+n.x*offset,z=p.z+n.z*offset;if(reserved.some(b=>Math.hypot(x-b.x,z-b.z)<r+b.r+4))return false;reserved.push({x,z,r});return true;}
- // Realistic edge lines, kerbs, catch fences and lamps sampled in metres.
+ // Open street edge lines, low kerbs and lamps sampled in metres.
  for(let m=0;m<length;m+=5){const u=m/length,i=idx(u),p=points[i],n=normals[i];a.at(p.x,0,p.z,Math.atan2(n.x,n.z),1,()=>{
  for(const side of [-1,1]){a.box(white,0,.026,side*(width-.28),4.9,.015,.12,false);a.box(Math.floor(m/5)%2?white:(key==='miami'?blue:red),0,.045,side*(width-.7),4.9,.05,.65,false);}
  });
- if(m%25===0)for(const side of [-1,1]){const offset=side*(width+1);const fi=idx(u);if(distance(points[fi].x+normals[fi].x*offset,points[fi].z+normals[fi].z*offset)<width+.5)continue;at(u,offset,()=>{a.cylinder(dark,0,2.7,0,.07,5.4);for(const y of [1.7,2.5,3.3,4.1,4.9])a.box(dark,0,y,0,24,.025,.025,false);});}
  if(m%100===0)for(const side of [-1,1])if(safe(u,side*(width+4),.4))at(u,side*(width+4),()=>{a.cylinder(dark,0,6,0,.14,12);a.box(light,0,12,0,4,.15,1);});
  }
  // Asphalt runoff patches sit beyond the barriers and avoid neighboring road branches.
  if(key==='shanghai'||key==='miami')for(let m=0;m<length;m+=12){for(const side of [-1,1]){const u=m/length,off=side*(width+7);if(safe(u,off,3))at(u,off,()=>{a.box(asphalt,0,.009,0,11.9,.012,10,false);a.box(key==='miami'?blue:green,0,.022,-side*4,11.9,.014,1.2,false);});}}
+ const urban=urbanDistrict(a,key as CityKey,length,width,at,reserve);buildings+=urban.buildings;
  // Start straight pit garages and stepped grandstands, outside the driving corridor.
  for(let j=0;j<16;j++){const u=(length-150+j*10)/length;if(reserve(u,width+16,6))at(u,width+16,()=>{a.box(concrete,0,4,0,9.5,8,12);a.box(glass,0,6.3,-6.02,8,2,.1);a.box(dark,0,1.8,-6.05,7,3.5,.12);a.box(white,0,8.4,0,10,.7,13);buildings++;});}
  function stand(u:number,side:number,rows=9){const offset=side*(width+19);if(!reserve(u,offset,19))return;at(u,offset,()=>{for(let r=0;r<rows;r++){a.box(concrete,0,.4+r*.65,(r-rows/2)*1.1,28,.6,1.15);for(let seat=0;seat<24;seat++)a.box((seat+r)%3?blue:white,(seat-11.5)*1.05,.95+r*.65,(r-rows/2)*1.1,.72,.55,.6,false);}a.box(white,0,rows*.65+3,0,32,.45,18);for(const x of [-14,14])a.cylinder(dark,x,4,5,.22,8);});buildings++;}
@@ -32,7 +34,7 @@ export function buildCircuitVenue(world:T.Group,points:T.Vector3[],normals:T.Vec
  function trees(u:number,offset:number){if(!safe(u,offset,4))return;at(u,offset,()=>{a.cylinder(bark,0,3.5,0,.2,7);if(key==='miami'||key==='vegas'||key==='monaco'){for(let k=0;k<8;k++){const th=k*Math.PI/4;a.beam(foliage,new T.Vector3(0,7,0),new T.Vector3(Math.cos(th)*4,6.2,Math.sin(th)*4),.22);}}else a.sphere(foliage,0,7,0,3.5,1.3);});}
  if(key==='shanghai'||key==='miami'){
  for(let m=0;m<length;m+=55)for(const side of [-1,1])trees(m/length,side*42);
- // Purpose-built facilities replace the geographically incorrect downtown skyline.
+ // Circuit facilities coexist with the fictional downtown streets.
  if(key==='shanghai'){
   for(const u of [.96,.98,.02,.04]){if(!reserve(u,-65,25))continue;at(u,-65,()=>{a.box(glass,0,12,0,34,24,24);for(let y=3;y<24;y+=4)a.box(white,0,y,0,35,.4,25);a.cylinder(dark,0,29,0,.5,12);a.cylinder(white,0,32,0,27,1.1,1,32);for(let k=0;k<12;k++){const th=k*Math.PI/6;a.beam(dark,new T.Vector3(0,33,0),new T.Vector3(Math.cos(th)*26,32,Math.sin(th)*26),.12);}buildings++;});}
  }else{
@@ -57,5 +59,6 @@ export function buildCircuitVenue(world:T.Group,points:T.Vector3[],normals:T.Vec
  if(park)a.box(parking,x,-.023,z,48,.025,48,false);
  if(park){for(let lane=0;lane<10;lane++)a.box(white,x-24+lane*5,.002,z,.08,.015,34,false);}else if(d<220){for(let k=0;k<3;k++){a.cylinder(bark,x+(k-1)*12,2.5,z,.16,5);a.sphere(foliage,x+(k-1)*12,5.5,z,3,1.2);}}
  }
- const stats=a.finish();return{key,buildings,landmark:meta.name+' · '+meta.description+'｜地理轮廓改编',focus:center,previewRadius:Math.max(size.x,size.z)*1.04,instances:stats.instances,batches:stats.batches,minimumBuildingClearance:Math.min(...reserved.map(b=>distance(b.x,b.z)-b.r)),minimumBuildingSeparation:reserved.length>1?Math.min(...reserved.flatMap((b,i)=>reserved.slice(i+1).map(c=>Math.hypot(b.x-c.x,b.z-c.z)-b.r-c.r))):0};
+ let separation=Infinity;for(let i=0;i<reserved.length;i++)for(let j=i+1;j<reserved.length;j++){const b=reserved[i],c=reserved[j];separation=Math.min(separation,Math.hypot(b.x-c.x,b.z-c.z)-b.r-c.r);}
+ const stats=a.finish();return{key,buildings,landmark:meta.name+' · '+({shanghai:'东方明珠 · 陆家嘴天际线 · 外滩风格街区',miami:'南海滩酒店 · 自由塔 · 体育场',vegas:'Sphere · 酒店霓虹大道 · 金字塔',monaco:'蒙特卡洛赌场 · 王宫风格建筑 · 游艇港'}[key]||meta.description)+'｜城市幻想改编',urbanBuildings:urban.buildings,urbanLandmarks:urban.landmarks,roadsideBarriers:0,focus:center,previewRadius:Math.max(size.x,size.z)*1.04,instances:stats.instances,batches:stats.batches,minimumBuildingClearance:Math.min(...reserved.map(b=>distance(b.x,b.z)-b.r)),minimumBuildingSeparation:reserved.length>1?separation:0};
 }

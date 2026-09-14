@@ -528,6 +528,7 @@ function buildWorld(ti) {
   if(T.circuit)scene.fog=new THREE.Fog(T.time==='night'?0x202a3a:0xc1d5dc,1800,11000);
   const roadMat=D_(surfaces.material(wetness>0));
   worldGroup.add(buildStrip(ROAD_W,-ROAD_W,0,0,roadMat));
+  if(!T.circuit){
   const wallMat = D_(new THREE.MeshStandardMaterial({ color: 0x91958f, roughness: .9, side: THREE.DoubleSide }));
   worldGroup.add(buildStrip(ROAD_W + .3, ROAD_W + .3, 0, 1.1, wallMat));
   worldGroup.add(buildStrip(-ROAD_W - .3, -ROAD_W - .3, 1.1, 0, wallMat));
@@ -538,6 +539,7 @@ function buildWorld(ti) {
   const railMat = D_(new THREE.MeshBasicMaterial({ map: curbTex, side: THREE.DoubleSide }));
   worldGroup.add(buildStrip(ROAD_W + .32, ROAD_W + .32, 1.1, 1.02, railMat));
   worldGroup.add(buildStrip(-ROAD_W - .32, -ROAD_W - .32, 1.02, 1.1, railMat));
+  }
   // 路肩带(人行道/草肩/沙肩)
   const shoulderMat = D_(new THREE.MeshPhongMaterial({ color: (night || dusk) ? 0x2b303c : shadeCol(E.ground, 1.22), shininess: 8 }));
   worldGroup.add(buildStrip(ROAD_W + 2.6, ROAD_W + .36, .04, .04, shoulderMat));
@@ -1156,7 +1158,13 @@ function updatePlayer(dt) {
   const lat = (player.pos.x - cp.x) * n.x + (player.pos.z - cp.z) * n.z;
   player.latOnTrack = lat;
   const maxLat = ROAD_W - 1.05;
-  if (Math.abs(lat) > maxLat) {
+  if (TRACKS[trackSel].circuit && Math.abs(lat)>maxLat) {
+    // Open runoff: grass/sidewalk drag rather than an invisible wall with impact sparks.
+    const over=Math.abs(lat)-maxLat;
+    player.speed*=Math.exp(-dt*Math.min(1.8,over*.28));
+    if(over>2)session.invalid=true;
+    if(over>5){const correction=(over-5)*(1-Math.exp(-dt*6));player.pos.x-=n.x*Math.sign(lat)*correction;player.pos.z-=n.z*Math.sign(lat)*correction;}
+  } else if (!TRACKS[trackSel].circuit && Math.abs(lat) > maxLat) {
     const over = Math.abs(lat) - maxLat;
     player.pos.x -= n.x * Math.sign(lat) * over;
     player.pos.z -= n.z * Math.sign(lat) * over;

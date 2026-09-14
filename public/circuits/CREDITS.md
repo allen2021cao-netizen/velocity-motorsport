@@ -11,3 +11,6 @@ Official reference pages:
 - https://www.formula1.com/en/racing/2026/miami
 
 This is an unofficial game adaptation, not a laser scan or a licensed replica. Elevation remains flat; widths are constant gameplay approximations (Shanghai / Vegas 16 m, Miami 13 m, Monaco 9 m). Architecture, vegetation, tunnel, stadium, pit areas and harbor are simplified original meshes. Do not interpret them as surveyed positions or a complete reproduction of actual venue buildings. Other eight tracks remain city-inspired fictional routes.
+
+## Open city edition
+The four circuit routes retain their geographic outlines. Their surroundings are now fictional composites: downtown-style districts and stylized city landmarks are intentionally relocated near the circuits. Shanghai adds Oriental Pearl and Lujiazui silhouettes; Miami combines South Beach-inspired hotels and a Freedom Tower-inspired landmark with the stadium; Las Vegas adds illuminated hotel wings and a pyramid; Monaco adds casino and palace-inspired architecture. Continuous catch fences and road-edge walls are removed. Low kerbs, open shoulders, road markings and braking boards remain. Leaving the shoulder slows the car and invalidates shortcut laps.
