@@ -30,7 +30,12 @@ export async function loadDetailedCar(car:any){
   }
   const steeringWheel=model.getObjectByName('steering_wheel');
   const steeringPosition=steeringWheel?body.worldToLocal(steeringWheel.getWorldPosition(new T.Vector3())):new T.Vector3(.34,.78,.2);
+  // Sample the imported surface in world space, then keep the camera anchor body-local.
+  body.updateWorldMatrix(true,true);
+  const hoodRay=new T.Raycaster(body.localToWorld(new T.Vector3(0,5,1)),new T.Vector3(0,-1,0).transformDirection(body.matrixWorld));
+  const hoodHit=hoodRay.intersectObject(wrapper,true)[0];
+  const bonnet={x:0,y:(hoodHit?body.worldToLocal(hoodHit.point.clone()).y:1.1)+.22,z:1};
   car.group.userData.dimensions={length:4.55,width:size.x*scale,height:size.y*scale,wheelbase:2.65};
-  Object.assign(car,{bodyParts:body,wheels,frontPivots,flames:[],glowPlane:new T.Group(),brakeLight,detailed:true,modelKind:'imported-glb',wheelRadius:.34,cockpit:{x:steeringPosition.x,y:T.MathUtils.clamp(steeringPosition.y+.22,.95,1.14),z:steeringPosition.z-.45},bonnet:{x:0,y:.83,z:1.84},steeringWheel});
+  Object.assign(car,{bodyParts:body,wheels,frontPivots,flames:[],glowPlane:new T.Group(),brakeLight,detailed:true,modelKind:'imported-glb',wheelRadius:.34,cockpit:{x:steeringPosition.x,y:T.MathUtils.clamp(steeringPosition.y+.22,.95,1.14),z:steeringPosition.z-.45},bonnet,steeringWheel});
  }finally{draco.dispose();}
 }
