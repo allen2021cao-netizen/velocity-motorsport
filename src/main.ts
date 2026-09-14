@@ -2,6 +2,7 @@ import shell from './shell.html?raw';
 import './legacy.css';
 import './style.css';
 import './menu.css';
+import './mobile-landscape.css';
 import {startSplash} from './splash';
 import {startOfflineCache} from './offline';
 document.querySelector('#app')!.innerHTML=shell;

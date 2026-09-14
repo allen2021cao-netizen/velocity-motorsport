@@ -1,0 +1,90 @@
+/* Keep phone landscape in a two-column layout even below 650 CSS pixels.
+   Size controls directly instead of scaling the page or its touch coordinates. */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+@media (orientation:landscape) and (max-height:600px) and (max-width:1100px){
+ :root{--edge-l:max(8px,env(safe-area-inset-left));--edge-r:max(8px,env(safe-area-inset-right));--edge-b:max(6px,env(safe-area-inset-bottom))}
+ #menu{height:100dvh;padding:max(5px,env(safe-area-inset-top)) var(--edge-r) var(--edge-b) var(--edge-l);gap:5px}
+ #menu #title{display:none}
+ #menuTabs{gap:5px;padding-right:148px}
+ #menuTabs button{min-height:34px;padding:5px 7px;font-size:11px}
+ #menuWorkspace{display:grid;grid-template-columns:minmax(0,1fr) clamp(230px,32vw,310px);gap:8px;flex:1;min-height:0}
+ #menuPreview{flex:initial;border-radius:6px}
+ #menuViewport{inset:0 0 39px}
+ #menu #previewCaption{height:39px;padding:4px 9px;gap:2px;overflow:hidden}
+ #menu #previewCaption span{display:none}
+ #menu #previewCaption strong{font-size:13px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #menu #previewCaption small{font-size:10px;line-height:1.2}
+ #menuControls{padding:0 2px 4px 0;scrollbar-width:thin}
+ #menu #carPanel,#menu #selPanel,#menu #setupPanel{padding:9px;font-size:11px;border-radius:6px}
+ #menu #carHead{margin-bottom:5px;gap:6px}
+ #menu .arrowBtn{min-width:36px;min-height:36px;width:36px;height:36px;font-size:21px}
+ #menu #carName{font-size:14px;line-height:1.25}
+ #menu #carNameEn{font-size:9px;letter-spacing:.5px;margin:3px 0}
+ #menu #carDesc{font-size:11px;line-height:1.5;margin:7px 0}
+ #menu .statRow{margin:8px 0;gap:5px}
+ #menu .statRow .lbl{font-size:10px;width:78px}
+ #menu .statRow .bar{height:4px}
+ #menu #vehicleBtn,#menu #retryModel{font-size:11px;min-height:34px;padding:7px;margin-top:4px}
+ #menu .selLabel{font-size:11px;margin:3px 0 8px}
+ #menu #trackGrid{grid-template-columns:1fr;gap:5px}
+ #menu .trackBtn{min-height:52px;padding:5px 7px;gap:8px}
+ #menu .trackBtn .tn{font-size:11px;line-height:1.35}
+ #menu .trackBtn .tc{font-size:9px;line-height:1.3}
+ #menu .trackBtn .ts{font-size:9px;line-height:1.2}
+ #menu .trackBtn .tshape{width:28px;height:28px}
+ #menu .diffBtn{min-height:36px;padding:6px 2px;font-size:11px}
+ #difficultyNote{font-size:10px;line-height:1.4;margin:6px 0 10px}
+ #setupPanel label{margin:6px 0;font-size:11px}
+ #setupPanel select{font-size:11px;min-height:34px;padding:5px;margin-top:3px}
+ .section-kicker{font-size:9px;padding-bottom:7px;margin-bottom:5px;letter-spacing:1px}
+ #drivingHelp{margin-top:6px;padding:7px 9px;font-size:10px;line-height:1.6}
+ #drivingHelp summary{min-height:30px;display:list-item;align-content:center}
+ #menuFooter{gap:8px;padding:0;min-height:34px}
+ #raceSummary{font-size:10px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ #menu #startBtn{width:clamp(140px,23vw,190px);min-height:34px;padding:7px 12px;font-size:13px;letter-spacing:1px}
+ #menuPreview .orbit-toolbar{top:5px;right:5px;gap:4px}
+ .orbit-toolbar button{min-width:32px;min-height:30px;padding:4px 6px;font-size:10px}
+ #menuPreview #tourBtn{left:6px;top:6px;min-width:100px;min-height:34px;padding:7px 10px;font-size:12px}
+ #quickQuality{top:max(5px,env(safe-area-inset-top));right:var(--edge-r);gap:2px;padding:2px;border-radius:6px}
+ #quickQuality button{min-width:42px;min-height:30px;padding:4px 6px;font-size:11px}
+ #quickQuality.in-race{top:51px}
+ #performancePanel{top:91px;right:var(--edge-r);gap:4px;font-size:10px}
+ #performancePanel button,#fpsValue{min-height:30px;padding:5px;font-size:10px}
+ #fpsValue{min-width:54px}#fpsAdvice{top:36px;width:240px;font-size:11px;padding:8px}
+ #posBox{left:var(--edge-l);top:7px}#posBig{font-size:25px}#posBig small{font-size:10px}#lapTxt{font-size:10px;margin-left:5px}#diffTxt{font-size:8px}
+ #timeBox{right:var(--edge-r);top:5px;padding:3px 6px}#timeBox .row{font-size:8px}#timeBox .row b{font-size:10px}
+ #telemetry{top:6px;left:50%;right:auto;transform:translateX(-50%);font-size:8px;line-height:1.4;padding:3px 7px;max-width:210px;background:#0d1a208c}
+ #minimap{left:var(--edge-l);top:48px;transform:scale(.48);transform-origin:top left}
+ #speedo{right:var(--edge-r);bottom:calc(var(--edge-b) + 71px);transform:scale(.36);transform-origin:bottom right}
+ #btnL,#btnR{width:60px;height:60px;bottom:var(--edge-b)}
+ #btnL{left:var(--edge-l)}#btnR{left:calc(var(--edge-l) + 67px)}
+ #btnGas{right:var(--edge-r);bottom:var(--edge-b);width:68px;height:68px}
+ #btnBrake{right:calc(var(--edge-r) + 76px);bottom:var(--edge-b);width:60px;height:60px}
+ #btnDrift{right:calc(var(--edge-r) + 82px);bottom:calc(var(--edge-b) + 69px);width:44px;height:44px;font-size:10px}
+ .tbtn .big{font-size:21px}.tbtn .sm{font-size:9px;letter-spacing:0}
+ #touchUI #btnCam{left:var(--edge-l);bottom:calc(var(--edge-b) + 69px);width:100px;height:38px;border-width:1px;gap:1px;font-size:11px}
+ #btnCam small{font-size:9px}
+ #controlsToggle{left:calc(var(--edge-l) + 105px);bottom:calc(var(--edge-b) + 71px);top:auto;min-height:34px;padding:5px 7px;font-size:10px}
+ #btnPause,#btnReset,#btnSound{width:34px;height:34px;top:7px;font-size:14px}
+ #btnPause{left:calc(var(--edge-l) + 135px)}#btnReset{left:calc(var(--edge-l) + 174px)}#btnSound{left:calc(var(--edge-l) + 213px)}
+ #pitButton{padding:7px 10px;font-size:10px;bottom:var(--edge-b)}
+ #msg{font-size:34px}#submsg{font-size:12px}
+ #tourOverlay,#vehicleOverlay{left:var(--edge-l);right:var(--edge-r);bottom:var(--edge-b);padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+ #tourOverlay.hidden,#vehicleOverlay.hidden{display:none}
+ #tourOverlay small,#vehicleOverlay small{font-size:8px;letter-spacing:2px}
+ #tourOverlay h2,#vehicleOverlay h2{font-size:16px;margin:3px 0}
+ #tourOverlay p,#vehicleOverlay p{font-size:10px;margin:3px 0;line-height:1.4;max-width:45vw}
+ .tour-actions,.vehicle-actions{gap:5px;flex-wrap:wrap;margin:0;justify-content:flex-end}
+ .tour-actions button,.vehicle-actions button{min-height:32px;padding:5px 8px;font-size:10px}
+ #vehicleOverlay{display:grid;grid-template-columns:minmax(150px,1fr) minmax(0,1.4fr);column-gap:12px;row-gap:3px}
+ #vehicleOverlay>small{display:none}#vehicleOverlay h2{grid-column:1;grid-row:1}#vehicleOverlay p{grid-column:1;grid-row:2;max-width:none}#vehicleOverlay>a{grid-column:1;grid-row:3;font-size:9px!important}
+ #vehicleOverlay .vehicle-actions{grid-column:2;grid-row:1/3}#vehicleOverlay .orbit-toolbar{grid-column:2;grid-row:3;margin:0;gap:4px;justify-content:flex-end}
+ #pause .pbox{max-height:94dvh;overflow-y:auto;padding:8px 16px}
+ #pause h2{font-size:22px;margin-bottom:7px;letter-spacing:1px}
+ #pause .setLabel{font-size:10px;margin:7px 0 4px}#pause .setBtn{padding:7px 12px;min-height:32px;font-size:11px}
+ #pause .pbox .resBtn{margin-top:8px;padding:9px 16px;font-size:12px}
+ #resultsBox{max-height:94dvh;overflow:auto;padding:10px 20px}#resTitle{font-size:28px}.resBtn{font-size:12px;padding:9px 14px}
+}
+
+@media (orientation:landscape) and (max-height:600px) and (max-width:740px){#telemetry{top:47px;max-width:180px}}
+@media (orientation:landscape) and (max-height:360px) and (max-width:1100px){#speedo{right:calc(var(--edge-r) + 150px);bottom:var(--edge-b);transform:scale(.32)}#menu #carDesc{margin:5px 0}#menu .statRow{margin:6px 0}}

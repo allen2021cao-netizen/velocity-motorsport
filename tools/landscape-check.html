@@ -1,0 +1,7 @@
+<!doctype html><meta charset="utf-8"><title>Phone landscape layout check</title>
+<style>body{margin:0;background:#0c1419;color:white;font:12px system-ui}button{padding:8px;margin:4px}iframe{display:block;border:0}pre{white-space:pre-wrap}</style>
+<div id="sizes"></div><pre id="report">Loading…</pre><iframe id="game" src="/" width="844" height="390"></iframe>
+<script>
+const frame=document.querySelector('#game');for(const [w,h]of [[844,390],[667,375],[740,320],[915,412]]){const b=document.createElement('button');b.textContent=w+' × '+h;b.onclick=()=>{frame.width=w;frame.height=h;};document.querySelector('#sizes').append(b);}
+setInterval(()=>{const doc=frame.contentDocument;if(!doc?.querySelector('#menuViewport'))return;const rect=id=>doc.querySelector(id)?.getBoundingClientRect(),v=rect('#menuViewport'),m=rect('#menuWorkspace'),footer=rect('#startBtn'),tabs=rect('#menuTabs'),q=rect('#quickQuality');const w=Number(frame.width),h=Number(frame.height);const controls=rect('#menuControls');document.querySelector('#report').textContent=JSON.stringify({width:w,height:h,preview:{width:Math.round(v.width),height:Math.round(v.height)},twoColumns:controls.x>=v.right,footerFits:footer.bottom<=h&&footer.right<=w,bodyFits:doc.documentElement.scrollWidth<=w,previewAboveFooter:v.bottom<=footer.top,menuHeight:Math.round(m.height),qualityClearOfTabs:q.left>=tabs.right-148},null,1);},500);
+</script>
