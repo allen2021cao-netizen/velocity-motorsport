@@ -529,6 +529,8 @@ function buildWorld(ti) {
   atmosphere.set(T.circuit?{...CITY_PROFILES[T.theme],sky:T.time==='night'?'night':'day'}:CITY_PROFILES[T.theme],wetness>0);
   if(T.circuit)scene.fog=new THREE.Fog(T.time==='night'?0x202a3a:0xc1d5dc,1800,11000);
   const roadMat=D_(surfaces.material(wetness>0));
+  // Physical road/ground separation needs no bias: a negative bias hides distant kerbs.
+  if(T.circuit)roadMat.polygonOffset=false;
   worldGroup.add(buildStrip(ROAD_W,-ROAD_W,0,0,roadMat));
   if(!T.circuit){
   const wallMat = D_(new THREE.MeshStandardMaterial({ color: 0x91958f, roughness: .9, side: THREE.DoubleSide }));
@@ -969,6 +971,7 @@ async function startRace() {
   try{await Promise.all([chosen,...aiIdx].map(i=>ensureDetailedCar(carObjs[i])));}
   finally{preparingRace=false;startButton.disabled=false;startButton.innerHTML=label;}
   if(selected!==chosen||trackSel!==chosenTrack||options.mode!==chosenMode||diffSel!==chosenDifficulty)return;
+  if(cityShowcase)buildWorld(trackSel);
   document.activeElement?.blur();
   const T = TRACKS[trackSel], D = DIFFS[diffSel];
   session.start(T.theme,CARS[selected].recordId||CARS[selected].type);
@@ -1339,7 +1342,7 @@ function updateCamera(dt) {
     const target=vehicleView==='wheel'?new THREE.Vector3((car.group.userData.dimensions?.width||1.9)*.45,.70,car.frontPivots[0]?.position.z||1.3):new THREE.Vector3(0,1,0);
     vehicleOrbit.view(camera,dt,target,vehicleView==='wheel'?1.25:2.65);return;
   }
-  if(state==='tour'&&cityShowcase){tourTime+=Math.min(dt,1/30);cityShowcase.view(camera,tourTime);return;}
+  if(cityShowcase&&(state==='tour'||(state==='menu'&&menuTab==='track'))){tourTime+=Math.min(dt,1/30);cityShowcase.view(camera,tourTime);return;}
   if(state==='tour'||(state==='menu'&&menuTab==='track')){
     if(state==='tour')tourAngle+=Math.min(dt,1/30)*.025;const angle=state==='tour'?tourAngle:Math.atan2(sPts[0].x-cityReport.focus.x,sPts[0].z-cityReport.focus.z);
     const focus=cityReport.focus,radius=(cityReport.previewRadius||(cityReport.key==='alps'?650:440))/Math.min(1,camera.aspect);
@@ -1695,7 +1698,7 @@ function loop() {
   updateRain(dt || .001);
   updateParticles(dt || .001);
   animateCity(worldGroup,dt);
-  const previewCity=state==='tour'||(state==='menu'&&menuTab==='track');graphics.render(state==='tour'&&cityShowcase?cityShowcase.focus:previewCity?cityReport.focus:state==='menu'||state==='vehicle'?showroom.position:player.pos,previewCity,state==='vehicle'||(state==='menu'&&menuTab!=='track'),presentationRect());
+  const previewCity=state==='tour'||(state==='menu'&&menuTab==='track');graphics.render(previewCity&&cityShowcase?cityShowcase.focus:previewCity?cityReport.focus:state==='menu'||state==='vehicle'?showroom.position:player.pos,previewCity,state==='vehicle'||(state==='menu'&&menuTab!=='track'),presentationRect());
 }
 
 addEventListener('resize', () => {
@@ -1722,7 +1725,7 @@ function enterTour(){
  state='tour';paused=false;document.getElementById('menu').classList.add('hidden');document.getElementById('hud').style.display='none';
  carObjs.forEach(c=>c.group.visible=false);showroom.visible=false;headlight.visible=false;
  tourAngle=Math.atan2(sPts[0].x-cityReport.focus.x,sPts[0].z-cityReport.focus.z);
- if(TRACKS[trackSel].circuit){if(cityShowcase)cityShowcase.dispose();cityShowcase=createCityShowcase(TRACKS[trackSel].theme);scene.add(cityShowcase.group);worldGroup.visible=false;tourTime=0;showLights.forEach(l=>l.visible=false);rain.visible=false;stars.visible=false;atmosphere.set(cityShowcase.profile,false);scene.fog=new THREE.Fog(cityShowcase.profile.sky==='night'?0x152538:0xbbbac1,750,2600);}
+ if(TRACKS[trackSel].circuit)showCityPreview();
  tourOverlay.classList.remove('hidden');document.getElementById('tourCity').textContent=cityShowcase?.title||CITY_PROFILES[TRACKS[trackSel].theme].label;document.getElementById('tourLandmark').textContent=cityShowcase?.description||cityReport.landmark;
 }
 tourButton.onclick=enterTour;document.getElementById('tourBack').onclick=toMenu;
@@ -1761,8 +1764,12 @@ const menuViewport=document.getElementById('menuViewport');menuViewport.tabIndex
 const orbitSurface=document.createElement('div');orbitSurface.id='vehicleOrbitSurface';orbitSurface.dataset.orbit='true';orbitSurface.tabIndex=0;orbitSurface.setAttribute('aria-label','360 度车辆展示，拖动旋转，滚轮或双指缩放');document.body.append(orbitSurface);vehicleOrbit.bind(orbitSurface,()=>state==='vehicle');
 function orbitToolbar(parent){const bar=document.createElement('div');bar.className='orbit-toolbar';bar.innerHTML='<button aria-label="放大车辆">＋</button><button aria-label="缩小车辆">−</button><button aria-label="复位车辆视角">复位</button><button aria-label="切换自动旋转">自动旋转</button>';const buttons=bar.querySelectorAll('button');buttons[0].onclick=()=>vehicleOrbit.scale(.8);buttons[1].onclick=()=>vehicleOrbit.scale(1.25);buttons[2].onclick=()=>{vehicleView='front';vehicleOrbit.reset();};buttons[3].onclick=()=>vehicleOrbit.toggle();parent.append(bar);}
 orbitToolbar(document.getElementById('menuPreview'));orbitToolbar(vehicleOverlay);
-function refreshMenuPreview(){if(!menuUI)return;document.getElementById('menuPreview').classList.toggle('city-preview',menuTab==='track');document.getElementById('previewKind').textContent=menuTab==='track'?'CIRCUIT PREVIEW':'360° VEHICLE STUDIO';document.getElementById('previewName').textContent=menuTab==='track'?(TRACKS[trackSel].circuit?.name||CITY_PROFILES[TRACKS[trackSel].theme].label):CARS[selected].nameCn;document.getElementById('previewStatus').textContent=menuTab==='track'?cityReport?.landmark:'拖动旋转 · 滚轮 / 双指缩放';document.getElementById('raceSummary').textContent=CARS[selected].nameCn+' · '+TRACKS[trackSel].city+' / '+DIFFS[diffSel].name;}
-function syncMenuScene(){const city=menuTab==='track';document.getElementById('menuPreview')?.classList.toggle('vehicle-loading',!city&&carObjs[selected].assetStatus==='loading');worldGroup.visible=city;showroom.visible=!city;showLights.forEach(l=>l.visible=!city);if(city)carObjs.forEach(c=>c.group.visible=false);else updateMenuCar();refreshMenuPreview();}
+function refreshMenuPreview(){if(!menuUI)return;document.getElementById('menuPreview').classList.toggle('city-preview',menuTab==='track');document.getElementById('previewKind').textContent=menuTab==='track'?(cityShowcase?'CITY EXPLORER':'CITY PREVIEW'):'360° VEHICLE STUDIO';document.getElementById('previewName').textContent=menuTab==='track'?(cityShowcase?.title||CITY_PROFILES[TRACKS[trackSel].theme].label):CARS[selected].nameCn;document.getElementById('previewStatus').textContent=menuTab==='track'?(cityShowcase?.description||cityReport?.landmark):'拖动旋转 · 滚轮 / 双指缩放';document.getElementById('raceSummary').textContent=CARS[selected].nameCn+' · '+TRACKS[trackSel].city+' / '+DIFFS[diffSel].name;}
+function showCityPreview(){
+ if(!cityShowcase){cityShowcase=createCityShowcase(TRACKS[trackSel].theme);scene.add(cityShowcase.group);tourTime=0;atmosphere.set(cityShowcase.profile,false);scene.fog=new THREE.Fog(cityShowcase.profile.sky==='night'?0x152538:0xbbbac1,750,2600);}
+ worldGroup.visible=false;showLights.forEach(l=>l.visible=false);rain.visible=false;stars.visible=false;
+}
+function syncMenuScene(){const city=menuTab==='track';if(!city&&cityShowcase)buildWorld(trackSel);document.getElementById('menuPreview')?.classList.toggle('vehicle-loading',!city&&carObjs[selected].assetStatus==='loading');worldGroup.visible=city;showroom.visible=!city;showLights.forEach(l=>l.visible=!city);if(city){carObjs.forEach(c=>c.group.visible=false);if(TRACKS[trackSel].circuit)showCityPreview();}else updateMenuCar();refreshMenuPreview();}
 graphics.quality(options.quality);qLevel=options.quality==='low'?3:options.quality==='balanced'?1:0;applyQuality();
 buildWorld(trackSel);menuUI.select('car');toMenu();loop();
 // Read-only diagnostics for performance and smoke testing.
