@@ -1,5 +1,5 @@
 import type {Setup} from './physics';
-export const options:Setup & {quality:string;line:boolean}={mode:'sprint',tires:'sport',assist:'sport',downforce:.4,balance:55,weather:'track',quality:'high',line:true,cornerAssist:true};
+export const options:Setup & {quality:string;line:boolean}={mode:'sprint',tires:'sport',assist:'sport',downforce:.4,balance:55,weather:'track',quality:'balanced',line:true,cornerAssist:true};
 try{const saved=JSON.parse(localStorage.getItem('uv3-setup')||'{}');for(const key of ['mode','tires','assist','weather'] as const){const allowed:Record<string,string[]>={mode:['sprint','race','time','endurance'],tires:['sport','soft','wet'],assist:['sport','off'],weather:['track','clear','rain'],quality:['high','balanced','low']};if(allowed[key].includes(saved[key]))(options as any)[key]=saved[key];}if(typeof saved.line==='boolean')options.line=saved.line;if(typeof saved.cornerAssist==='boolean')options.cornerAssist=saved.cornerAssist;for(const [key,min,max] of [['downforce',0,1],['balance',45,65]] as const)if(Number.isFinite(saved[key]))options[key]=Math.max(min,Math.min(max,saved[key]));}catch{}
 export class Session {
  laps=1;checkpoints=0;invalid=false;best:number|null=null;key='';pit=0;sectors:number[]=[];lastSector=0;

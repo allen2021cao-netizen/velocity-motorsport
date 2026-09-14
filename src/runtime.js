@@ -1,3 +1,4 @@
+import {mountExperience} from './experience';
 import {createCityShowcase} from './environment/showcase';
 import {createTrackCurve,CIRCUITS,circuitCurvature} from './circuits/circuit';
 import {buildCircuitVenue} from './circuits/venue';
@@ -892,7 +893,7 @@ TRACKS.forEach((t, i) => {
   const km = (approxLen(t) / 1000).toFixed(t.circuit?3:1);
   b.innerHTML = '<canvas class="tshape" width="38" height="38"></canvas><span><div class="tn">' + timeIcon(t.time) + ' ' + t.city + ' · ' + t.name + '</div><div class="ts">' + '★★★★★'.slice(0, t.stars) + '☆☆☆☆☆'.slice(0, 5 - t.stars) + '</div><div class="tc">' + km + 'KM · ' + (t.circuit?t.circuit.turns+' 弯 · ':'') + (t.time === 'day' ? '白天' : t.time === 'dusk' ? '黄昏' : '夜晚') + '</div>' + (t.circuit?'<div class="tc">'+t.circuit.description+'</div>':'') + '</span>';
   b.onclick = () => {
-    initAudio();highestPreviewQuality(); if (trackSel === i) return;
+    initAudio(); if (trackSel === i) return;
     trackSel = i;
     [...trackGrid.children].forEach((c, j) => c.classList.toggle('sel', j === i));
     buildWorld(trackSel);syncMenuScene();
@@ -903,7 +904,7 @@ TRACKS.forEach((t, i) => {
 });
 
 function switchCar(dir) {
-  highestPreviewQuality();
+  
   selected = (selected + dir + CARS.length) % CARS.length;
   if(state==='menu')syncMenuScene();else updateMenuCar();refreshMenuPreview();
   beep(660, .07, .15, 'triangle');
@@ -935,7 +936,7 @@ function updateMenuCar() {
 }
 function toMenu() {
   if(cityShowcase)buildWorld(trackSel);
-  highestPreviewQuality();
+  
   state = 'menu';
   showroom.visible=true;if(worldGroup)worldGroup.visible=true;document.getElementById('vehicleOverlay')?.classList.add('hidden');
   document.getElementById('tourOverlay')?.classList.add('hidden');
@@ -1330,7 +1331,9 @@ function updateAI(dt) {
 
 // ---------------- 摄像机 ----------------
 function presentationRect(){if(state==='tour'&&cityShowcase)return undefined;if(state==='menu')return menuUI?.rect();const overlay=state==='vehicle'?document.getElementById('vehicleOverlay'):state==='tour'?document.getElementById('tourOverlay'):null;if(overlay){const height=Math.max(150,overlay.getBoundingClientRect().top-12);return new DOMRect(0,0,innerWidth,height);}return undefined;}
+let chasePrevious=null;
 function updateCamera(dt) {
+  if(camMode!==0||!['race','countdown'].includes(state))chasePrevious=null;
   const rect=presentationRect();if(rect)camera.up.set(0,1,0);camera.aspect=rect?rect.width/Math.max(1,rect.height):innerWidth/innerHeight;
   orbitSurface.style.display=state==='vehicle'?'block':'none';if(state==='vehicle')orbitSurface.style.height=rect.height+'px';
   if(state==='menu'||state==='vehicle')document.querySelectorAll('[aria-label="切换自动旋转"]').forEach(b=>{const active=vehicleOrbit.snapshot().automatic;b.setAttribute('aria-pressed',String(active));b.textContent=active?'暂停旋转':'自动旋转';});
@@ -1356,11 +1359,15 @@ function updateCamera(dt) {
   const spd = Math.abs(player.speed);
   if (camMode === 0) {
     camera.up.set(0,1,0);
-    const dist = 6.4 + spd * .026, h = 2.35 + spd * .009;
+    const dist = 5.1 + Math.min(spd * .003, .3), h = 1.75 + Math.min(spd * .001, .1);
     tmpV.copy(player.pos).addScaledVector(fwdV, -dist).add(new THREE.Vector3(0, h, 0));
-    camPos.x = damp(camPos.x, tmpV.x, 5.5, dt);
-    camPos.y = damp(camPos.y, tmpV.y, 5.5, dt);
-    camPos.z = damp(camPos.z, tmpV.z, 5.5, dt);
+    // Follow translation immediately; smooth only the relative orbit to avoid speed-dependent lag.
+    if(!chasePrevious||chasePrevious.distanceTo(player.pos)>30)camPos.copy(tmpV);
+    else camPos.add(player.pos.clone().sub(chasePrevious));
+    chasePrevious=player.pos.clone();
+    camPos.x = damp(camPos.x, tmpV.x, 8, dt);
+    camPos.y = damp(camPos.y, tmpV.y, 8, dt);
+    camPos.z = damp(camPos.z, tmpV.z, 8, dt);
     camera.position.copy(camPos);
     if (shake > 0) camera.position.add(tmpV.set((Math.random() - .5) * shake, (Math.random() - .5) * shake, (Math.random() - .5) * shake));
     const spdJit = clamp((spd - 42) / 50, 0, 1) * .05; // 高速路面微震,增强速度感
@@ -1373,7 +1380,7 @@ function updateCamera(dt) {
   }
 
   shake = Math.max(0, shake - dt * 1.6);
-  const targetFov = camMode===1?68:camMode===2?64:60+spd*.08;
+  const targetFov = camMode===1?68:camMode===2?64:58+Math.min(spd/90,1)*8;
   camera.fov = damp(camera.fov, targetFov, 5, dt);
   camera.updateProjectionMatrix();
 }
@@ -1667,6 +1674,7 @@ function loop() {
   const rawDt = clock.getDelta();
   let dt = Math.min(rawDt, .1);
   autoQuality(rawDt);
+  experience.update(rawDt,state==='race'&&!paused,options.quality);
   if (paused) dt = 0;
   accumulator+=dt;
   while(accumulator>=1/120){
@@ -1729,7 +1737,7 @@ function enterTour(){
  tourOverlay.classList.remove('hidden');document.getElementById('tourCity').textContent=cityShowcase?.title||CITY_PROFILES[TRACKS[trackSel].theme].label;document.getElementById('tourLandmark').textContent=cityShowcase?.description||cityReport.landmark;
 }
 tourButton.onclick=enterTour;document.getElementById('tourBack').onclick=toMenu;
-for(const [id,step] of [['tourPrev',-1],['tourNext',1]])document.getElementById(id).onclick=()=>{highestPreviewQuality();trackSel=(trackSel+step+TRACKS.length)%TRACKS.length;[...trackGrid.children].forEach((c,j)=>c.classList.toggle('sel',j===trackSel));buildWorld(trackSel);enterTour();};
+for(const [id,step] of [['tourPrev',-1],['tourNext',1]])document.getElementById(id).onclick=()=>{trackSel=(trackSel+step+TRACKS.length)%TRACKS.length;[...trackGrid.children].forEach((c,j)=>c.classList.toggle('sel',j===trackSel));buildWorld(trackSel);enterTour();};
 const vehicleOrbit=createVehicleOrbit();let vehicleView='front';
 const vehicleButton=document.createElement('button');vehicleButton.id='vehicleBtn';vehicleButton.textContent='车辆鉴赏  ↗';document.getElementById('selPanel').append(vehicleButton);
 const vehicleOverlay=document.createElement('div');vehicleOverlay.id='vehicleOverlay';vehicleOverlay.className='hidden';vehicleOverlay.innerHTML='<small>AUTOMOTIVE ATELIER</small><h2 id="vehicleTitle"></h2><p id="vehicleInfo"></p><a href="/models/CREDITS.md" target="_blank" rel="noopener" style="color:#b8c9cc;font-size:11px">车模来源与许可</a><div class="vehicle-actions"><button data-view="front">前侧</button><button data-view="rear">后侧</button><button data-view="side">侧面</button><button data-view="wheel">轮组细节</button><button id="vehiclePrev">上一辆</button><button id="vehicleNext">下一辆</button><button id="vehicleBack">返回车库</button></div>';document.body.append(vehicleOverlay);
@@ -1755,9 +1763,9 @@ const quickQuality=document.createElement('div');quickQuality.id='quickQuality';
 for(const [value,label]of [['low','流畅'],['balanced','均衡'],['high','最高']]){const button=document.createElement('button');button.type='button';button.dataset.quality=value;button.textContent=label;button.addEventListener('click',()=>{setQuality(value);try{localStorage.setItem('uv3-setup',JSON.stringify(options));}catch{}});quickQuality.append(button);}document.body.append(quickQuality);
 function refreshQualityLabel(){document.querySelectorAll('#quickQuality button').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.quality===options.quality)));}
 function setQuality(value){options.quality=value;graphics.quality(value);qLevel=value==='low'?3:value==='balanced'?1:0;qTimer=0;qGoodT=0;applyQuality();refreshQualityLabel();}
-function highestPreviewQuality(){setQuality('high');}
+const experience=mountExperience(setQuality);
 refreshQualityLabel();
-menuUI=mountMenu(tab=>{if(tab==='car'||tab==='track')highestPreviewQuality();menuTab=tab;if(worldGroup)syncMenuScene();});
+menuUI=mountMenu(tab=>{menuTab=tab;if(worldGroup)syncMenuScene();});
 document.getElementById('menuPreview').append(tourButton);
 mountDrivingHelp(clearInput);
 const menuViewport=document.getElementById('menuViewport');menuViewport.tabIndex=0;menuViewport.setAttribute('aria-label','三维车辆展示，拖动旋转，滚轮或双指缩放');vehicleOrbit.bind(menuViewport,()=>state==='menu'&&menuTab!=='track');

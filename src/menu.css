@@ -31,3 +31,10 @@
 #quickQuality.in-race{top:85px}#menu #title{padding-right:190px}
 @media(max-height:520px) and (orientation:landscape){#menuTabs{padding-right:190px}#quickQuality{top:8px}#quickQuality button{min-height:34px}#quickQuality.in-race{top:65px}}
 @media(max-width:650px){#quickQuality{right:max(12px,env(safe-area-inset-right));gap:2px;padding:3px}#quickQuality button{min-width:46px;padding:8px 6px;font-size:12px}#menu #title{padding-right:154px}#menu #title .sub{max-width:calc(100vw - 184px);white-space:nowrap;overflow:hidden}}
+#rotateHint[hidden],#performancePanel[hidden],#fpsValue[hidden],#fpsAdvice[hidden]{display:none!important}
+#rotateHint{position:fixed;inset:0;z-index:1200;background:#091318ed;display:grid;place-items:center;padding:24px;color:#ecf4ed;text-align:center;backdrop-filter:blur(12px)}
+#rotateHint>div{max-width:340px}#rotateHint .rotate-icon{font-size:72px;color:#d8ef87}#rotateHint h2{font-size:25px}#rotateHint p{line-height:1.8;color:#bfccc5}#rotateHint button{margin-top:20px;padding:14px 22px;border:0;border-radius:8px;background:#d8ef87;color:#17251c;font-size:16px}
+#performancePanel{position:fixed;right:max(16px,env(safe-area-inset-right));top:146px;z-index:81;display:flex;gap:6px;align-items:center;color:#e4efd9;font:600 12px system-ui}
+#performancePanel button,#fpsValue{border:1px solid #73887b;background:#14232ded;border-radius:6px;color:#e4efd9;padding:8px;min-height:34px}#fpsValue{box-sizing:border-box;min-width:66px;text-align:center;font-variant-numeric:tabular-nums}#fpsValue.slow{color:#ffd78a}
+#fpsAdvice{position:absolute;right:0;top:44px;width:min(290px,80vw);padding:12px;background:#17272bf5;border:1px solid #d8b977;border-radius:8px;line-height:1.6}#fpsAdvice span{display:block;margin-bottom:8px}#fpsAdvice button{margin-right:6px}
+@media(max-height:520px) and (orientation:landscape){#performancePanel{top:112px}}
