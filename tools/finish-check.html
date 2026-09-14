@@ -1,0 +1,4 @@
+<!doctype html><meta charset="utf-8"><title>Finish flow check</title><style>body{background:#172028;color:white;font:12px monospace}iframe{width:900px;height:420px;border:0}pre{white-space:pre-wrap}</style><button id="finish">Simulate player finishing first</button><iframe id="game" src="/"></iframe><pre id="report">Waiting</pre><script>
+const frame=document.querySelector('iframe');document.querySelector('button').onclick=()=>frame.contentWindow.__raceFinishTest();
+setInterval(()=>{const s=frame.contentWindow.__velocity?.snapshot();if(s)document.querySelector('pre').textContent=JSON.stringify({state:s.state,time:s.raceTime,player:s.playerFinish,ai:s.finishTimes},null,2);},250);
+</script>

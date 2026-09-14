@@ -2,7 +2,7 @@ import {clamp,gripFor,stepVehicle,type Dynamics,type Setup} from './physics';
 export const DIFFICULTIES=[
  {name:'休闲',en:'CLUB',pace:.72,throttle:.76,braking:.72,mistake:.035,weave:.3,description:'提前制动、温和出弯，适合熟悉路线。'},
  {name:'竞技',en:'SPORT',pace:.94,throttle:1,braking:.91,mistake:.009,weave:.08,description:'充分利用直道，主动超车，稳定控制制动点与出弯。'},
- {name:'专家',en:'EXPERT',pace:.985,throttle:1,braking:.98,mistake:.002,weave:.025,description:'强车阵容，精确制动与连续进攻，失误极少。'},
+ {name:'专家',en:'EXPERT',pace:.992,throttle:1,braking:.98,mistake:.0005,weave:.025,description:'强车阵容，精确制动与连续进攻，失误极少。'},
 ] as const;
 export type OpponentCar={top:number;accel:number;handling:number;wheelbase?:number};
 export function freshDriver():Dynamics{return {speed:0,heading:0,steer:0,drift:0,fuel:100,wear:0,temperature:75,longG:0,latG:0,traction:false,abs:false};}
@@ -24,8 +24,8 @@ export function aiTargetSpeed(curvature:number[],segment:number,index:number,car
   const exitSpeed=Math.min(target,corner);
   const load=1+setup.downforce*exitSpeed*exitSpeed*.000025;
   const lateral=Math.min(l.grip*load,exitSpeed*exitSpeed*k);
-  const brake=l.braking*load*.78*Math.sqrt(Math.max(0,1-(lateral/(l.grip*load))**2));
-  target=Math.min(l.top,corner,Math.sqrt(target*target+2*brake*(metres<12?0:step)));
+  const brake=l.braking*load*(difficulty===2?.88:.78)*Math.sqrt(Math.max(0,1-(lateral/(l.grip*load))**2));
+  target=Math.min(l.top,corner,Math.sqrt(target*target+2*brake*(metres<(difficulty===2?10:12)?0:step)));
  }
  const currentK=roadCurvature(curvature,segment,index)-l.grip*setup.downforce*.000025;
  return Math.min(target,currentK>1e-6?Math.sqrt(l.grip/currentK)*l.pace:l.top);
@@ -73,3 +73,21 @@ export function matchedOpponents(cars:OpponentCar[],selected:number,difficulty:n
 }
 
 export function drivingCurvature(tangents:{angleTo:(other:any)=>number}[]){return tangents.map((t,i)=>t.angleTo(tangents[(i+1)%tangents.length])*14);}
+
+export interface PitCar {dist:number;speed:number;driver:Dynamics;pitAt?:number;pitTime?:number;pitRequested?:boolean}
+/** Same eight-second fuel/tire service as the player, inside the start-area pit zone. */
+export function opponentPit(a:PitCar,length:number,laps:number,setup:Setup,dt:number,wet=0){
+ if(setup.mode!=='endurance')return{target:Infinity,holding:false};
+ a.pitAt??=length+20;a.pitTime??=0;
+ if(a.pitAt>=length*laps)return{target:Infinity,holding:false};
+ const remaining=a.pitAt-a.dist;
+ if(remaining<400&&(a.driver.fuel<60||a.driver.wear>.55))a.pitRequested=true;
+ if(!a.pitRequested){if(remaining< -5)a.pitAt+=length;return{target:Infinity,holding:false};}
+ if(remaining<4&&a.speed<5/3.6){
+  a.speed=0;a.driver.speed=0;a.driver.throttlePressure=0;a.driver.brakePressure=1;a.driver.longG=0;a.pitTime+=dt;
+  if(a.pitTime>=8){a.driver.fuel=100;a.driver.wear=0;a.driver.temperature=65;a.pitTime=0;a.pitRequested=false;a.pitAt+=length;}
+  return{target:0,holding:true};
+ }
+ const grip=9.81*gripFor(setup,a.driver.wear,a.driver.temperature,wet);
+ return{target:Math.sqrt(2*grip*.55*Math.max(0,remaining-2)),holding:false};
+}

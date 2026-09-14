@@ -1,8 +1,11 @@
 import {gripFor} from '../src/physics';
 import {createTrackCurve,circuitCurvature} from '../src/circuits/circuit';
 import {TRACKS} from '../src/tracks.js';
-import {aiTargetSpeed,stepOpponent,freshDriver,roadCurvature,drivingCurvature} from '../src/race-ai';
+import {aiTargetSpeed,stepOpponent,freshDriver,roadCurvature,drivingCurvature,opponentPit} from '../src/race-ai';
 const setup={tires:'sport',assist:'sport',downforce:.4,balance:55,weather:'clear',mode:'race'},car={top:296,accel:.84,handling:.9};
+const wet=process.argv.includes('--rain')?1:0;
+setup.tires=process.argv.includes('--wet-tires')?'wet':process.argv.includes('--soft-tires')?'soft':'sport';
+const laps=process.argv.includes('--endurance')?8:1;if(laps===8)setup.mode='endurance';
 const results=[];
 for(const theme of TRACKS.map(t=>t.theme)){
  const curve=createTrackCurve(TRACKS.find(t=>t.theme===theme)!),n=1400,length=curve.getLength(),seg=length/n;
@@ -10,15 +13,16 @@ for(const theme of TRACKS.map(t=>t.theme)){
  const row:{city:string;tiers:unknown[]}={city:theme,tiers:[]};
  for(let difficulty=0;difficulty<3;difficulty++){
   const driver=freshDriver();driver.temperature=60;let distance=0,time=0,peak=0,maxCornerExcess=0;const dt=1/120;
-  let target=0,timer=0;
-  while(distance<length&&time<900){const idx=Math.floor(distance/seg)%n,k=roadCurvature(curvature,seg,idx);
-   if(timer<=0){target=aiTargetSpeed(curvature,seg,idx,car,setup,difficulty,0,driver);timer=.08;}timer-=dt;
-   driver.speed=stepOpponent(driver.speed,target,car,setup,difficulty,dt,0,driver,k);
+  let target=0,timer=0;const pitCar={dist:0,speed:0,driver};
+  while(distance<length*laps&&time<7200){const idx=Math.floor(distance/seg)%n,k=roadCurvature(curvature,seg,idx);
+   if(timer<=0){target=aiTargetSpeed(curvature,seg,idx,car,setup,difficulty,wet,driver);timer=.08;}timer-=dt;
+   pitCar.dist=distance;pitCar.speed=driver.speed;const pit=opponentPit(pitCar,length,laps,setup,dt,wet);
+   driver.speed=pit.holding?0:stepOpponent(driver.speed,Math.min(target,pit.target),car,setup,difficulty,dt,wet,driver,k);
    distance+=driver.speed*dt;time+=dt;peak=Math.max(peak,driver.speed*3.6);
-   maxCornerExcess=Math.max(maxCornerExcess,driver.speed*driver.speed*k/9.81-gripFor(setup,driver.wear,driver.temperature)*(1+setup.downforce*driver.speed*driver.speed*.000025)*(.85+car.handling*.18));
+   maxCornerExcess=Math.max(maxCornerExcess,driver.speed*driver.speed*k/9.81-gripFor(setup,driver.wear,driver.temperature,wet)*(1+setup.downforce*driver.speed*driver.speed*.000025)*(.85+car.handling*.18));
   }
-  row.tiers.push({difficulty,seconds:+time.toFixed(2),peakKmh:+peak.toFixed(1),cornerDemandExcessG:+maxCornerExcess.toFixed(3)});
+  row.tiers.push({difficulty,finished:distance>=length*laps,fuel:+driver.fuel.toFixed(1),seconds:+time.toFixed(2),peakKmh:+peak.toFixed(1),cornerDemandExcessG:+maxCornerExcess.toFixed(3)});
  }
  results.push(row);
 }
-console.log(JSON.stringify({method:'One standing-start lap, identical car/setup, dry weather, no traffic or mistakes; lap pace only, not human win rates.',results},null,2));
+console.log(JSON.stringify({method:'Standing-start laps, identical car/setup, no traffic or mistakes; lap pace only, not human win rates.',laps,wet,tires:setup.tires,results},null,2));

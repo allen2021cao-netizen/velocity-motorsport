@@ -18,3 +18,5 @@
 @media (orientation:landscape) and (max-height:360px) and (max-width:1100px){
  #raceTiming #minimap{width:54px;height:54px}#raceTiming caption{display:none}
 }
+#hud.post-finish #touchUI,#hud.post-finish #controlsToggle,#hud.post-finish #speedo{display:none!important}
+#resList .rt small{display:block;font-size:.75em;color:#a6bab9;margin-top:3px}

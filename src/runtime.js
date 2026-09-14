@@ -1,3 +1,4 @@
+import {allFinished,crossingTime} from './race-finish';
 import {mountRaceTiming,CheckpointTiming,raceOrder} from './race-timing';
 import {mountExperience} from './experience';
 import {createCityShowcase} from './environment/showcase';
@@ -8,7 +9,7 @@ import {cameraPose} from './camera-rig';
 import {createVehicleOrbit} from './vehicle-orbit';
 import {mountDrivingHelp} from './driving-help';
 import {mountMenu} from './menu';
-import {DIFFICULTIES,aiTargetSpeed,stepOpponent,freshDriver,roadCurvature,trafficPlan,matchedOpponents,drivingCurvature} from './race-ai';
+import {DIFFICULTIES,aiTargetSpeed,stepOpponent,freshDriver,roadCurvature,trafficPlan,matchedOpponents,drivingCurvature,opponentPit} from './race-ai';
 import {buildAutomobile} from './automotive/model';
 import * as THREE from 'three';
 import {ensureDetailedCar,DETAILED_VEHICLES} from './detailed-vehicles';
@@ -988,6 +989,7 @@ async function startRace() {
   document.getElementById('menu').classList.add('hidden');
   document.getElementById('hud').style.display = 'block';
   document.getElementById('results').style.display = 'none';
+  document.getElementById('hud').classList.remove('post-finish');
   document.getElementById('diffTxt').textContent = '难度 ' + D.en + ' · ' + T.city;
   showLights.forEach(l => l.visible = false);
   ring.visible = false; ped.visible = false;
@@ -1057,15 +1059,19 @@ function flashFx(op) { // 冲线/重撞白闪
 function finishRace() {
   player.finished = true;
   player.finishTime = raceTime;
-  state = 'finished';
-  showMsg('FINISH!', '比赛完成', 3);
+  state = 'finishing';
+  player.speed=0;player.throttlePressure=0;player.brakePressure=1;
+  document.getElementById('hud').classList.add('post-finish');
+  showMsg('FINISH!', '你已完赛 · 等待其他车辆冲线', 3);
   flashFx(.85);
   vib([40, 60, 40, 60, 130]); // 冲线震动节拍
   spawnBurst(player.pos.x, 1, player.pos.z, 26, 1, .85, .3, 7, .9, 5); // 金色庆祝粒子
   beep(880, .3, .25, 'triangle'); setTimeout(() => beep(1320, .5, .25, 'triangle'), 200);
-  setTimeout(showResults, 2200);
+
 }
 function showResults() {
+  if(!allFinished(player,ais))return;
+  state='finished';
   const rows=raceOrder([
     {id:'player',name:player.cfg.nameCn+'(你)',me:true,distance:((player.lap-1)+player.s)*trackLen,finishTime:player.finishTime},
     ...ais.map(a=>({id:a.car.cfg.type,name:a.car.cfg.nameCn,me:false,distance:a.dist,finishTime:a.finishTime}))
@@ -1076,21 +1082,14 @@ function showResults() {
   const rkTxt = ['🥇 冠军 P1', '🥈 亚军 P2', '🥉 季军 P3', 'P4'][myRank - 1];
   rkEl.innerHTML = '<div class="rk' + (myRank === 1 ? '' : ' p' + myRank) + '">' + rkTxt + '</div>' +
     '<div class="rks">总时间 <b id="resTimeCnt">0:00.000</b></div>';
-  const t0 = performance.now(), cntDur = 1100, target = player.finishTime;
-  const cntEl = document.getElementById('resTimeCnt');
-  (function tick() {
-    const k = clamp((performance.now() - t0) / cntDur, 0, 1);
-    const e = 1 - Math.pow(1 - k, 3); // easeOutCubic
-    cntEl.textContent = fmt(target * e);
-    if (k < 1 && document.getElementById('results').style.display !== 'none') requestAnimationFrame(tick);
-  })();
+  document.getElementById('resTimeCnt').textContent=fmt(player.finishTime);
   const list = document.getElementById('resList');
   list.innerHTML = '';
   rows.forEach((r, i) => {
     const div = document.createElement('div');
     div.className = 'resRow' + (r.me ? ' me' : '') + (i === 0 ? ' first' : '');
     div.style.animationDelay = (.25 + i * .13) + 's';
-    div.innerHTML = '<div class="rp">' + (i === 0 ? '🏆' : (i + 1)) + '</div><div class="rn">' + r.name + '</div><div class="rt">' + (r.time===null?'未完赛':i===0?fmt(r.time):'+'+(r.time-rows[0].time).toFixed(3)+' 秒') + '</div>';
+    div.innerHTML = '<div class="rp">' + (i === 0 ? '🏆' : (i + 1)) + '</div><div class="rn">' + r.name + '</div><div class="rt">' + (fmt(r.time)+(i===0?'':'<small> +'+(r.time-rows[0].time).toFixed(3)+' 秒</small>')) + '</div>';
     list.appendChild(div);
   });
   const T = TRACKS[trackSel], DF = DIFFS[diffSel];
@@ -1189,6 +1188,7 @@ function updatePlayer(dt) {
   if (player.lastS > .88 && player.s < .12 && session.checkpoints===3) {
     if (state === 'race') {
       const lapT = raceTime - player.lapStart;
+      player.lastCompletedLapTime=lapT;
       const validLap=session.complete(lapT);
       if (validLap) {
         if (player.best == null || lapT < player.best) {
@@ -1283,7 +1283,7 @@ function updateAI(dt) {
   const playerTotal = (player.lap - 1) + player.s;
   const playerDist = playerTotal * trackLen;
   const traffic=ais.filter(a=>!a.finished).map(a=>({dist:a.dist,lat:a.lat,speed:a.speed,acceleration:a.driver.longG*9.81}));
-  traffic.push({dist:playerDist,lat:player.latOnTrack||0,speed:player.speed,acceleration:player.longG*9.81});
+  if(!player.finished)traffic.push({dist:playerDist,lat:player.latOnTrack||0,speed:player.speed,acceleration:player.longG*9.81});
   for (const a of ais) {
     if (a.finished) continue;
     const idx = wrapIdx(Math.round(a.dist / SEG));
@@ -1294,17 +1294,21 @@ function updateAI(dt) {
     const avoid=trafficPlan(a,traffic.filter(o=>o.dist!==a.dist||o.lat!==a.lat),trackLen,ROAD_W,dt,raceTime<5);
     a.trafficTarget=avoid.target;
     target=Math.min(target,avoid.target);
+    const pit=opponentPit(a,trackLen,session.laps,options,(state==='race'||state==='finishing')?dt:0,wetness);
+    target=Math.min(target,pit.target);
     a.commandTarget=target;
     if(a.slow>0){a.slow-=dt;target*=.84;}else if(Math.random()<D.mistake*dt&&curvAhead>.08)a.slow=1.1;
-    if(state==='race')a.speed=stepOpponent(a.speed,target,a.car.cfg,options,diffSel,dt,wetness,a.driver,roadCurvature(sDriveCurv,SEG,idx));else a.speed=damp(a.speed,0,4,dt);
+    if(pit.holding)a.speed=0;else if(state==='race'||state==='finishing')a.speed=stepOpponent(a.speed,target,a.car.cfg,options,diffSel,dt,wetness,a.driver,roadCurvature(sDriveCurv,SEG,idx));else a.speed=damp(a.speed,0,4,dt);
+    const previousDistance=a.dist;
     a.dist += a.speed * dt;
-    if (a.dist >= session.laps * trackLen + 5 && !a.finished) { a.finished = true; a.finishTime = raceTime; a.speed = 0; }
+    const arrival=crossingTime(previousDistance,a.dist,session.laps*trackLen,raceTime,dt);
+    if(arrival!==null){a.finished=true;a.finishTime=arrival;a.dist=session.laps*trackLen;a.speed=0;}
     // 采样点间连续插值,消除逐格跳动
     const fIdx = a.dist / SEG;
     const i0 = wrapIdx(Math.floor(fIdx)), i1 = wrapIdx(i0 + 1);
     const fr = fIdx - Math.floor(fIdx);
     const p0 = sPts[i0], p1 = sPts[i1], n0 = sNrm[i0], n1 = sNrm[i1];
-    a.lat = clamp(state==='race'?avoid.lat:a.lat, -(ROAD_W - 1.3), ROAD_W - 1.3);
+    a.lat = clamp((state==='race'||state==='finishing')?avoid.lat:a.lat, -(ROAD_W - 1.3), ROAD_W - 1.3);
     a.car.group.position.set(
       lerp(p0.x, p1.x, fr) + lerp(n0.x, n1.x, fr) * a.lat, 0,
       lerp(p0.z, p1.z, fr) + lerp(n0.z, n1.z, fr) * a.lat);
@@ -1348,6 +1352,11 @@ function updateCamera(dt) {
   }
   if(state==='menu'){
     carObjs[selected].group.rotation.set(0,0,0);vehicleOrbit.view(camera,dt,new THREE.Vector3(0,.92,0),1.6+Math.sin(vehicleOrbit.snapshot().pitch)*1.1);return;
+  }
+  if(state==='finishing'){
+    const watching=ais.filter(a=>!a.finished).sort((a,b)=>b.dist-a.dist)[0];
+    if(watching){const p=watching.car.group.position,h=watching.heading||0;camera.up.set(0,1,0);
+      tmpV.set(p.x-Math.sin(h)*8,4,p.z-Math.cos(h)*8);camera.position.lerp(tmpV,1-Math.exp(-5*dt));camera.lookAt(p.x,1,p.z);camera.fov=64;camera.updateProjectionMatrix();return;}
   }
   fwdV.set(Math.sin(player.heading), 0, Math.cos(player.heading));
   const spd = Math.abs(player.speed);
@@ -1586,8 +1595,9 @@ function updateHud(dt) {
     posBig.innerHTML = rank + '<small>/' + (ais.length+1) + '</small>';
     posBig.style.color = rank === 1 ? '#b9ff00' : '#fff';
     updateHudStatic();
-    document.getElementById('tTotal').textContent = fmt(raceTime);
-    document.getElementById('tLap').textContent = fmt(raceTime - player.lapStart);
+    if(state==='finishing'){document.getElementById('submsg').textContent='你已完赛 · 等待 '+ais.filter(a=>!a.finished).length+' 辆车冲线';document.getElementById('submsg').style.opacity=1;msgTimer=1;}
+    document.getElementById('tTotal').textContent = fmt(player.finishTime??raceTime);
+    document.getElementById('tLap').textContent = fmt(player.finished?player.lastCompletedLapTime:raceTime-player.lapStart);
     document.getElementById('tBest').textContent = fmt(player.best);
   }
   if (msgTimer > 0) {
@@ -1677,14 +1687,15 @@ function loop() {
   while(accumulator>=1/120){
     const step=1/120;
     if(state==='countdown')updateCountdown(step);
-    if(state==='race'||state==='finished'||state==='countdown'){
-      if(state==='race')raceTime+=step;
-      updatePlayer(step);updateAI(step);
-      if(checkpointTiming&&(state==='race'||state==='countdown')){
+    if(state==='race'||state==='finishing'||state==='countdown'){
+      if(state==='race'||state==='finishing')raceTime+=step;
+      if(!player.finished)updatePlayer(step);updateAI(step);
+      if(checkpointTiming&&(state==='race'||state==='finishing'||state==='countdown')){
         const i=player.trackIdx,offset=(player.pos.x-sPts[i].x)*sTan[i].x+(player.pos.z-sPts[i].z)*sTan[i].z;
-        checkpointTiming.sample('player',Math.max(0,((player.lap-1)+player.s)*trackLen+clamp(offset,-SEG/2,SEG/2)),raceTime);
+        if(!player.finished)checkpointTiming.sample('player',Math.max(0,((player.lap-1)+player.s)*trackLen+clamp(offset,-SEG/2,SEG/2)),raceTime);
         ais.forEach(a=>checkpointTiming.sample(a.car.cfg.type,a.dist,raceTime));
       }
+      if(state==='finishing'&&allFinished(player,ais))showResults();
     }
     accumulator-=step;
   }
@@ -1694,7 +1705,7 @@ function loop() {
     document.getElementById('telemetry').textContent=(options.mode==='time'?'TIME ATTACK':'MOTORSPORT')+'  /  '+(player.abs?'ABS ': '')+(player.traction?'TCS ': '')+(player.cornerBraking?'弯道辅助 ': '')+Math.abs(player.latG).toFixed(2)+' G'+advisory+'\n'+(wetness?'湿地':'干地')+' · 胎温 '+Math.round(player.temperature)+'°C · 最佳 '+fmt(session.best)+(session.invalid?' · 本圈无效':'')+(options.mode==='endurance'?'\n油量 '+Math.round(player.fuel)+'% · 胎耗 '+Math.round(player.wear*100)+'%'+(session.pit?' · 补给 '+session.pit.toFixed(1)+'/8 秒':''):'');
   }
   if(raceAudio){
-    const active=!paused&&(state==='race'||state==='countdown');
+    const active=!paused&&(state==='race'||state==='finishing'||state==='countdown');
     const throttle=state==='countdown'?((keys.KeyW||keys.ArrowUp||vk.gas)?1:0):player.throttlePressure||0;
     const heading=player.heading||0;
     raceAudio.update({active,type:CARS[selected].type,top:CARS[selected].top,speed:player.speed,throttle,brake:player.brakePressure||0,slip:Math.abs(player.drift)*Math.abs(player.speed),wet:wetness,camera:camMode,countdown:state==='countdown',fuel:player.fuel,opponents:ais.map(a=>{const dx=a.car.group.position.x-player.pos.x,dz=a.car.group.position.z-player.pos.z;return {x:dx*Math.cos(heading)-dz*Math.sin(heading),z:dx*Math.sin(heading)+dz*Math.cos(heading),speed:a.speed,type:a.car.cfg.type};})},Math.min(rawDt,.1));
@@ -1787,4 +1798,10 @@ window.addEventListener('vehicle-model-ready',event=>{if(event.detail!==CARS[sel
 
 buildWorld(trackSel);menuUI.select('car');toMenu();loop();
 // Read-only diagnostics for performance and smoke testing.
-window.__velocity={snapshot:()=>({state,paused,track:TRACKS[trackSel].theme,trackLength:trackLen,roadWidth:ROAD_W*2,car:CARS[selected].type,speed:player.speed,heading:player.heading,position:player.pos.toArray(),lap:player.lap,laps:session.laps,mode:options.mode,wetness,ai:ais.length,fuel:player.fuel,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,fps:fpsEMA,physicsHz:120,quality:options.quality,qualityLevel:qLevel,audio:raceAudio?.snapshot(),detailed:!!carObjs[selected].detailed,modelKind:carObjs[selected].modelKind,dimensions:carObjs[selected].group.userData.dimensions,wheelCount:carObjs[selected].wheels.length,assetCredit:carObjs[selected].assetCredit,assetError:!!carObjs[selected].assetError,assetStatus:carObjs[selected].assetStatus,bodyLod:carObjs[selected].bodyLod?.getCurrentLevel(),aiLods:ais.map(a=>({car:a.car.cfg.type,level:a.car.bodyLod?.getCurrentLevel()})),steeringAngle:carObjs[selected].steeringWheel?.rotation.z,wheelPositions:carObjs[selected].wheels.map(w=>w.parent.position.toArray()),cockpit:carObjs[selected].cockpit,bonnet:carObjs[selected].bonnet,camera:camMode,cameraEye:camera.position.toArray(),cameraClip:[camera.near,camera.far],pixelRatio:renderer.getPixelRatio(),orbit:vehicleOrbit.snapshot(),pedals:{throttle:player.throttlePressure,brake:player.brakePressure},cornerBraking:!!player.cornerBraking,menuTab,difficulty:diffSel,aiSpeeds:ais.map(a=>a.speed),aiDiagnostics:ais.map(a=>({car:a.car.cfg.type,speed:a.speed,planned:a.plannedSpeed,traffic:a.trafficTarget,target:a.commandTarget,throttle:a.driver.throttlePressure,brake:a.driver.brakePressure,distance:a.dist,lat:a.lat,latG:a.driver.latG})),sceneVisibility:{world:worldGroup.visible,showroom:showroom.visible,cars:carObjs.filter(c=>c.group.visible).length},environment:{...cityReport,sky:atmosphere.snapshot(),surfaces:surfaces.status}})};
+window.__velocity={snapshot:()=>({state,paused,raceTime,playerFinish:player.finishTime,finishTimes:ais.map(a=>a.finishTime),track:TRACKS[trackSel].theme,trackLength:trackLen,roadWidth:ROAD_W*2,car:CARS[selected].type,speed:player.speed,heading:player.heading,position:player.pos.toArray(),lap:player.lap,laps:session.laps,mode:options.mode,wetness,ai:ais.length,fuel:player.fuel,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,fps:fpsEMA,physicsHz:120,quality:options.quality,qualityLevel:qLevel,audio:raceAudio?.snapshot(),detailed:!!carObjs[selected].detailed,modelKind:carObjs[selected].modelKind,dimensions:carObjs[selected].group.userData.dimensions,wheelCount:carObjs[selected].wheels.length,assetCredit:carObjs[selected].assetCredit,assetError:!!carObjs[selected].assetError,assetStatus:carObjs[selected].assetStatus,bodyLod:carObjs[selected].bodyLod?.getCurrentLevel(),aiLods:ais.map(a=>({car:a.car.cfg.type,level:a.car.bodyLod?.getCurrentLevel()})),steeringAngle:carObjs[selected].steeringWheel?.rotation.z,wheelPositions:carObjs[selected].wheels.map(w=>w.parent.position.toArray()),cockpit:carObjs[selected].cockpit,bonnet:carObjs[selected].bonnet,camera:camMode,cameraEye:camera.position.toArray(),cameraClip:[camera.near,camera.far],pixelRatio:renderer.getPixelRatio(),orbit:vehicleOrbit.snapshot(),pedals:{throttle:player.throttlePressure,brake:player.brakePressure},cornerBraking:!!player.cornerBraking,menuTab,difficulty:diffSel,aiSpeeds:ais.map(a=>a.speed),aiDiagnostics:ais.map(a=>({car:a.car.cfg.type,speed:a.speed,planned:a.plannedSpeed,traffic:a.trafficTarget,target:a.commandTarget,throttle:a.driver.throttlePressure,brake:a.driver.brakePressure,distance:a.dist,lat:a.lat,latG:a.driver.latG})),sceneVisibility:{world:worldGroup.visible,showroom:showroom.visible,cars:carObjs.filter(c=>c.group.visible).length},environment:{...cityReport,sky:atmosphere.snapshot(),surfaces:surfaces.status}})};
+
+if(import.meta.env.DEV)window.__raceFinishTest=()=>{
+ if(state!=='race')throw new Error('Start a local race first');
+ ais.forEach((a,i)=>{a.dist=session.laps*trackLen-80-i*70;a.speed=24;a.driver.speed=24;a.driver.fuel=100;a.planTimer=0;a.finished=false;a.finishTime=null;});
+ player.lap=session.laps+1;player.s=0;player.lastCompletedLapTime=raceTime;finishRace();
+};
