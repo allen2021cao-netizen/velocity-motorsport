@@ -14,3 +14,6 @@ This is an unofficial game adaptation, not a laser scan or a licensed replica. E
 
 ## Open city edition
 The four circuit routes retain their geographic outlines. Their surroundings are now fictional composites: downtown-style districts and stylized city landmarks are intentionally relocated near the circuits. Shanghai adds Oriental Pearl and Lujiazui silhouettes; Miami combines South Beach-inspired hotels and a Freedom Tower-inspired landmark with the stadium; Las Vegas adds illuminated hotel wings and a pyramid; Monaco adds casino and palace-inspired architecture. Continuous catch fences and road-edge walls are removed. Low kerbs, open shoulders, road markings and braking boards remain. Leaving the shoulder slows the car and invalidates shortcut laps.
+
+## Standalone city explorer
+Shanghai, Las Vegas, Miami and Monaco city tours now use separate city portrait scenes with no racing circuit meshes. Their landmarks, waterfronts, blocks, camera framing and lighting are artistic composites, not photogrammetry or a geographically exact reconstruction. Waterfront views use planar reflected city geometry; tours release their GPU resources and restore circuit lighting when returning to the garage.
