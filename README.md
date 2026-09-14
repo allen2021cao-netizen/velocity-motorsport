@@ -8,6 +8,10 @@ Node 22+ is recommended. Run `npm ci`, then `npm run dev`. `npm run build` type-
 
 ## Contents
 
+- Responsive three-step menu (car / circuit / setup), one scrolling control panel, persistent start button and a measured WebGL preview viewport. Vehicle and city scenes are explicitly isolated on every transition.
+- Three CPU levels: Club / Sport / Expert. Corner-speed planning looks 200 metres ahead; acceleration and braking use the player's performance model without catch-up boosts. A deterministic two-lap benchmark yields approximately 111 / 96 / 87 seconds, not measured human win rates. Car choice and driving skill still affect results.
+- Faster low-speed steering and recentring; live sensitivity settings; optional corner braking assistance, with separate assisted/manual best-lap records. Cockpit and bonnet cameras follow per-car body-local anchors, including actual imported steering-wheel position for the 458.
+
 - 13 vehicles: 12 individually parameterized coachwork models with continuous body surfaces, open wheel arches, separate roof/glazing, seats/instruments/steering, model-specific lighting/aero and independently rotating wheels with stationary calipers; plus a Draco-compressed Ferrari 458 GLB. `src/automotive/` replaces the previous side-profile extrusion at runtime. The twelve generated vehicles are authored approximations, not manufacturer CAD or scanned replicas.
 - Vehicle Atelier: neutral studio lighting, front/rear/side views and wheel close-up, accessible from the garage. `node tools/vehicle-check.mjs` checks all 13 cars and captures front/rear views; the geometry test checks finite vertices, axle spacing, tire contact and polygon budget.
 - 12 city environments with distinct facades, structural landmarks, street grids, balconies, cornices, shops, drainage, lamps and vegetation. Photographic HDR skies provide environment reflections; asphalt uses local diffuse/normal/roughness textures. Waterfronts have animated wave normals; mountain regions have terrain and snow lines. **Routes and building placements are artistic approximations, not GIS-derived or surveyed replicas.**
@@ -20,7 +24,9 @@ Node 22+ is recommended. Run `npm ci`, then `npm run dev`. `npm run build` type-
 
 ## Controls
 
-WASD / arrows: throttle, brake and steer. Space: handbrake. C: camera. Esc: pause. R: reset to track (invalidates the current lap). M: mute. P: endurance service. Gamepad left stick steers, RT accelerates, LT brakes, A applies the handbrake.
+WASD / arrows: throttle, brake and steer. Space: handbrake. C: cycle chase, cockpit and bonnet cameras. Esc: pause. R: reset to track (invalidates the current lap). M: mute. P: endurance service. Gamepad left stick steers, RT accelerates, LT brakes, A applies the handbrake. The pause settings' three sensitivity levels now affect physical steering input.
+
+`node tools/release-check.mjs` covers 320/390-pixel portrait, 844-pixel landscape and desktop menus, preview isolation, all 13 cockpit/bonnet views and a CPU race. `node tools/interaction.mjs` verifies simultaneous touch input and pit service. Set `TEST_URL` to run against a deployed build.
 
 ## Layout
 

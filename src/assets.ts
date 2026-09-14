@@ -28,6 +28,9 @@ export async function loadDetailedCar(car:any){
    const pos=wheel.getWorldPosition(new T.Vector3());car.group.worldToLocal(pos);
    const pivot=new T.Group();pivot.position.copy(pos);car.group.add(pivot);const spin=new T.Group();pivot.add(spin);spin.updateMatrixWorld(true);spin.attach(wheel);wheels.push(spin);if(name.includes('_f'))frontPivots.push(pivot);
   }
-  Object.assign(car,{bodyParts:body,wheels,frontPivots,flames:[],glowPlane:new T.Group(),brakeLight,detailed:true,modelKind:'imported-glb',wheelRadius:.34,cockpit:{x:.34,y:.98,z:-.1},steeringWheel:model.getObjectByName('steering_wheel')});
+  const steeringWheel=model.getObjectByName('steering_wheel');
+  const steeringPosition=steeringWheel?body.worldToLocal(steeringWheel.getWorldPosition(new T.Vector3())):new T.Vector3(.34,.78,.2);
+  car.group.userData.dimensions={length:4.55,width:size.x*scale,height:size.y*scale,wheelbase:2.65};
+  Object.assign(car,{bodyParts:body,wheels,frontPivots,flames:[],glowPlane:new T.Group(),brakeLight,detailed:true,modelKind:'imported-glb',wheelRadius:.34,cockpit:{x:steeringPosition.x,y:T.MathUtils.clamp(steeringPosition.y+.22,.95,1.14),z:steeringPosition.z-.45},bonnet:{x:0,y:.83,z:1.84},steeringWheel});
  }finally{draco.dispose();}
 }

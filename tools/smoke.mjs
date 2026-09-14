@@ -9,7 +9,7 @@ await page.waitForFunction(()=>window.__velocity,{timeout:90000});
 await page.waitForTimeout(2000);
 console.log('MENU',await page.evaluate(()=>window.__velocity.snapshot()));
 await page.screenshot({path:'artifacts/garage.png'});
-await page.selectOption('#quality','balanced');
+await page.click('#navSetup');await page.selectOption('#quality','balanced');
 await page.selectOption('#mode','time');
 await page.click('#startBtn');await page.waitForFunction(()=>window.__velocity.snapshot().state==='race',null,{timeout:120000});
 await page.keyboard.down('KeyW');await page.waitForFunction(()=>window.__velocity.snapshot().speed>8,null,{timeout:60000});await page.keyboard.up('KeyW');
@@ -21,6 +21,7 @@ await page.click('#startBtn');await page.waitForFunction(()=>window.__velocity.s
 await page.screenshot({path:'artifacts/race.png'});
 await page.keyboard.press('KeyC');await page.waitForTimeout(500);await page.screenshot({path:'artifacts/cockpit.png'});
 await page.keyboard.press('Escape');await page.click('#quitBtn');
+await page.click('#navTrack');
 for(let i=0;i<12;i++){await page.locator('.trackBtn').nth(i).click();await page.waitForTimeout(150);console.log('TRACK',i,(await page.evaluate(()=>window.__velocity.snapshot())).track);}
 await page.setViewportSize({width:390,height:844});await page.screenshot({path:'artifacts/mobile.png'});
 console.log('ERRORS',errors);fs.writeFileSync('artifacts/smoke.json',JSON.stringify({moving,errors},null,2));await browser.close();if(errors.length)process.exitCode=1;

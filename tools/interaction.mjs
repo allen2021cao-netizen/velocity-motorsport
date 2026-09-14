@@ -4,6 +4,7 @@ const page=await browser.newPage({viewport:{width:844,height:390},isMobile:true,
 const errors=[];page.on('pageerror',e=>errors.push(e.message));
 await page.goto(process.env.TEST_URL||'http://127.0.0.1:5173/');
 await page.waitForFunction(()=>window.__velocity,null,{timeout:90000});
+await page.click('#navSetup');
 await page.locator('#downforce').scrollIntoViewIfNeeded();await page.focus('#downforce');
 const before=await page.inputValue('#downforce');await page.keyboard.press('ArrowRight');
 const after=await page.inputValue('#downforce');if(Number(after)<=Number(before))throw Error('Range keyboard handling failed');

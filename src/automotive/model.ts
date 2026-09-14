@@ -77,7 +77,7 @@ export function buildAutomobile(cfg:any){
  const roundFront=id==='p911',popups=['f40','diablo','c5'].includes(id),headZ=front+.02,headY=p.nose-.03;
  for(const side of [-1,1]){
   const hx=side*p.width*.32;
-  if(roundFront){ellipsoid(paint,hx,headY+.12,headZ-.22,.183,.163,.20);const m=ellipsoid(trim,hx,headY+.14,headZ-.07,.145,.137,.035);m.rotation.x=-.50;const l=ellipsoid(lens,hx,headY+.145,headZ-.042,.127,.12,.025);l.rotation.x=-.50;}
+  if(roundFront){ellipsoid(paint,hx,headY+.035,headZ-.18,.17,.085,.15);const m=ellipsoid(trim,hx,headY+.045,headZ-.09,.139,.116,.026);m.rotation.x=-.65;const l=ellipsoid(lens,hx,headY+.05,headZ-.07,.124,.103,.019);l.rotation.x=-.65;}
   else{
    const housing=box(trim,hx,headY,headZ-.01,p.width*.23,.105,.065,.035);housing.rotation.z=side*(p.round?.09:0);
    for(let j=-1;j<=1;j++){ellipsoid(alloy,hx+j*.092,headY,headZ+.027,.036,.035,.016);ellipsoid(light,hx+j*.092,headY,headZ+.039,.024,.025,.013);}
@@ -133,5 +133,5 @@ export function buildAutomobile(cfg:any){
  function batch(root:T.Group){root.updateMatrixWorld(true);const inverse=root.matrixWorld.clone().invert(),bins=new Map<T.Material,T.Mesh[]>();root.traverse(o=>{const m=o as T.Mesh;if(m.isMesh&&!Array.isArray(m.material)&&!m.material.transparent){const list=bins.get(m.material)||[];list.push(m);bins.set(m.material,list);}});for(const [mat,list]of bins){if(list.length<2)continue;const source=list.map(m=>(m.geometry.index?m.geometry.toNonIndexed():m.geometry.clone()).applyMatrix4(inverse.clone().multiply(m.matrixWorld)));const geo=mergeGeometries(source);source.forEach(x=>x.dispose());if(geo){const mesh=add(geo,mat,0,0,0,root);mesh.name='batched-'+mat.uuid;list.forEach(m=>{m.removeFromParent();m.geometry.dispose();});}}}
  steeringWheel.removeFromParent();batch(body);body.add(steeringWheel);for(const w of wheels)batch(w);
  g.name=cfg.nameEn;g.userData.modelKind='procedural-coachwork';g.userData.dimensions={length:p.length,width:p.width,height:p.height,wheelbase:p.wheelbase};
- return{group:g,bodyParts:body,wheels,frontPivots,flames:[],glowPlane:new T.Group(),cfg,brakeLight:red,steeringWheel,detailed:true,cockpit:{x:p.cockpit,y:p.height-.20,z:p.screen-.88},wheelRadius:p.wheel,modelKind:'procedural-coachwork',materials:mats};
+ return{group:g,bodyParts:body,wheels,frontPivots,flames:[],glowPlane:new T.Group(),cfg,brakeLight:red,steeringWheel,detailed:true,cockpit:{x:p.cockpit,y:p.height-.12,z:p.screen-.95},bonnet:{x:0,y:top(0,front-.38)+.14,z:front-.38},wheelRadius:p.wheel,modelKind:'procedural-coachwork',materials:mats};
 }

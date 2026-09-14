@@ -1,6 +1,7 @@
 import shell from './shell.html?raw';
 import './legacy.css';
 import './style.css';
+import './menu.css';
 document.querySelector('#app')!.innerHTML=shell;
 import('./runtime.js').catch(error=>{
  console.error(error);
