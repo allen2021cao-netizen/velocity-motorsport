@@ -1,4 +1,4 @@
-import {mountRaceTiming} from './race-timing';
+import {mountRaceTiming,CheckpointTiming,raceOrder} from './race-timing';
 import {mountExperience} from './experience';
 import {createCityShowcase} from './environment/showcase';
 import {createTrackCurve,CIRCUITS,circuitCurvature} from './circuits/circuit';
@@ -652,6 +652,7 @@ let selected = 12, diffSel = 1, trackSel = 7;
 let camMode = 0;
 let menuTab='car',menuUI=null;
 let raceTime = 0, countdownT = 0;
+let checkpointTiming=null;
 let shake = 0, camAngle = .8;
 let paused = false;
 const camPos = new THREE.Vector3(0, 6, 14);
@@ -982,6 +983,7 @@ async function startRace() {
   const nightish = T.time !== 'day';
   worldGroup.visible=true;showroom.visible=false;document.getElementById('vehicleOverlay')?.classList.add('hidden');document.getElementById('tourOverlay')?.classList.add('hidden');
   state = 'countdown'; countdownT = 3.8; raceTime = 0; paused = false;
+  checkpointTiming=new CheckpointTiming(trackLen);
   document.getElementById('menu').classList.add('hidden');
   document.getElementById('hud').style.display = 'block';
   document.getElementById('results').style.display = 'none';
@@ -1063,18 +1065,10 @@ function finishRace() {
   setTimeout(showResults, 2200);
 }
 function showResults() {
-  const rows = [];
-  rows.push({ name: player.cfg.nameCn + '(你)', me: true, time: player.finishTime });
-  ais.forEach(a => {
-    let t = a.finishTime, est = false;
-    if (t == null) {
-      const remain = session.laps * trackLen + 5 - a.dist;
-      t = raceTime + remain / Math.max(a.speed, 30);
-      est = true;
-    }
-    rows.push({ name: a.car.cfg.nameCn, me: false, time: t, est });
-  });
-  rows.sort((x, y) => x.time - y.time);
+  const rows=raceOrder([
+    {id:'player',name:player.cfg.nameCn+'(你)',me:true,distance:((player.lap-1)+player.s)*trackLen,finishTime:player.finishTime},
+    ...ais.map(a=>({id:a.car.cfg.type,name:a.car.cfg.nameCn,me:false,distance:a.dist,finishTime:a.finishTime}))
+  ]).map(r=>({...r,time:r.finishTime}));
   const myRank = rows.findIndex(r => r.me) + 1;
   // 大名次牌 + 总时间数字滚动
   const rkEl = document.getElementById('resRankBig');
@@ -1095,7 +1089,7 @@ function showResults() {
     const div = document.createElement('div');
     div.className = 'resRow' + (r.me ? ' me' : '') + (i === 0 ? ' first' : '');
     div.style.animationDelay = (.25 + i * .13) + 's';
-    div.innerHTML = '<div class="rp">' + (i === 0 ? '🏆' : (i + 1)) + '</div><div class="rn">' + r.name + '</div><div class="rt">' + fmt(r.time) + (r.est ? ' *' : '') + '</div>';
+    div.innerHTML = '<div class="rp">' + (i === 0 ? '🏆' : (i + 1)) + '</div><div class="rn">' + r.name + '</div><div class="rt">' + (r.time===null?'未完赛':i===0?fmt(r.time):'+'+(r.time-rows[0].time).toFixed(3)+' 秒') + '</div>';
     list.appendChild(div);
   });
   const T = TRACKS[trackSel], DF = DIFFS[diffSel];
@@ -1579,7 +1573,7 @@ function updateHud(dt) {
     const rank=renderRaceTiming([
       {id:'player',name:player.cfg.nameCn,distance:playerTotal*trackLen,finishTime:player.finishTime,me:true},
       ...ais.map(a=>({id:a.car.cfg.type,name:a.car.cfg.nameCn,distance:a.dist,finishTime:a.finishTime}))
-    ],raceTime,fmt);
+    ],raceTime,fmt,checkpointTiming);
     if (state === 'race' && raceTime > 6 && rank !== lastRank) { // 超车/被超即时提示
       if (rank < lastRank) { showMsg('', '↑ 超车!P' + rank, 1.2); beep(980, .1, .16, 'triangle'); vib(16); }
       else { showMsg('', '↓ 被超 P' + rank, 1); }
@@ -1683,6 +1677,11 @@ function loop() {
     if(state==='race'||state==='finished'||state==='countdown'){
       if(state==='race')raceTime+=step;
       updatePlayer(step);updateAI(step);
+      if(checkpointTiming&&(state==='race'||state==='countdown')){
+        const i=player.trackIdx,offset=(player.pos.x-sPts[i].x)*sTan[i].x+(player.pos.z-sPts[i].z)*sTan[i].z;
+        checkpointTiming.sample('player',Math.max(0,((player.lap-1)+player.s)*trackLen+clamp(offset,-SEG/2,SEG/2)),raceTime);
+        ais.forEach(a=>checkpointTiming.sample(a.car.cfg.type,a.dist,raceTime));
+      }
     }
     accumulator-=step;
   }
