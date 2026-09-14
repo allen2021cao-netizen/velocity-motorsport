@@ -1,5 +1,5 @@
 export const clamp=(v:number,a:number,b:number)=>Math.max(a,Math.min(b,v));
-export interface Dynamics {speed:number;heading:number;steer:number;drift:number;fuel:number;wear:number;temperature:number;longG:number;latG:number;traction:boolean;abs:boolean;}
+export interface Dynamics {speed:number;heading:number;steer:number;drift:number;fuel:number;wear:number;temperature:number;longG:number;latG:number;traction:boolean;abs:boolean;throttlePressure?:number;brakePressure?:number;}
 export interface Controls {throttle:number;brake:number;steer:number;handbrake:boolean;}
 export interface Setup {tires:string;assist:string;downforce:number;balance:number;weather:string;mode:string;steering?:number;cornerAssist?:boolean;}
 export function gripFor(setup:Setup,wear=0,temp=75,wet=0){
@@ -9,6 +9,10 @@ export function gripFor(setup:Setup,wear=0,temp=75,wet=0){
 }
 /** Approximate bicycle model in metres/seconds. Combined grip budget limits braking + cornering. */
 export function stepVehicle(p:Dynamics,c:Controls,car:{top:number;accel:number;handling:number;wheelbase?:number},s:Setup,dt:number,wet=0){
+ const brakeRequest=clamp(c.brake,0,1),throttleRequest=brakeRequest>.02?0:clamp(c.throttle,0,1);
+ p.throttlePressure=(p.throttlePressure??0)+(throttleRequest-(p.throttlePressure??0))*(1-Math.exp(-(throttleRequest?8:24)*dt));
+ p.brakePressure=(p.brakePressure??0)+(brakeRequest-(p.brakePressure??0))*(1-Math.exp(-22*dt));
+ c={...c,throttle:brakeRequest>.02?0:p.throttlePressure,brake:p.brakePressure};
  const v=Math.abs(p.speed), grip=gripFor(s,p.wear,p.temperature,wet);
  const load=1+s.downforce*v*v*.000025;
  const maxG=9.81*grip*load*(.85+car.handling*.18);
