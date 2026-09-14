@@ -1,0 +1,74 @@
+[
+  {
+    "name": "ferrari458-v2",
+    "source": "458-new",
+    "start": 1.0000000000000002,
+    "seconds": 2.3,
+    "envelopeVariation": 0.09856126624284335,
+    "rms": 0.17,
+    "peak": 0.5380163282138103,
+    "seam": 0.003078852014913719,
+    "sourceSha256": "de652ea46cd915e0853b2de6037e888f68be3d3da3a6437d56436503d0340ede",
+    "outputSha256": "3d25de5570dc991198fd02c1b1efe4a65f944a7c3ad8bcbaf225af954d0da56c"
+  },
+  {
+    "name": "ferrari-f40-v2",
+    "source": "f40-new",
+    "start": 0.15000000000000002,
+    "seconds": 2.3,
+    "envelopeVariation": 0.31910190777283043,
+    "rms": 0.17,
+    "peak": 0.4152950886833307,
+    "seam": 0.003265401510604934,
+    "sourceSha256": "ab8ba8ac34186a730a3f6e3d811619fed0f663fbde9c0720d32b62f69ba3968e",
+    "outputSha256": "a768eac11d4d3f7292a5f13ffda3a37f91015fe8a02c84ac8fd313dc4b391cbe"
+  },
+  {
+    "name": "audi-v10-v2",
+    "source": "audi-new",
+    "start": 0.15000000000000002,
+    "seconds": 1.60996875,
+    "envelopeVariation": 0.06616687544482099,
+    "rms": 0.17,
+    "peak": 0.5097967574136675,
+    "seam": 0.06794818895566071,
+    "sourceSha256": "6e48aa716b134a949cc00c683e57d3b00797173b44635ae0de7c0155665d95be",
+    "outputSha256": "0cc5116f7805eec59d54a56c0e6929d08763c16d1e0b051d54cacb5da7525774"
+  },
+  {
+    "name": "lambo-v12-v2",
+    "source": "lambo-new",
+    "start": 1.950000000000001,
+    "seconds": 2.3,
+    "envelopeVariation": 0.21062931991390868,
+    "rms": 0.17,
+    "peak": 0.5878508502029439,
+    "seam": 0.006587140862869865,
+    "sourceSha256": "1b5eab70c8581e533a4ab6e0c14e78a57b3a78548c2a44331b767a15d02fa941",
+    "outputSha256": "b812b9f6eeafbcf72a2f19ea0fbd0329bfb453e0b147a4f44b4181d86dcd2640"
+  },
+  {
+    "name": "mclaren-v12-v2",
+    "source": "mclaren-new",
+    "start": 1.2500000000000004,
+    "seconds": 2.3,
+    "envelopeVariation": 0.030261443528983863,
+    "rms": 0.17,
+    "peak": 0.34906430999213234,
+    "seam": 0.03171711386167801,
+    "sourceSha256": "ce02e2c532b5a53e6fbcb6fb1eb06de3c477731cb389d094f61a2d27565f6aaa",
+    "outputSha256": "ec7cdc46bd7810b03b71d8e3b5457141bdca6d46d7a8127bc0e2e37dc67b8ff6"
+  },
+  {
+    "name": "mclaren-idle-v2",
+    "source": "mclaren-idle-new",
+    "start": 0.8500000000000002,
+    "seconds": 2.3,
+    "envelopeVariation": 0.07484655295747937,
+    "rms": 0.17,
+    "peak": 0.45434063597492863,
+    "seam": 0.004497957458193473,
+    "sourceSha256": "bdac0b308a07ed8a7697b40072dcf6565b6d0b8213e716bd11f670b6b1010b42",
+    "outputSha256": "7f487e713ba305b6f98c2eb5135ccfec447219d3c1154d4365b7ac7332fee2f7"
+  }
+]

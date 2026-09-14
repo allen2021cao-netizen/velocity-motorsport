@@ -52,7 +52,7 @@ Modifications: dimensions, wheel/caliper separation, material calibration, Draco
 
 Challenger is a customized 2006 Concept model with an exposed intake; its source carries NoAI. Used only for ordinary rendering and mechanical geometry processing. Veneno and SLR retain source interiors; Challenger and C7 interiors are less detailed than their exteriors. Source instrument faces and steering wheels are static; the HUD provides live telemetry. These are artist models, not manufacturer CAD or scans.
 
-Race sound effects: ElevenLabs Explore library. Seven source clips, IDs and adaptations are documented in public/audio/CREDITS.md. AI sound design, not exact manufacturer recordings. https://elevenlabs.io/sound-effects
+Race sound effects: ElevenLabs Explore library. Current source clips, generated groups, IDs and adaptations are documented in public/audio/CREDITS.md. AI sound design, not exact manufacturer recordings. https://elevenlabs.io/sound-effects
 
 ## Circuit route data
 Four layouts adapted from Tomislav Bacinger’s MIT-licensed f1-circuits dataset. See public/circuits/CREDITS.md and LICENSE.md for sources, transformations and full license.

@@ -8,14 +8,6 @@
     "sourceSha256": "d3a2915582d5aaef221f24575d13d46f0824bf914b30f8a0a59979512fcf09e1"
   },
   {
-    "name": "exotic",
-    "seconds": 2.72,
-    "peak": 0.5111919478788252,
-    "rms": 0.22000000000000003,
-    "loopSeam": 0.051425286619252726,
-    "sourceSha256": "4d6cb663f84837f3954b21e5032b72f7ed747cc6ce29534eb88ce6731b592cde"
-  },
-  {
     "name": "six",
     "seconds": 4.92,
     "peak": 0.85,

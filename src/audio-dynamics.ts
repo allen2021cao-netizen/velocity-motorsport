@@ -1,15 +1,15 @@
-export type EngineFamily='muscle'|'exotic'|'six';
+export type EngineFamily='muscle'|'six'|'ferrari458'|'ferrariF40'|'audiV10'|'lamboV12'|'mclarenV12';
 export interface EngineProfile {family:EngineFamily;cylinders:number;idle:number;redline:number;pitch:number;body:number;turbo:number;}
 export const ENGINE_PROFILES:Record<string,EngineProfile>={
  p911:{family:'six',cylinders:6,idle:780,redline:7400,pitch:.93,body:1,turbo:0},
  r34:{family:'six',cylinders:6,idle:850,redline:8000,pitch:1,body:.8,turbo:1},
  supra:{family:'six',cylinders:6,idle:850,redline:7600,pitch:.91,body:1,turbo:1},
  m3:{family:'six',cylinders:6,idle:780,redline:7200,pitch:1.04,body:.85,turbo:.7},
- f40:{family:'exotic',cylinders:8,idle:1000,redline:7800,pitch:.92,body:.8,turbo:1},
- '458':{family:'exotic',cylinders:8,idle:950,redline:9000,pitch:1.1,body:.7,turbo:0},
- diablo:{family:'exotic',cylinders:12,idle:900,redline:8500,pitch:1.03,body:1,turbo:0},
- mcf1:{family:'exotic',cylinders:12,idle:900,redline:8000,pitch:.96,body:1,turbo:0},
- r8:{family:'exotic',cylinders:10,idle:850,redline:8500,pitch:1.06,body:.82,turbo:0},
+ f40:{family:'ferrariF40',cylinders:8,idle:1000,redline:7800,pitch:1,body:.90,turbo:1},
+ '458':{family:'ferrari458',cylinders:8,idle:950,redline:9000,pitch:1,body:.85,turbo:0},
+ diablo:{family:'lamboV12',cylinders:12,idle:900,redline:8500,pitch:1,body:1,turbo:0},
+ mcf1:{family:'mclarenV12',cylinders:12,idle:900,redline:8000,pitch:1,body:.95,turbo:0},
+ r8:{family:'audiV10',cylinders:10,idle:850,redline:8500,pitch:1,body:.90,turbo:0},
  viper:{family:'muscle',cylinders:8,idle:750,redline:6400,pitch:.91,body:1.2,turbo:0},
  clk:{family:'muscle',cylinders:8,idle:750,redline:7000,pitch:1.03,body:1,turbo:.45},
  c5:{family:'muscle',cylinders:8,idle:750,redline:6600,pitch:1,body:1.1,turbo:0},
