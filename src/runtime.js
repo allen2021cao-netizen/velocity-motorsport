@@ -1735,11 +1735,11 @@ document.querySelector('#mirror').textContent='COCKPIT VIEW';
 const difficultyNote=document.createElement('p');difficultyNote.id='difficultyNote';difficultyNote.textContent=DIFFS[diffSel].description;diffRow.after(difficultyNote);
 document.getElementById('carPanel').append(vehicleButton);document.getElementById('setupPanel').prepend(diffRow.previousElementSibling,diffRow,difficultyNote);
 const steerLabel=document.createElement('label');steerLabel.innerHTML='转向灵敏度<select id="steeringSensitivity"><option value="0">舒缓</option><option value="1">标准</option><option value="2">灵敏</option></select>';document.getElementById('setupPanel').insertBefore(steerLabel,document.getElementById('sessionNote'));const steerSelect=document.getElementById('steeringSensitivity');steerSelect.value=String(SETS.sens);steerSelect.onchange=()=>{SETS.sens=Number(steerSelect.value);saveSets();document.querySelectorAll('#sensRow .setBtn').forEach(b=>b.classList.toggle('sel',Number(b.dataset.s)===SETS.sens));};
-const quickQuality=document.createElement('details');quickQuality.id='quickQuality';
-const qualitySummary=document.createElement('summary');quickQuality.append(qualitySummary);
-quickQuality.append(document.getElementById('quality').closest('label'));document.body.append(quickQuality);
-function refreshQualityLabel(){const summary=document.querySelector('#quickQuality summary');if(summary)summary.textContent='画质 · '+({high:'最高',balanced:'均衡',low:'流畅'}[options.quality]||'最高');}
-function highestPreviewQuality(){options.quality='high';const input=document.getElementById('quality');if(input)input.value='high';graphics.quality('high');qLevel=0;qTimer=0;qGoodT=0;applyQuality();refreshQualityLabel();}
+const quickQuality=document.createElement('div');quickQuality.id='quickQuality';quickQuality.setAttribute('role','group');quickQuality.setAttribute('aria-label','画质');
+for(const [value,label]of [['low','流畅'],['balanced','均衡'],['high','最高']]){const button=document.createElement('button');button.type='button';button.dataset.quality=value;button.textContent=label;button.addEventListener('click',()=>{setQuality(value);try{localStorage.setItem('uv3-setup',JSON.stringify(options));}catch{}});quickQuality.append(button);}document.body.append(quickQuality);
+function refreshQualityLabel(){document.querySelectorAll('#quickQuality button').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.quality===options.quality)));}
+function setQuality(value){options.quality=value;graphics.quality(value);qLevel=value==='low'?3:value==='balanced'?1:0;qTimer=0;qGoodT=0;applyQuality();refreshQualityLabel();}
+function highestPreviewQuality(){setQuality('high');}
 refreshQualityLabel();
 menuUI=mountMenu(tab=>{if(tab==='car'||tab==='track')highestPreviewQuality();menuTab=tab;if(worldGroup)syncMenuScene();});
 document.getElementById('menuPreview').append(tourButton);
