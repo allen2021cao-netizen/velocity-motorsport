@@ -705,7 +705,7 @@ function setMuted(m) {
 }
 function initAudio() {
   if (AC) { if (AC.state === 'suspended') AC.resume(); return; }
-  AC = new (window.AudioContext || window.webkitAudioContext)();
+  AC = new (window.AudioContext || window.webkitAudioContext)({sampleRate:48000,latencyHint:'interactive'});
   master = AC.createGain(); master.gain.value = muted ? 0 : .6; master.connect(AC.destination);
   raceAudio=new RaceAudio(AC,master);
   noiseBuf=AC.createBuffer(1,AC.sampleRate,AC.sampleRate);
@@ -1858,3 +1858,4 @@ if(import.meta.env.DEV)window.__raceCombatTest=(scenario)=>{
  ais.forEach((a,i)=>{const [dist,lat,speed]=layout[i];Object.assign(a,{dist,lat,speed,lateralVelocity:scenario==='scrape'&&i===0?3:0,contactYaw:0,tactics:freshTactics(i),planTimer:0,finished:false});a.driver.speed=speed;placeOnTrack(a.car,dist,lat);a.heading=a.car.group.rotation.y;});
  raceTime=Math.max(6,raceTime);renderMotion.reset();
 };
+
