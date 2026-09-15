@@ -1,4 +1,11 @@
+import {surfaceFeedback,gripFeedback} from './driving-feedback';
+import {resolveContacts} from './race-contact';
+import {freshTactics,tacticalPlan,PERSONALITIES} from './race-tactics';
 import {allFinished,crossingTime} from './race-finish';
+import {RenderMotion} from './render-motion';
+import {drivingCue,mountDrivingCue} from './driving-cue';
+import {AdaptiveQuality} from './adaptive-quality';
+import {EnvironmentDetail} from './environment/detail';
 import {mountRaceTiming,CheckpointTiming,raceOrder} from './race-timing';
 import {mountExperience} from './experience';
 import {createCityShowcase} from './environment/showcase';
@@ -9,7 +16,7 @@ import {cameraPose} from './camera-rig';
 import {createVehicleOrbit} from './vehicle-orbit';
 import {mountDrivingHelp} from './driving-help';
 import {mountMenu} from './menu';
-import {DIFFICULTIES,aiTargetSpeed,stepOpponent,freshDriver,roadCurvature,trafficPlan,matchedOpponents,drivingCurvature,opponentPit} from './race-ai';
+import {DIFFICULTIES,aiTargetSpeed,stepOpponent,freshDriver,roadCurvature,matchedOpponents,drivingCurvature,opponentPit} from './race-ai';
 import {buildAutomobile} from './automotive/model';
 import * as THREE from 'three';
 import {ensureDetailedCar,DETAILED_VEHICLES} from './detailed-vehicles';
@@ -73,6 +80,10 @@ const atmosphere=new Atmosphere(renderer,scene,sunLight,ambient,hemi);
 const surfaces=new RoadSurfaces();
 let cityReport=null,tourAngle=0,cityShowcase=null,tourTime=0;
 const session=new Session();
+const renderMotion=new RenderMotion();
+const environmentDetail=new EnvironmentDetail();
+const drivingCoach=mountDrivingCue();
+let currentCue=null,cueTick=0,renderAlpha=1;
 let wetness=0;
 
 // ---------------- 程序纹理 ----------------
@@ -548,7 +559,7 @@ function buildWorld(ti) {
   worldGroup.add(buildStrip(-ROAD_W - .32, -ROAD_W - .32, 1.02, 1.1, railMat));
   }
   // 路肩带(人行道/草肩/沙肩)
-  const shoulderMat = D_(new THREE.MeshPhongMaterial({ color: (night || dusk) ? 0x2b303c : shadeCol(E.ground, 1.22), shininess: 8 }));
+  const shoulderMat = D_(new THREE.MeshPhongMaterial({ color: T.circuit&&['shanghai','miami'].includes(T.theme)?0x648145:(night || dusk) ? 0x2b303c : shadeCol(E.ground, 1.22), shininess: 8 }));
   worldGroup.add(buildStrip(ROAD_W + 2.6, ROAD_W + .36, .04, .04, shoulderMat));
   worldGroup.add(buildStrip(-ROAD_W - .36, -ROAD_W - 2.6, .04, .04, shoulderMat));
 
@@ -586,6 +597,7 @@ function buildWorld(ti) {
   }
 
   cityReport=T.circuit?buildCircuitVenue(worldGroup,sPts,sNrm,T.theme,worldDisposables,trackLen,ROAD_W):buildCity(worldGroup,sPts,sNrm,T.theme,worldDisposables,trackLen);
+  environmentDetail.register(worldGroup);
   buildMinimapPath();
 }
 
@@ -623,6 +635,11 @@ const headlightTarget = new THREE.Object3D();
 scene.add(headlight); scene.add(headlightTarget);
 headlight.target = headlightTarget;
 headlight.visible = false;
+function placeHeadlight(position,heading){
+ const x=Math.sin(heading),z=Math.cos(heading);
+ headlight.position.set(position.x+x*1.8,position.y+1.1,position.z+z*1.8);
+ headlightTarget.position.set(position.x+x*45,position.y,position.z+z*45);
+}
 
 // ---------------- 展厅 ----------------
 const showroom = new THREE.Group();
@@ -740,8 +757,10 @@ function startMusic() {
 
 // ---------------- 输入(键盘 + 触屏) ----------------
 function toggleCam() {
-  if (state !== 'race' && state !== 'countdown') return;
+  if (paused||(state !== 'race' && state !== 'countdown')) return;
   camMode = (camMode + 1) % 3;
+  renderMotion.reset();renderAlpha=1;
+  chasePrevious=null;
   document.getElementById('cockpit').style.display = 'none';
   if (player.car) {
     player.car.bodyParts.visible = !camMode || player.car.detailed;
@@ -761,10 +780,10 @@ addEventListener('keydown', e => {
     if (e.code === 'KeyD' || e.code === 'ArrowRight') switchCar(1);
     if (e.code === 'Enter') startRace();
   }
-  if (e.code === 'KeyC') toggleCam();
-  if (e.code === 'KeyM') setMuted(!muted);
-  if (e.code === 'KeyR' && state === 'race') resetToTrack();
-  if (e.code === 'Escape' && (state === 'race'||state === 'countdown')) togglePause();
+  if (!e.repeat&&e.code === 'KeyC') toggleCam();
+  if (!e.repeat&&e.code === 'KeyM') setMuted(!muted);
+  if (!e.repeat&&e.code === 'KeyR' && state === 'race'&&!paused) resetToTrack();
+  if (!e.repeat&&e.code === 'Escape' && (state === 'race'||state === 'countdown')) togglePause();
 });
 addEventListener('keyup', e => { keys[e.code] = false; });
 addEventListener('pointerdown', initAudio);
@@ -780,14 +799,18 @@ document.addEventListener('touchmove', e => {
 }, { passive: false });
 
 // 触屏按键绑定(多点触控:每个按键独立跟踪 pointerId,可同时转向+氮气+油门)
+const releaseTouchControls=[];
 function bindHold(id, key) {
   const el = document.getElementById(id);
-  const on = e => { e.preventDefault(); initAudio(); el.setPointerCapture(e.pointerId); vk[key] = true; el.classList.add('on'); vib(8); };
-  const off = () => { vk[key] = false; el.classList.remove('on'); };
+  const pointers=new Set();
+  const sync=()=>{vk[key]=pointers.size>0;el.classList.toggle('on',vk[key]);};
+  const on = e => { e.preventDefault();if(paused||!['race','countdown'].includes(state))return;initAudio();el.setPointerCapture(e.pointerId);pointers.add(e.pointerId);sync();vib(8); };
+  const off = e => { pointers.delete(e.pointerId);sync(); };
+  releaseTouchControls.push(()=>{pointers.clear();sync();});
   el.addEventListener('pointerdown', on);
   el.addEventListener('pointerup', off);
   el.addEventListener('pointercancel', off);
-  el.addEventListener('pointerleave', off);
+  el.addEventListener('lostpointercapture', off);
 }
 bindHold('btnL', 'left');
 bindHold('btnR', 'right');
@@ -847,6 +870,8 @@ document.getElementById('quitBtn').onclick = () => { paused = false; document.ge
 
 function togglePause() {
   paused = !paused;
+  clearInput();
+  document.activeElement?.blur();
   document.getElementById('pause').style.display = paused ? 'flex' : 'none';
   if(paused)raceAudio?.silence();
 }
@@ -858,7 +883,7 @@ DIFFS.forEach((d, i) => {
   b.setAttribute('role','button');b.tabIndex=0;b.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();b.click();}};
   b.className = 'diffBtn' + (i === diffSel ? ' sel' : '');
   b.innerHTML = '<span class="dn">' + d.name + '</span><span class="de">' + d.en + '</span>';
-  b.onclick = () => { initAudio(); diffSel = i;document.getElementById('difficultyNote').textContent=DIFFS[i].description;refreshMenuPreview(); beep(700, .06, .12, 'triangle');
+  b.onclick = () => { initAudio(); diffSel = i;document.getElementById('difficultyNote').textContent=DIFFS[i].description+' 对手含保守 / 稳定 / 进攻型，无追赶加速。';refreshMenuPreview(); beep(700, .06, .12, 'triangle');
     [...diffRow.children].forEach((c, j) => c.classList.toggle('sel', j === i)); };
   diffRow.appendChild(b);
 });
@@ -979,7 +1004,7 @@ async function startRace() {
   document.activeElement?.blur();
   const T = TRACKS[trackSel], D = DIFFS[diffSel];
   session.start(T.theme,CARS[selected].recordId||CARS[selected].type);
-  Object.assign(player,{fuel:100,wear:0,temperature:60,longG:0,latG:0,traction:false,abs:false});
+  Object.assign(player,{contactX:0,contactZ:0,contactCooldown:0,fuel:100,wear:0,temperature:60,longG:0,latG:0,traction:false,abs:false});
   lastCount=4;
   document.getElementById('pitButton').style.display=options.mode==='endurance'?'block':'none';
   const nightish = T.time !== 'day';
@@ -1013,7 +1038,7 @@ async function startRace() {
     if (i === selected) return;
     const d = gridDist[aiN], lat = gridLat[aiN];
     placeOnTrack(c, d, lat);
-    ais.push({ car: c, dist: d, speed: 0, driver:{...freshDriver(),temperature:60}, planTimer:0, slow: 0, finished: false, finishTime: null, lat: lat });
+    ais.push({ tactics:freshTactics(aiN%3), lateralVelocity:0, contactYaw:0, car: c, dist: d, speed: 0, driver:{...freshDriver(),temperature:60}, planTimer:0, slow: 0, finished: false, finishTime: null, lat: lat });
     aiN++;
   });
   player.car.bodyParts.visible = !camMode || player.car.detailed;
@@ -1021,7 +1046,7 @@ async function startRace() {
   const pIdx = placeOnTrack(player.car, gridDist[3], gridLat[3]);
   player.pos.copy(player.car.group.position);
   player.heading = player.car.group.rotation.y;
-  player.speed = 0; player.drift = 0; player.steer = 0;player.throttlePressure=0;player.brakePressure=0;
+  player.contactX=0;player.contactZ=0;player.speed = 0; player.drift = 0; player.steer = 0;player.throttlePressure=0;player.brakePressure=0;
   player.trackIdx = pIdx; player.s = pIdx / SAMPLES; player.lastS = player.s;
   player.lap = 1;
   player.nosMax = 30 + 70 * player.cfg.nos;
@@ -1032,6 +1057,10 @@ async function startRace() {
   camPos.copy(player.pos).add(new THREE.Vector3(-Math.sin(player.heading) * 10, 4, -Math.cos(player.heading) * 10));
   updateHudStatic();
   showMsg('', '');
+  clearInput();accumulator=0;renderAlpha=1;cueTick=0;currentCue=null;chasePrevious=null;adaptiveQuality.reset();
+  const racers=[player.car,...ais.map(a=>a.car)];
+  placeHeadlight(player.pos,player.heading);
+  renderMotion.setTargets([...racers.flatMap(c=>[c.group,c.bodyParts,...c.wheels,...c.frontPivots,c.steeringWheel].filter(Boolean)),headlight,headlightTarget]);
 }
 function resetToTrack() {
   const idx = player.trackIdx;
@@ -1039,7 +1068,11 @@ function resetToTrack() {
   session.invalid=true;
   player.pos.set(p.x, 0, p.z);
   player.heading = Math.atan2(t.x, t.z);
-  player.speed = 0; player.drift = 0;
+  player.contactX=0;player.contactZ=0;player.speed = 0; player.drift = 0;
+  player.steer=0;player.car.group.position.copy(player.pos);player.car.group.rotation.set(0,player.heading,0);
+  player.car.bodyParts.rotation.set(0,0,0);
+  placeHeadlight(player.pos,player.heading);
+  renderMotion.reset();accumulator=0;renderAlpha=1;chasePrevious=null;cueTick=0;currentCue=null;
   thud(.2);
 }
 
@@ -1155,6 +1188,8 @@ function updatePlayer(dt) {
     if (d < bd) { bd = d; bi = j; }
   }
   player.trackIdx = bi;
+  player.pos.x+=(player.contactX||0)*dt;player.pos.z+=(player.contactZ||0)*dt;
+  player.contactX=(player.contactX||0)*Math.exp(-4*dt);player.contactZ=(player.contactZ||0)*Math.exp(-4*dt);
   const n = sNrm[bi], cp = sPts[bi];
   const lat = (player.pos.x - cp.x) * n.x + (player.pos.z - cp.z) * n.z;
   player.latOnTrack = lat;
@@ -1208,72 +1243,24 @@ function updatePlayer(dt) {
 
   const velDot = Math.sin(moveDir) * sTan[bi].x + Math.cos(moveDir) * sTan[bi].z;
   if (player.speed > 6 && velDot < -.4) player.wrongWay += dt; else player.wrongWay = 0;
-  document.getElementById('wrongway').style.display = player.wrongWay > 1 ? 'block' : 'none';
 
-  // —— 车辆碰撞:双向刚体响应(动量交换 + 硬性分离,杜绝穿模) ——
-  const hx = Math.sin(player.heading), hz = Math.cos(player.heading);
-  for (const a of ais) {
-    const rx = a.car.group.position.x - player.pos.x;
-    const rz = a.car.group.position.z - player.pos.z;
-    const lon = rx * hx + rz * hz;  // AI相对玩家:纵向(+在前)
-    const lt = rx * hz - rz * hx;   // 横向(+在右)
-    const LON = 4.15, LAT = 1.85;   // 两车半长/半宽之和
-    if (Math.abs(lon) < LON && Math.abs(lt) < LAT) {
-      const penLon = LON - Math.abs(lon);
-      const penLat = LAT - Math.abs(lt);
-      if (penLat < penLon) {
-        // 侧面刮蹭:横向对半分离,双方轻微失速
-        const sd = lt >= 0 ? 1 : -1;
-        player.pos.x -= hz * sd * penLat * .5;
-        player.pos.z += hx * sd * penLat * .5;
-        a.lat = clamp(a.lat - sd * penLat * .55, -(ROAD_W - 1.3), ROAD_W - 1.3);
-        player.speed *= 1 - .35 * dt;
-        a.speed *= 1 - .35 * dt;
-        if (!(a.touch > 0)) { thud(.12); shake = Math.max(shake, .08); vib(28); spawnBurst(player.pos.x, .5, player.pos.z, 4, 1, .7, .3, 3, .3, 6); a.touch = .4; }
-      } else {
-        // 追尾/被追尾:等质量动量交换(恢复系数0.35)——撞人者减速,被撞者前弹
-        const sd = lon >= 0 ? 1 : -1;
-        const closing = sd > 0 ? player.speed - a.speed : a.speed - player.speed;
-        if (closing > 0) {
-          const e = .35, v1 = player.speed, v2 = a.speed;
-          player.speed = ((1 - e) * v1 + (1 + e) * v2) / 2;
-          a.speed = ((1 + e) * v1 + (1 - e) * v2) / 2;
-          if (!(a.touch > 0)) {
-            const imp = clamp(closing * .03, .08, .45);
-            thud(imp); shake = Math.max(shake, imp * .7); a.touch = .4;
-            vib(clamp(imp * 220, 30, 150) | 0);
-            spawnBurst(player.pos.x + hx * 2, .5, player.pos.z + hz * 2, 7, 1, .62, .18, 4.5, .4, 6);
-          }
-        }
-        // 位置硬分离:各退一半
-        const sep = penLon * .5 + .02;
-        player.pos.x -= hx * sd * sep;
-        player.pos.z -= hz * sd * sep;
-        a.dist += sd * sep;
-      }
-    }
-    if (a.touch > 0) a.touch -= dt;
-  }
-
-  const car = player.car;
+  const car=player.car;
   car.group.position.copy(player.pos);
   car.group.rotation.y = player.heading;
-  car.group.rotation.z = damp(car.group.rotation.z, -player.steer * clamp(player.speed * .004, 0, .05), 6, dt);
+  car.group.rotation.z = damp(car.group.rotation.z, -player.steer * clamp(player.speed * .004, 0, .05)*options.bodyMotion, 6, dt);
   const wheelSpin = player.speed * dt / (car.wheelRadius||.34);
   car.wheels.forEach(w => w.rotation.x += wheelSpin);
   car.frontPivots.forEach(p => p.rotation.y = player.steer);
   car.brakeLight.emissiveIntensity=brake?4:.5;
   if(car.steeringWheel){if(car.modelKind==='imported-glb'&&car.steeringWheel.userData.steeringAxis!=='z')car.steeringWheel.rotation.y=-player.steer*3.2;else car.steeringWheel.rotation.z=-player.steer*3.2;}
-  car.bodyParts.rotation.x=damp(car.bodyParts.rotation.x,player.longG*.028,5,dt);
-  car.bodyParts.rotation.z=damp(car.bodyParts.rotation.z,-player.latG*.025,5,dt);
+  car.bodyParts.rotation.x=damp(car.bodyParts.rotation.x,clamp(player.longG,-1.5,1.5)*.028*options.bodyMotion,5,dt);
+  car.bodyParts.rotation.z=damp(car.bodyParts.rotation.z,clamp(-player.latG,-1.5,1.5)*.025*options.bodyMotion,5,dt);
   car.flames.forEach(f => {
     f.visible = player.nosActive;
     if (f.visible) { f.scale.set(1, 1, .6 + Math.random() * .9); f.material.color.setHSL(.55 + Math.random() * .06, 1, .6); }
   });
   fwdV.set(Math.sin(player.heading), 0, Math.cos(player.heading));
-  headlight.position.copy(player.pos).add(tmpV.set(0, 1.1, 0)).addScaledVector(fwdV, 1.8);
-  headlightTarget.position.copy(player.pos).addScaledVector(fwdV, 45);
-  document.getElementById('wheelSvg').style.transform = 'rotate(' + (-player.steer * 100) + 'deg)';
+  placeHeadlight(player.pos,player.heading);
 
 }
 
@@ -1282,7 +1269,7 @@ function updateAI(dt) {
   const D = DIFFS[diffSel];
   const playerTotal = (player.lap - 1) + player.s;
   const playerDist = playerTotal * trackLen;
-  const traffic=ais.filter(a=>!a.finished).map(a=>({dist:a.dist,lat:a.lat,speed:a.speed,acceleration:a.driver.longG*9.81}));
+  const traffic=ais.filter(a=>!a.finished).map(a=>({id:a.car.cfg.type,dist:a.dist,lat:a.lat,speed:a.speed,acceleration:a.driver.longG*9.81}));
   if(!player.finished)traffic.push({dist:playerDist,lat:player.latOnTrack||0,speed:player.speed,acceleration:player.longG*9.81});
   for (const a of ais) {
     if (a.finished) continue;
@@ -1291,7 +1278,9 @@ function updateAI(dt) {
     a.planTimer-=dt;
     if(a.planTimer<=0){a.plannedSpeed=aiTargetSpeed(sDriveCurv,SEG,idx,a.car.cfg,options,diffSel,wetness,a.driver);a.planTimer=.08;}
     let target=a.plannedSpeed;
-    const avoid=trafficPlan(a,traffic.filter(o=>o.dist!==a.dist||o.lat!==a.lat),trackLen,ROAD_W,dt,raceTime<5);
+    const t0=sTan[idx],t1=sTan[wrapIdx(idx+Math.max(8,Math.round(Math.max(20,a.speed*1.2)/SEG)))];
+    const corner=t0.z*t1.x-t0.x*t1.z;
+    const avoid=tacticalPlan(a,traffic.filter(o=>o.id!==a.car.cfg.type),trackLen,ROAD_W,dt,a.tactics,corner,raceTime<2);
     a.trafficTarget=avoid.target;
     target=Math.min(target,avoid.target);
     const pit=opponentPit(a,trackLen,session.laps,options,(state==='race'||state==='finishing')?dt:0,wetness);
@@ -1308,7 +1297,15 @@ function updateAI(dt) {
     const i0 = wrapIdx(Math.floor(fIdx)), i1 = wrapIdx(i0 + 1);
     const fr = fIdx - Math.floor(fIdx);
     const p0 = sPts[i0], p1 = sPts[i1], n0 = sNrm[i0], n1 = sNrm[i1];
-    a.lat = clamp((state==='race'||state==='finishing')?avoid.lat:a.lat, -(ROAD_W - 1.3), ROAD_W - 1.3);
+    a.laneVelocity=(state==='race'||state==='finishing')?(avoid.lat-a.lat)/dt:0;
+    a.lat = (state==='race'||state==='finishing')?avoid.lat:a.lat;
+    a.lat+=(a.lateralVelocity||0)*dt;a.lateralVelocity*=Math.exp(-4*dt);
+    const over=Math.abs(a.lat)-(ROAD_W-1.05);
+    if(over>0){
+      if(TRACKS[trackSel].circuit){a.speed*=Math.exp(-dt*Math.min(1.8,over*.28));if(over>5)a.lat-=Math.sign(a.lat)*(over-5)*(1-Math.exp(-dt*6));}
+      else{a.lat=Math.sign(a.lat)*(ROAD_W-1.05);a.speed*=1-clamp(.10+over*.1,0,.3)*dt*32;a.lateralVelocity=0;}
+    }
+    a.contactYaw*=Math.exp(-3*dt);
     a.car.group.position.set(
       lerp(p0.x, p1.x, fr) + lerp(n0.x, n1.x, fr) * a.lat, 0,
       lerp(p0.z, p1.z, fr) + lerp(n0.z, n1.z, fr) * a.lat);
@@ -1319,7 +1316,7 @@ function updateAI(dt) {
     let dh = targetHeading - a.heading;
     while (dh > Math.PI) dh -= TAU; while (dh < -Math.PI) dh += TAU;
     a.heading += dh * (1 - Math.exp(-10 * dt));
-    a.car.group.rotation.y = a.heading;
+    a.car.group.rotation.y = a.heading+a.contactYaw;
     const turnSign=Math.sign(tc.z*tn.x-tc.x*tn.z);
     a.car.frontPivots.forEach(p=>p.rotation.y=a.driver.steer*turnSign);
     const spin = a.speed * dt / (a.car.wheelRadius||.34);
@@ -1327,9 +1324,44 @@ function updateAI(dt) {
   }
 }
 
+
+// Resolve every pair after movement and before render interpolation captures the pose.
+function updateContacts(dt){
+  const racers=[...(!player.finished?[{player:true,car:player.car}]:[]),...ais.filter(a=>!a.finished)];
+  const bodies=racers.map(a=>{
+    const pos=a.player?player.pos:a.car.group.position,h=a.player?player.heading:a.car.group.rotation.y;
+    const t=a.player?{x:Math.sin(h),z:Math.cos(h)}:sTan[wrapIdx(Math.round(a.dist/SEG))];
+    const n={x:-t.z,z:t.x},speed=a.player?player.speed:a.speed;
+    return{x:pos.x,z:pos.z,heading:h,vx:t.x*speed+(a.player?(player.contactX||0):n.x*(a.lateralVelocity+(a.laneVelocity||0))),vz:t.z*speed+(a.player?(player.contactZ||0):n.z*(a.lateralVelocity+(a.laneVelocity||0))),length:4.3,width:2.1};
+  });
+  const original=bodies.map(b=>({x:b.x,z:b.z})),impacts=resolveContacts(bodies);
+  racers.forEach((a,i)=>{
+    const b=bodies[i],old=original[i],impact=impacts.get(i)||0;
+    if(a.player){
+      player.pos.x=b.x;player.pos.z=b.z;
+      const hx=Math.sin(player.heading),hz=Math.cos(player.heading);
+      player.speed=Math.max(0,b.vx*hx+b.vz*hz);
+      player.contactX=b.vx-hx*player.speed;player.contactZ=b.vz-hz*player.speed;
+      player.contactCooldown=Math.max(0,(player.contactCooldown||0)-dt);
+      if(impact>.3&&player.contactCooldown===0){thud(clamp(impact*.025,.06,.4));shake=Math.max(shake,Math.min(.3,impact*.015));vib(28);player.contactCooldown=.25;}
+      player.car.group.position.copy(player.pos);placeHeadlight(player.pos,player.heading);
+    }else{
+      const idx=wrapIdx(Math.round(a.dist/SEG)),t=sTan[idx],n=sNrm[idx],dx=b.x-old.x,dz=b.z-old.z;
+      a.dist+=dx*t.x+dz*t.z;a.lat+=dx*n.x+dz*n.z;
+      a.speed=Math.max(0,b.vx*t.x+b.vz*t.z);a.driver.speed=a.speed;
+      a.lateralVelocity=b.vx*n.x+b.vz*n.z-(a.laneVelocity||0);
+      if(impact>.3){a.contactYaw=clamp(-Math.atan2(a.lateralVelocity,Math.max(8,a.speed)),-.22,.22);a.tactics.mode='recover';a.tactics.cooldown=1.5;}
+      a.car.group.position.set(b.x,0,b.z);a.car.group.rotation.y=a.heading+a.contactYaw;
+    }
+  });
+}
+
 // ---------------- 摄像机 ----------------
 function presentationRect(){if(state==='tour'&&cityShowcase)return undefined;if(state==='menu')return menuUI?.rect();const overlay=state==='vehicle'?document.getElementById('vehicleOverlay'):state==='tour'?document.getElementById('tourOverlay'):null;if(overlay){const height=Math.max(150,overlay.getBoundingClientRect().top-12);return new DOMRect(0,0,innerWidth,height);}return undefined;}
 let chasePrevious=null;
+const chasePoint=new THREE.Vector3(),chaseDelta=new THREE.Vector3();
+const cabinPose={eye:new THREE.Vector3(),target:new THREE.Vector3(),up:new THREE.Vector3()};
+const viewButton=document.getElementById('btnCam');
 function updateCamera(dt) {
   if(camMode!==0||!['race','countdown'].includes(state))chasePrevious=null;
   const rect=presentationRect();if(rect)camera.up.set(0,1,0);camera.aspect=rect?rect.width/Math.max(1,rect.height):innerWidth/innerHeight;
@@ -1337,7 +1369,7 @@ function updateCamera(dt) {
   if(state==='menu'||state==='vehicle')document.querySelectorAll('[aria-label="切换自动旋转"]').forEach(b=>{const active=vehicleOrbit.snapshot().automatic;b.setAttribute('aria-pressed',String(active));b.textContent=active?'暂停旋转':'自动旋转';});
   const cityView=state==='tour'||(state==='menu'&&menuTab==='track');
   camera.near=cityView?2:camMode===1&&state==='race'?.04:.15;camera.far=cityView&&TRACKS[trackSel].circuit?12000:cityView?5000:4000;
-  const viewButton=document.getElementById('btnCam');if(viewButton.dataset.mode!==String(camMode)){viewButton.dataset.mode=String(camMode);viewButton.innerHTML='<span>切换视角 ↻</span><small>'+['追尾','驾驶舱','车头'][camMode]+' · C</small>';viewButton.setAttribute('aria-label','切换车辆视角，当前'+['追尾','驾驶舱','车头'][camMode]);}
+  if(viewButton.dataset.mode!==String(camMode)){viewButton.dataset.mode=String(camMode);viewButton.innerHTML='<span>切换视角 ↻</span><small>'+['追尾','驾驶舱','车头'][camMode]+' · C</small>';viewButton.setAttribute('aria-label','切换车辆视角，当前'+['追尾','驾驶舱','车头'][camMode]);}
   if(state==='vehicle'){
     const car=carObjs[selected];car.group.rotation.set(0,0,0);
     const target=vehicleView==='wheel'?new THREE.Vector3((car.group.userData.dimensions?.width||1.9)*.45,.70,car.frontPivots[0]?.position.z||1.3):new THREE.Vector3(0,1,0);
@@ -1355,35 +1387,36 @@ function updateCamera(dt) {
   }
   if(state==='finishing'){
     const watching=ais.filter(a=>!a.finished).sort((a,b)=>b.dist-a.dist)[0];
-    if(watching){const p=watching.car.group.position,h=watching.heading||0;camera.up.set(0,1,0);
-      tmpV.set(p.x-Math.sin(h)*8,4,p.z-Math.cos(h)*8);camera.position.lerp(tmpV,1-Math.exp(-5*dt));camera.lookAt(p.x,1,p.z);camera.fov=64;camera.updateProjectionMatrix();return;}
+    if(watching){const p=watching.car.group.position;camera.up.set(0,1,0);fwdV.set(0,0,1).applyQuaternion(watching.car.group.quaternion);
+      tmpV.copy(p).addScaledVector(fwdV,-8);tmpV.y=4;camera.position.lerp(tmpV,1-Math.exp(-5*dt));camera.lookAt(p.x,1,p.z);camera.fov=64;camera.updateProjectionMatrix();return;}
   }
-  fwdV.set(Math.sin(player.heading), 0, Math.cos(player.heading));
+  const viewPosition=player.car.group.position;
+  fwdV.set(0,0,1).applyQuaternion(player.car.group.quaternion);
   const spd = Math.abs(player.speed);
   if (camMode === 0) {
     camera.up.set(0,1,0);
     const dist = 5.1 + Math.min(spd * .003, .3), h = 1.75 + Math.min(spd * .001, .1);
-    tmpV.copy(player.pos).addScaledVector(fwdV, -dist).add(new THREE.Vector3(0, h, 0));
+    tmpV.copy(viewPosition).addScaledVector(fwdV, -dist);tmpV.y+=h;
     // Follow translation immediately; smooth only the relative orbit to avoid speed-dependent lag.
-    if(!chasePrevious||chasePrevious.distanceTo(player.pos)>30)camPos.copy(tmpV);
-    else camPos.add(player.pos.clone().sub(chasePrevious));
-    chasePrevious=player.pos.clone();
+    if(!chasePrevious||chasePrevious.distanceTo(viewPosition)>30)camPos.copy(tmpV);
+    else camPos.add(chaseDelta.subVectors(viewPosition,chasePrevious));
+    chasePrevious=chasePoint.copy(viewPosition);
     camPos.x = damp(camPos.x, tmpV.x, 8, dt);
     camPos.y = damp(camPos.y, tmpV.y, 8, dt);
     camPos.z = damp(camPos.z, tmpV.z, 8, dt);
     camera.position.copy(camPos);
-    if (shake > 0) camera.position.add(tmpV.set((Math.random() - .5) * shake, (Math.random() - .5) * shake, (Math.random() - .5) * shake));
-    const spdJit = clamp((spd - 42) / 50, 0, 1) * .014; // 高速路面微震,增强速度感
+    if (shake > 0) camera.position.add(tmpV.set((Math.random() - .5) * shake*options.cameraMotion, (Math.random() - .5) * shake*options.cameraMotion, (Math.random() - .5) * shake*options.cameraMotion));
+    const spdJit = clamp((spd - 42) / 50, 0, 1) * .014*options.cameraMotion; // 高速路面微震,增强速度感
     if (spdJit > 0 && state === 'race') camera.position.y += Math.sin(raceTime*37) * spdJit;
-    tmpV.copy(player.pos).addScaledVector(fwdV, 5.5).add(new THREE.Vector3(0, 1.0, 0));
+    tmpV.copy(viewPosition).addScaledVector(fwdV, 5.5);tmpV.y+=1;
     camera.lookAt(tmpV);
   } else {
     const anchor=camMode===1?player.car.cockpit:player.car.bonnet;
-    const pose=cameraPose(player.car.bodyParts,anchor);camera.position.copy(pose.eye);camera.up.copy(pose.up);camera.lookAt(pose.target);
+    const pose=cameraPose(player.car.bodyParts,anchor,cabinPose,options.cameraMotion);camera.position.copy(pose.eye);camera.up.copy(pose.up);camera.lookAt(pose.target);
   }
 
   shake = Math.max(0, shake - dt * 1.6);
-  const targetFov = camMode===1?68:camMode===2?64:58+Math.pow(Math.min(spd/90,1),.8)*12;
+  const targetFov = camMode===1?68:camMode===2?64:58+Math.pow(Math.min(spd/90,1),.8)*12*options.cameraMotion;
   camera.fov = damp(camera.fov, targetFov, 5, dt);
   camera.updateProjectionMatrix();
 }
@@ -1566,10 +1599,12 @@ function drawCluster() {
   if (nosF > .02) { g.fillStyle = '#37e0ff'; rr(g, 232, 168, 96 * nosF, 6, 3); g.fill(); }
   g.font = 'bold 9px Arial'; g.fillStyle = '#37e0ff'; g.fillText('N₂O', 280, 190);
 }
-function updateHudStatic() {
-  document.getElementById('lapTxt').textContent = '圈 LAP ' + Math.min(player.lap, session.laps) + '/' + session.laps;
-}
+const hudElements=Object.fromEntries(['lapTxt','posBig','tTotal','tLap','tBest','msg','submsg'].map(id=>[id,document.getElementById(id)]));
+function hudText(id,text){const element=hudElements[id];if(element.textContent!==text)element.textContent=text;}
+function updateHudStatic() {hudText('lapTxt','圈 LAP ' + Math.min(player.lap, session.laps) + '/' + session.laps);}
 const renderRaceTiming=mountRaceTiming(document.getElementById('raceTimingRows'));
+let telemetryEl;
+const wrongWayEl=document.getElementById('wrongway'),wheelSvgEl=document.getElementById('wheelSvg');
 let hudTick = 0, lastRank = 4;
 function updateHud(dt) {
   drawSpeedo();
@@ -1591,20 +1626,22 @@ function updateHud(dt) {
       else { showMsg('', '↓ 被超 P' + rank, 1); }
     }
     lastRank = rank;
-    const posBig = document.getElementById('posBig');
-    posBig.innerHTML = rank + '<small>/' + (ais.length+1) + '</small>';
-    posBig.style.color = rank === 1 ? '#b9ff00' : '#fff';
+    const posBig = hudElements.posBig,rankKey=rank+'/'+(ais.length+1);
+    if(posBig.dataset.rank!==rankKey){posBig.dataset.rank=rankKey;posBig.innerHTML = rank + '<small>/' + (ais.length+1) + '</small>';posBig.style.color = rank === 1 ? '#b9ff00' : '#fff';}
     updateHudStatic();
-    if(state==='finishing'){document.getElementById('submsg').textContent='你已完赛 · 等待 '+ais.filter(a=>!a.finished).length+' 辆车冲线';document.getElementById('submsg').style.opacity=1;msgTimer=1;}
-    document.getElementById('tTotal').textContent = fmt(player.finishTime??raceTime);
-    document.getElementById('tLap').textContent = fmt(player.finished?player.lastCompletedLapTime:raceTime-player.lapStart);
-    document.getElementById('tBest').textContent = fmt(player.best);
+    if(state==='finishing'){hudText('submsg','你已完赛 · 等待 '+ais.filter(a=>!a.finished).length+' 辆车冲线');hudElements.submsg.style.opacity=1;msgTimer=1;}
+    hudText('tTotal',fmt(player.finishTime??raceTime));
+    hudText('tLap',fmt(player.finished?player.lastCompletedLapTime:raceTime-player.lapStart));
+    hudText('tBest',fmt(player.best));
+    telemetryEl.textContent=(options.mode==='time'?'TIME ATTACK':'MOTORSPORT')+'  /  '+(player.abs?'ABS ': '')+(player.traction?'TCS ': '')+Math.abs(player.latG).toFixed(2)+' G'+'\n'+(wetness?'湿地':'干地')+' · 胎温 '+Math.round(player.temperature)+'°C'+(session.invalid?' · 本圈无效':'')+(options.mode==='endurance'?'\n油量 '+Math.round(player.fuel)+'% · 胎耗 '+Math.round(player.wear*100)+'%'+(session.pit?' · 补给 '+session.pit.toFixed(1)+'/8 秒':''):'');
+    wrongWayEl.style.display=player.wrongWay>1?'block':'none';
   }
+  wheelSvgEl.style.transform='rotate('+(-player.steer*100)+'deg)';
   if (msgTimer > 0) {
     msgTimer -= dt;
     if (msgTimer <= 0) {
-      document.getElementById('msg').style.opacity = 0;
-      document.getElementById('submsg').style.opacity = 0;
+      hudElements.msg.style.opacity = 0;
+      hudElements.submsg.style.opacity = 0;
     }
   }
 }
@@ -1648,9 +1685,13 @@ function updateRain(dt) {
 }
 
 // ---------------- 画质自适应(掉帧自动降负载,回稳后恢复) ----------------
-let qLevel = 0, fpsEMA = 60, qTimer = 0, qGoodT = 0;
+let qLevel = 0, fpsEMA = 60;
+const adaptiveQuality=new AdaptiveQuality();
+const qualityFloor=()=>options.quality==='low'?3:options.quality==='balanced'?1:0;
 const QPIX = [2, 1.5, 1.2, 1.0];
 function applyQuality() {
+  environmentDetail.setQuality(qLevel>=3?'low':qLevel>=2?'balanced':options.quality);
+  graphics.quality(qLevel>=3?'low':qLevel>=2?'balanced':options.quality);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, QPIX[qLevel]));
   renderer.setSize(innerWidth, innerHeight);
   graphics.resize();
@@ -1660,17 +1701,8 @@ function applyQuality() {
 }
 function autoQuality(rawDt) {
   fpsEMA = lerp(fpsEMA, Math.min(240, 1 / Math.max(rawDt, 1e-4)), .06);
-  // Avoid resizing the drawing buffer mid-orbit; automatic changes belong to driving.
-  if(state==='menu'||state==='tour'||state==='vehicle'){qTimer=0;return;}
-  qTimer += rawDt;
-  if (qTimer < 2) return;
-  qTimer = 0;
-  if(options.quality!=='high')return;
-  if (fpsEMA < 27 && qLevel < 3) { qLevel++; applyQuality(); qGoodT = 0; }
-  else if (fpsEMA > 52 && qLevel > 0) {
-    qGoodT += 2;
-    if (qGoodT >= 8) { qLevel--; applyQuality(); qGoodT = 0; }
-  } else qGoodT = 0;
+  const next=adaptiveQuality.update(rawDt,qLevel,qualityFloor(),state==='race'&&!paused&&!document.hidden);
+  if(next!==qLevel){qLevel=next;applyQuality();}
 }
 
 // ---------------- 主循环 ----------------
@@ -1686,10 +1718,11 @@ function loop() {
   accumulator+=dt;
   while(accumulator>=1/120){
     const step=1/120;
+    renderMotion.beforeStep();
     if(state==='countdown')updateCountdown(step);
     if(state==='race'||state==='finishing'||state==='countdown'){
       if(state==='race'||state==='finishing')raceTime+=step;
-      if(!player.finished)updatePlayer(step);updateAI(step);
+      if(!player.finished)updatePlayer(step);updateAI(step);updateContacts(step);
       if(checkpointTiming&&(state==='race'||state==='finishing'||state==='countdown')){
         const i=player.trackIdx,offset=(player.pos.x-sPts[i].x)*sTan[i].x+(player.pos.z-sPts[i].z)*sTan[i].z;
         if(!player.finished)checkpointTiming.sample('player',Math.max(0,((player.lap-1)+player.s)*trackLen+clamp(offset,-SEG/2,SEG/2)),raceTime);
@@ -1697,29 +1730,38 @@ function loop() {
       }
       if(state==='finishing'&&allFinished(player,ais))showResults();
     }
+    renderMotion.afterStep();
     accumulator-=step;
   }
+  cueTick-=dt;
+  if(state==='race'&&!paused&&options.line&&cueTick<=0){
+    currentCue=Math.abs(player.latOnTrack||0)>ROAD_W-1.05?{action:'recover',target:null,distance:null}:drivingCue(sDriveCurv,SEG,player.trackIdx,player.cfg,options,player,wetness);cueTick=.1;
+  }
+  drivingCoach.update(currentCue,state==='race'&&!paused&&options.line&&player.wrongWay<1,!!player.cornerBraking);
   if(state!=='menu'&&state!=='tour'&&state!=='vehicle'){
     updateHud(dt);
-    const advisory=options.line&&sCurv[wrapIdx(player.trackIdx+35)]>.15&&player.speed>24?' • 弯道在前 / 建议减速':'';
-    document.getElementById('telemetry').textContent=(options.mode==='time'?'TIME ATTACK':'MOTORSPORT')+'  /  '+(player.abs?'ABS ': '')+(player.traction?'TCS ': '')+(player.cornerBraking?'弯道辅助 ': '')+Math.abs(player.latG).toFixed(2)+' G'+advisory+'\n'+(wetness?'湿地':'干地')+' · 胎温 '+Math.round(player.temperature)+'°C · 最佳 '+fmt(session.best)+(session.invalid?' · 本圈无效':'')+(options.mode==='endurance'?'\n油量 '+Math.round(player.fuel)+'% · 胎耗 '+Math.round(player.wear*100)+'%'+(session.pit?' · 补给 '+session.pit.toFixed(1)+'/8 秒':''):'');
   }
   if(raceAudio){
     const active=!paused&&(state==='race'||state==='finishing'||state==='countdown');
     const throttle=state==='countdown'?((keys.KeyW||keys.ArrowUp||vk.gas)?1:0):player.throttlePressure||0;
     const heading=player.heading||0;
-    raceAudio.update({active,type:CARS[selected].type,top:CARS[selected].top,speed:player.speed,throttle,brake:player.brakePressure||0,slip:Math.abs(player.drift)*Math.abs(player.speed),wet:wetness,camera:camMode,countdown:state==='countdown',fuel:player.fuel,opponents:ais.map(a=>{const dx=a.car.group.position.x-player.pos.x,dz=a.car.group.position.z-player.pos.z;return {x:dx*Math.cos(heading)-dz*Math.sin(heading),z:dx*Math.sin(heading)+dz*Math.cos(heading),speed:a.speed,type:a.car.cfg.type};})},Math.min(rawDt,.1));
+    const surface=surfaceFeedback(TRACKS[trackSel].theme,!!TRACKS[trackSel].circuit,ROAD_W,player.latOnTrack||0,player.s,wetness);
+    raceAudio.update({surface,grip:gripFeedback(player,options,player.cfg?.handling||.9,wetness),active,type:CARS[selected].type,top:CARS[selected].top,speed:player.speed,throttle,brake:player.brakePressure||0,slip:Math.abs(player.drift)*Math.abs(player.speed),wet:wetness,camera:camMode,countdown:state==='countdown',fuel:player.fuel,opponents:ais.map(a=>{const dx=a.car.group.position.x-player.pos.x,dz=a.car.group.position.z-player.pos.z;return {x:dx*Math.cos(heading)-dz*Math.sin(heading),z:dx*Math.sin(heading)+dz*Math.cos(heading),speed:a.speed,type:a.car.cfg.type};})},Math.min(rawDt,.1));
     const audioState=raceAudio.snapshot();player.gearDisp=audioState.gear;player.rpmDisp=audioState.rpm/1000;
     musicGain.gain.setTargetAtTime(document.hidden||paused?0:active?.035:.10,AC.currentTime,.15);
   }
-  updateCamera(dt || .0001);
-  document.getElementById('quickQuality')?.classList.toggle('in-race',state==='race'||state==='countdown');
+  const interpolate=['race','countdown','finishing'].includes(state);
+  if(interpolate){if(!paused)renderAlpha=accumulator/(1/120);renderMotion.apply(renderAlpha);}
+  if(!paused)updateCamera(dt);
+  if(quickQuality.dataset.scene!==state){quickQuality.dataset.scene=state;quickQuality.classList.toggle('in-race',state==='race'||state==='countdown');}
   const parked=state==='menu'||state==='vehicle';
   (parked?carObjs[selected]:player.car)?.updateInstruments?.(parked?0:Math.abs(player.speed)*3.6,parked?.8:player.rpmDisp||.8);
   updateRain(dt || .001);
   updateParticles(dt || .001);
   animateCity(worldGroup,dt);
-  const previewCity=state==='tour'||(state==='menu'&&menuTab==='track');graphics.render(previewCity&&cityShowcase?cityShowcase.focus:previewCity?cityReport.focus:state==='menu'||state==='vehicle'?showroom.position:player.pos,previewCity,state==='vehicle'||(state==='menu'&&menuTab!=='track'),presentationRect());
+  environmentDetail.update(player.car?.group.position||showroom.position,state==='menu'||state==='tour'||state==='vehicle');
+  const previewCity=state==='tour'||(state==='menu'&&menuTab==='track');graphics.render(previewCity&&cityShowcase?cityShowcase.focus:previewCity?cityReport.focus:state==='menu'||state==='vehicle'?showroom.position:player.car.group.position,previewCity,state==='vehicle'||(state==='menu'&&menuTab!=='track'),presentationRect());
+  if(interpolate)renderMotion.restore();
 }
 
 addEventListener('resize', () => {
@@ -1739,7 +1781,8 @@ addEventListener('orientationchange', () => {
   }, 300);
 });
 
-mountSetup(key=>{refreshQualityLabel();graphics.quality(options.quality);qLevel=options.quality==='low'?3:options.quality==='balanced'?1:0;applyQuality();if(key!=='quality')buildWorld(trackSel);if(state==='menu')syncMenuScene();});
+mountSetup(key=>{refreshQualityLabel();graphics.quality(options.quality);qLevel=options.quality==='low'?3:options.quality==='balanced'?1:0;applyQuality();if(!['quality','bodyMotion','cameraMotion'].includes(key))buildWorld(trackSel);if(state==='menu')syncMenuScene();});
+telemetryEl=document.getElementById('telemetry');
 const tourButton=document.createElement('button');tourButton.id='tourBtn';tourButton.textContent='城市巡览  ↗';document.getElementById('selPanel').append(tourButton);
 const tourOverlay=document.createElement('div');tourOverlay.id='tourOverlay';tourOverlay.className='hidden';tourOverlay.innerHTML='<div><small>CITY EXPLORER</small><h2 id="tourCity"></h2><p id="tourLandmark"></p></div><div class="tour-actions"><button id="tourPrev">上一座城市</button><button id="tourNext">下一座城市</button><button id="tourBack">返回车库</button></div>';document.body.append(tourOverlay);
 function enterTour(){
@@ -1761,7 +1804,7 @@ for(const [id,step] of [['vehiclePrev',-1],['vehicleNext',1]])document.getElemen
 let pitHeld=false;
 document.getElementById('pitButton').addEventListener('pointerdown',e=>{pitHeld=true;e.target.setPointerCapture(e.pointerId);});
 for(const type of ['pointerup','pointercancel'])document.getElementById('pitButton').addEventListener(type,()=>pitHeld=false);
-const clearInput=()=>{Object.keys(keys).forEach(k=>keys[k]=false);Object.keys(vk).forEach(k=>vk[k]=false);pitHeld=false;};
+const clearInput=()=>{Object.keys(keys).forEach(k=>keys[k]=false);Object.keys(vk).forEach(k=>vk[k]=false);releaseTouchControls.forEach(release=>release());pitHeld=false;};
 addEventListener('blur',()=>{clearInput();if((state==='race'||state==='countdown')&&!paused)togglePause();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){clearInput();if((state==='race'||state==='countdown')&&!paused)togglePause();}});
 document.querySelector('#title .sub').textContent='13 CARS  /  12 CITIES  /  ONE PASSION';
@@ -1769,13 +1812,13 @@ document.querySelector('#title .en').textContent='MOTORSPORT · 精于每一道�
 document.querySelectorAll('.statRow')[3].style.display='none';
 document.getElementById('btnNos').style.display='none';document.getElementById('nosBar').style.display='none';
 document.querySelector('#mirror').textContent='COCKPIT VIEW';
-const difficultyNote=document.createElement('p');difficultyNote.id='difficultyNote';difficultyNote.textContent=DIFFS[diffSel].description;diffRow.after(difficultyNote);
+const difficultyNote=document.createElement('p');difficultyNote.id='difficultyNote';difficultyNote.textContent=DIFFS[diffSel].description+' 对手含保守 / 稳定 / 进攻型，无追赶加速。';diffRow.after(difficultyNote);
 document.getElementById('carPanel').append(vehicleButton);document.getElementById('setupPanel').prepend(diffRow.previousElementSibling,diffRow,difficultyNote);
 const steerLabel=document.createElement('label');steerLabel.innerHTML='转向灵敏度<select id="steeringSensitivity"><option value="0">舒缓</option><option value="1">标准</option><option value="2">灵敏</option></select>';document.getElementById('setupPanel').insertBefore(steerLabel,document.getElementById('sessionNote'));const steerSelect=document.getElementById('steeringSensitivity');steerSelect.value=String(SETS.sens);steerSelect.onchange=()=>{SETS.sens=Number(steerSelect.value);saveSets();document.querySelectorAll('#sensRow .setBtn').forEach(b=>b.classList.toggle('sel',Number(b.dataset.s)===SETS.sens));};
 const quickQuality=document.createElement('div');quickQuality.id='quickQuality';quickQuality.setAttribute('role','group');quickQuality.setAttribute('aria-label','画质');
 for(const [value,label]of [['low','流畅'],['balanced','均衡'],['high','最高']]){const button=document.createElement('button');button.type='button';button.dataset.quality=value;button.textContent=label;button.addEventListener('click',()=>{setQuality(value);try{localStorage.setItem('uv3-setup',JSON.stringify(options));}catch{}});quickQuality.append(button);}document.body.append(quickQuality);
 function refreshQualityLabel(){document.querySelectorAll('#quickQuality button').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.quality===options.quality)));}
-function setQuality(value){options.quality=value;graphics.quality(value);qLevel=value==='low'?3:value==='balanced'?1:0;qTimer=0;qGoodT=0;applyQuality();refreshQualityLabel();}
+function setQuality(value){options.quality=value;qLevel=qualityFloor();adaptiveQuality.reset();applyQuality();refreshQualityLabel();try{localStorage.setItem('uv3-setup',JSON.stringify(options));}catch{}}
 const experience=mountExperience(setQuality);
 refreshQualityLabel();
 menuUI=mountMenu(tab=>{menuTab=tab;if(worldGroup)syncMenuScene();});
@@ -1798,10 +1841,19 @@ window.addEventListener('vehicle-model-ready',event=>{if(event.detail!==CARS[sel
 
 buildWorld(trackSel);menuUI.select('car');toMenu();loop();
 // Read-only diagnostics for performance and smoke testing.
-window.__velocity={snapshot:()=>({state,paused,raceTime,playerFinish:player.finishTime,finishTimes:ais.map(a=>a.finishTime),track:TRACKS[trackSel].theme,trackLength:trackLen,roadWidth:ROAD_W*2,car:CARS[selected].type,speed:player.speed,heading:player.heading,position:player.pos.toArray(),lap:player.lap,laps:session.laps,mode:options.mode,wetness,ai:ais.length,fuel:player.fuel,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,fps:fpsEMA,physicsHz:120,quality:options.quality,qualityLevel:qLevel,audio:raceAudio?.snapshot(),detailed:!!carObjs[selected].detailed,modelKind:carObjs[selected].modelKind,dimensions:carObjs[selected].group.userData.dimensions,wheelCount:carObjs[selected].wheels.length,assetCredit:carObjs[selected].assetCredit,assetError:!!carObjs[selected].assetError,assetStatus:carObjs[selected].assetStatus,bodyLod:carObjs[selected].bodyLod?.getCurrentLevel(),aiLods:ais.map(a=>({car:a.car.cfg.type,level:a.car.bodyLod?.getCurrentLevel()})),steeringAngle:carObjs[selected].steeringWheel?.rotation.z,wheelPositions:carObjs[selected].wheels.map(w=>w.parent.position.toArray()),cockpit:carObjs[selected].cockpit,bonnet:carObjs[selected].bonnet,camera:camMode,cameraEye:camera.position.toArray(),cameraClip:[camera.near,camera.far],pixelRatio:renderer.getPixelRatio(),orbit:vehicleOrbit.snapshot(),pedals:{throttle:player.throttlePressure,brake:player.brakePressure},cornerBraking:!!player.cornerBraking,menuTab,difficulty:diffSel,aiSpeeds:ais.map(a=>a.speed),aiDiagnostics:ais.map(a=>({car:a.car.cfg.type,speed:a.speed,planned:a.plannedSpeed,traffic:a.trafficTarget,target:a.commandTarget,throttle:a.driver.throttlePressure,brake:a.driver.brakePressure,distance:a.dist,lat:a.lat,latG:a.driver.latG})),sceneVisibility:{world:worldGroup.visible,showroom:showroom.visible,cars:carObjs.filter(c=>c.group.visible).length},environment:{...cityReport,sky:atmosphere.snapshot(),surfaces:surfaces.status}})};
+window.__velocity={snapshot:()=>({state,paused,raceTime,playerFinish:player.finishTime,finishTimes:ais.map(a=>a.finishTime),track:TRACKS[trackSel].theme,trackLength:trackLen,roadWidth:ROAD_W*2,car:CARS[selected].type,speed:player.speed,heading:player.heading,position:player.pos.toArray(),lap:player.lap,laps:session.laps,mode:options.mode,wetness,ai:ais.length,fuel:player.fuel,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,fps:fpsEMA,physicsHz:120,quality:options.quality,qualityLevel:qLevel,audio:raceAudio?.snapshot(),detailed:!!carObjs[selected].detailed,modelKind:carObjs[selected].modelKind,dimensions:carObjs[selected].group.userData.dimensions,wheelCount:carObjs[selected].wheels.length,assetCredit:carObjs[selected].assetCredit,assetError:!!carObjs[selected].assetError,assetStatus:carObjs[selected].assetStatus,bodyLod:carObjs[selected].bodyLod?.getCurrentLevel(),aiLods:ais.map(a=>({car:a.car.cfg.type,level:a.car.bodyLod?.getCurrentLevel()})),steeringAngle:carObjs[selected].steeringWheel?.rotation.z,wheelPositions:carObjs[selected].wheels.map(w=>w.parent.position.toArray()),cockpit:carObjs[selected].cockpit,bonnet:carObjs[selected].bonnet,camera:camMode,motion:{body:options.bodyMotion,camera:options.cameraMotion},cameraEye:camera.position.toArray(),cameraClip:[camera.near,camera.far],pixelRatio:renderer.getPixelRatio(),orbit:vehicleOrbit.snapshot(),pedals:{throttle:player.throttlePressure,brake:player.brakePressure},cornerBraking:!!player.cornerBraking,menuTab,difficulty:diffSel,aiSpeeds:ais.map(a=>a.speed),aiDiagnostics:ais.map(a=>({car:a.car.cfg.type,speed:a.speed,planned:a.plannedSpeed,traffic:a.trafficTarget,target:a.commandTarget,throttle:a.driver.throttlePressure,brake:a.driver.brakePressure,distance:a.dist,lat:a.lat,latG:a.driver.latG,position:a.car.group.position.toArray(),heading:a.car.group.rotation.y,personality:PERSONALITIES[a.tactics.profile].name,tactic:a.tactics.mode,lateralVelocity:a.lateralVelocity,contactYaw:a.contactYaw})),sceneVisibility:{world:worldGroup.visible,showroom:showroom.visible,cars:carObjs.filter(c=>c.group.visible).length},environment:{...cityReport,sky:atmosphere.snapshot(),surfaces:surfaces.status}})};
 
 if(import.meta.env.DEV)window.__raceFinishTest=()=>{
  if(state!=='race')throw new Error('Start a local race first');
  ais.forEach((a,i)=>{a.dist=session.laps*trackLen-80-i*70;a.speed=24;a.driver.speed=24;a.driver.fuel=100;a.planTimer=0;a.finished=false;a.finishTime=null;});
  player.lap=session.laps+1;player.s=0;player.lastCompletedLapTime=raceTime;finishRace();
+};
+
+if(import.meta.env.DEV)window.__raceCombatTest=(scenario)=>{
+ if(state!=='race'||ais.length!==3)throw new Error('Start a three-opponent race first');
+ const cornerDistance=Math.max(40,sCurv.findIndex(k=>k>.3)*SEG);
+ const layouts={corner:[[cornerDistance,-1.4,15],[cornerDistance,1.4,15],[cornerDistance+30,0,15]],crowded:[[100,0,20],[104,0,15],[102,1.9,20]],blocked:[[100,0,30],[115,0,8],[112,-2.8,15]],lapped:[[trackLen+100,0,30],[115,0,8],[112,-2.8,15]],scrape:[[100,0,20],[100,2,20],[120,-2.8,20]]};
+ const layout=layouts[scenario];if(!layout)throw new Error('Unknown combat scenario');
+ ais.forEach((a,i)=>{const [dist,lat,speed]=layout[i];Object.assign(a,{dist,lat,speed,lateralVelocity:scenario==='scrape'&&i===0?3:0,contactYaw:0,tactics:freshTactics(i),planTimer:0,finished:false});a.driver.speed=speed;placeOnTrack(a.car,dist,lat);a.heading=a.car.group.rotation.y;});
+ raceTime=Math.max(6,raceTime);renderMotion.reset();
 };

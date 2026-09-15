@@ -1,3 +1,4 @@
+import {MONACO_TUNNEL} from '../driving-feedback';
 import {urbanDistrict} from './urban';
 import type {CityKey} from '../environment/profiles';
 import * as T from 'three';
@@ -49,7 +50,7 @@ export function buildCircuitVenue(world:T.Group,points:T.Vector3[],normals:T.Vec
  for(let j=0;j<100;j++){const u=.50+j*.0044,side=j%2?1:-1,off=side*(75+j%4*22);if(!reserve(u,off,30))continue;at(u,off,()=>{const h=35+j%6*12;a.box(j%3?glass:concrete,0,h/2,0,42,h,32);for(let y=5;y<h;y+=5)a.box(j%2?pink:light,0,y,-16.05,40,.18,.15,false);a.box(white,0,h+.7,0,43,1.4,34);buildings++;});}
  }else if(key==='monaco'){
  // Harbor-side tunnel follows the same centreline; roof and lights do not intrude on the road.
- for(let m=length*.41;m<length*.54;m+=6){at(m/length,0,()=>{a.box(concrete,0,7,0,6.4,.7,width*2+2);a.box(concrete,0,3.4,-width-1,6.4,6.8,.45);a.box(light,0,6.5,-width*.6,3,.08,.18);});}
+ for(let m=length*MONACO_TUNNEL.start;m<length*MONACO_TUNNEL.end;m+=6){at(m/length,0,()=>{a.box(concrete,0,7,0,6.4,.7,width*2+2);a.box(concrete,0,3.4,-width-1,6.4,6.8,.45);a.box(light,0,6.5,-width*.6,3,.08,.18);});}
  for(let j=0;j<170;j++){const u=j/170;for(const side of [-1,1]){const off=side*(width+24+j%3*13);if(!reserve(u,off,12))continue;at(u,off,()=>{const h=14+j%5*5;a.box(j%3?concrete:sand,0,h/2,0,17,h,15);a.box(red,0,h+.35,0,18,.7,16);for(let y=3;y<h;y+=3.3)for(let x=-6;x<=6;x+=3){a.box(glass,x,y,-7.55,1.4,1.8,.1,false);a.box(white,x,y-1,-8,2,.15,1,false);}buildings++;});}}
  // Mosaic harbor water avoids painting over the tight return section.
  const water=a.material(0x327e91,.5,.21);for(let x=center.x-150;x<center.x+340;x+=25)for(let z=center.z-30;z<center.z+320;z+=25)if(distance(x,z)>40&&!reserved.some(b=>Math.hypot(x-b.x,z-b.z)<b.r+22)){a.box(water,x,-.015,z,24.9,.025,24.9,false);}

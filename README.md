@@ -55,7 +55,7 @@ node tools/prepare-vehicle-lods.mjs r8 mcf1
 node tools/remaining-six-check.mjs
 ```
 
-Quality is always high on launch and when selecting a vehicle or track. The external top-right selector can lower it afterward; changing quality does not rebuild a running race. Replacement slots use distinct lap-record identifiers. See tools/vehicle-performance.md for specification sources and gameplay tuning.
+Quality defaults to balanced and remembers the last manual choice. Changing quality does not rebuild a running race. Sustained slow frames can reduce resolution/effects below that choice; recovery is slower and never exceeds the selected quality. Replacement slots use distinct lap-record identifiers. See tools/vehicle-performance.md for specification sources and gameplay tuning.
 
 Race audio uses separate replacement banks for five supercars, plus independent two-layer banks for 911/R34/Supra/M4 and the existing muscle bank, with per-car combustion profiles, shift transients, traction-driven tire scrub, road/wind layers and spatial nearby rivals. Audio is silenced in menus, on pause and when the page is hidden; sample failures retain a synthesized fallback. Source credits: public/audio/CREDITS.md.
 
@@ -63,3 +63,33 @@ Race audio uses separate replacement banks for five supercars, plus independent 
 Shanghai, Monaco, Las Vegas and Miami use local projected GeoJSON routes, normalized to published circuit length. Circuit cards, minimap and simulation share one spline. Venue scenery adds pits, stepped stands, barriers, metre-spaced brake boards and city-specific stadium / tunnel / skyline approximations. Acute corners retain their peak curvature in AI braking. Elevation is still flat and scenery is not surveyed. Sources: public/circuits/CREDITS.md.
 
 Supercar audition: /sound-preview.html shares the exact race audio engine, with idle, middle RPM, high RPM and gradual rev controls. The rejected shared exotic clip is no longer shipped. New sources remain AI designs, not exact OEM recordings.
+
+### Driving experience — first batch
+
+- Cars, wheels and body motion interpolate between the 120 Hz simulation steps. Follow/cockpit cameras use the rendered pose; original simulation transforms are restored before the next step. Starts and resets clear the history.
+- Optional driving cues show braking, lifting, steady steering, acceleration and off-track recovery. Reference corner speeds use existing curvature/braking planning with current tire condition and weather. They are guidance, not a guaranteed optimal racing line. The existing driving physics and corner-brake assistance remain unchanged; assistance intervention has a separate label.
+- Keyboard one-shot actions ignore key repeat. Touch buttons track individual captured pointers; releasing one finger does not cancel another. Pause, blur, cancellation and hiding controls clear held input.
+- Balanced shadows use 1024 pixels, high uses 2048; the slowest adaptive level disables shadows. Text telemetry updates at 10 Hz, while driving instruments stay animated.
+- Offline storage now caches the shell and requested assets on demand. Unvisited vehicles/environments are not guaranteed to work offline; the page no longer automatically downloads the entire game.
+- `node tools/driving-experience-check.mjs` checks keyboard driving, cameras, reset, pause, saved quality, guidance visibility, multi-touch capture/release and four phone layouts. `TEST_URL` selects a dev or production preview. Automated mobile emulation is not a physical-phone performance measurement.
+
+### Stability follow-up
+
+- Camera switches clear interpolation history. Night headlights interpolate with the car; the post-finish camera uses the interpolated opponent heading. Cockpit vectors are reused, and HUD text nodes are cached.
+- Small environmental spheres (including tree crowns) are grouped into 240-metre cells for frustum culling. Balanced detail steps down beyond 260/550 metres, with separate return thresholds to prevent flicker; low quality starts at medium detail. High quality and city previews retain full geometry. Large landmark spheres retain their original geometry at every quality.
+- The player car, road geometry and selected render resolution are unchanged by this environment optimization. Spatial batches can increase draw-call count slightly while reducing submitted triangles.
+- `node tools/stability-benchmark.mjs` compares a preserved pre-change dev copy on port 5174 with the current dev build on port 5173: fixed 458, Shanghai, clear weather, sport tires, balanced quality, solo keyboard driving, two alternating 12-second samples per viewport/version after warm-up. Results and comparison screenshots are saved to `artifacts/stability/`. This is a short local benchmark, not a full-race or physical-phone guarantee.
+### AI racecraft and contact
+
+- Each opponent keeps a conservative, steady or attacking personality. It changes following space, attack patience and retry delay; engine power, tire physics and difficulty pace limits remain shared with the existing simulation. The difficulty menu explicitly states that there is no catch-up boost.
+- Persistent follow/pass/recover decisions select an entry lane ahead of bends, retain space alongside another car, and wait before retrying an unsuccessful attack. Wrapped distance comparisons include lapped traffic.
+- All active player/AI and AI/AI pairs use the same 4.3 × 2.1 m oriented contact box and equal-mass impulse rules at 120 Hz. Iterative separation, low restitution and friction reduce overlap and repeated bouncing. These are simplified gameplay bounds, not mesh-accurate collision or vehicle damage.
+- Contact displacement and lateral velocity persist on AI cars instead of being erased by spline placement. Lateral motion decays gradually, with a short visual yaw response and a recovery decision. AI uses the same road-edge clearance, runoff drag and street-wall speed penalty as the player; player reset clears residual contact motion.
+- `node tools/ai-combat-check.mjs` runs five short Shanghai scenarios: crowded cars, side-by-side cornering, a slower lead car, lapped traffic and side scraping. It checks finite state and continued progress and writes `artifacts/ai-combat/browser.json`. This does not replace longer human testing on every circuit or a physical phone.
+### Driving-state immersion
+
+- Wheel-edge estimates activate rhythmic kerb noise on the existing circuit kerbs. Shanghai/Miami shoulder strips now use visible green grass and a distinct soft rustle; paved/rough runoff keeps a separate low rumble. Wet tarmac adds high-frequency spray. Surface classification follows broad scene zones rather than per-triangle material queries.
+- Tire warning begins at 70% of the current combined grip budget and ramps up before visible drift. It uses current tire compound, temperature, wear, downforce and rain, with low-speed suppression. Existing tire-slip audio remains present.
+- Nearby opponents retain stable audio voices with stronger stereo direction when alongside and quieter rear/distant sound. Monaco tunnel reflections fade inside the same .41–.54 lap interval used to build its roof; only engine audio feeds the short filtered reverb so tire cues remain direct.
+- Setup has separate saved body-motion and camera-motion sliders. Camera motion defaults to 65%; zero keeps a level cockpit view and disables chase vibration, collision shake and speed FOV expansion. Body pitch and roll remain small and bounded. Neither slider changes handling.
+- `node tools/immersion-check.mjs` verifies saved settings, live grip feedback and actual offline Web Audio output, including left/right channel levels and wet-surface high-frequency differences. It produces `artifacts/immersion/feedback-demo.wav`: eight two-second sections (dry, kerb, grass, wet, grip limit, left rival, right rival, tunnel). Measured audio differences do not substitute for human listening with headphones and phone speakers.

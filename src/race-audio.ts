@@ -1,11 +1,14 @@
+import {rivalFeedback,type surfaceFeedback} from './driving-feedback';
 import {ENGINE_BANKS,AUDIO_ASSETS,engineBlend,highBlend} from './engine-banks';
 import {ENGINE_PROFILES,advancePowertrain,type Powertrain,type EngineProfile} from './audio-dynamics';
+const TAU=Math.PI*2;
 const clamp=(v:number,a:number,b:number)=>Math.max(a,Math.min(b,v));
-interface Frame {active:boolean;type:string;top:number;speed:number;throttle:number;brake:number;slip:number;wet:number;camera:number;countdown:boolean;fuel:number;opponents:{x:number;z:number;speed:number;type:string}[];}
+interface Frame {surface?:ReturnType<typeof surfaceFeedback>;grip?:number;active:boolean;type:string;top:number;speed:number;throttle:number;brake:number;slip:number;wet:number;camera:number;countdown:boolean;fuel:number;opponents:{x:number;z:number;speed:number;type:string}[];}
 interface Voice {waveKey?:string;osc:OscillatorNode;sub:OscillatorNode;filter:BiquadFilterNode;gain:GainNode;pan:StereoPannerNode;}
 /** Layered designed engine audio. Source library clips are AI SFX, not exact car recordings. */
 export class RaceAudio {
  private bus:GainNode;private engineBus:GainNode;private filter:BiquadFilterNode;private synth:Voice;private rivals:Voice[]=[];
+ private kerb:GainNode;private grass:GainNode;private spray:GainNode;private limit:GainNode;private room:GainNode;private surfacePhase=0;
  private noise:AudioBuffer;private wind:GainNode;private road:GainNode;private scrub:GainNode;private pads:GainNode;
  private samples=new Map<string,{source:AudioBufferSourceNode;gain:GainNode}>();private buffers=new Map<string,AudioBuffer>();
  private train:Powertrain={gear:1,rpm:850,shift:0,cooldown:0};private type='';private lastThrottle=0;private lastHit=-10;private running=false;private wasCountdown=false;
@@ -17,6 +20,11 @@ export class RaceAudio {
   this.noise=ac.createBuffer(1,ac.sampleRate*2,ac.sampleRate);const data=this.noise.getChannelData(0);let brown=0;for(let i=0;i<data.length;i++){brown=(brown+(Math.random()*2-1)*.025)*.995;data[i]=brown;}
   this.synth=this.voice(this.engineBus);for(let i=0;i<3;i++)this.rivals.push(this.voice(this.bus));
   this.wind=this.noiseLoop('highpass',650,.5);this.road=this.noiseLoop('lowpass',380,.6);this.scrub=this.noiseLoop('bandpass',1800,2);this.pads=this.noiseLoop('bandpass',2600,.6);
+  this.kerb=this.noiseLoop('bandpass',160,1.6);this.grass=this.noiseLoop('lowpass',850,.8);this.spray=this.noiseLoop('highpass',2200,.7);this.limit=this.noiseLoop('bandpass',1100,3);
+  // A short, filtered stereo impulse gives early tunnel reflections without masking tire cues.
+  const convolution=ac.createConvolver(),impulse=ac.createBuffer(2,Math.floor(ac.sampleRate*.7),ac.sampleRate);
+  for(let channel=0;channel<2;channel++){const data=impulse.getChannelData(channel);for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*Math.exp(-i/(ac.sampleRate*.13))*.12;for(const [delay,level] of [[.043,.5],[.079,.3],[.127,.18]])data[Math.floor((delay+channel*.007)*ac.sampleRate)]+=level;}
+  convolution.buffer=impulse;const roomFilter=ac.createBiquadFilter();roomFilter.type='lowpass';roomFilter.frequency.value=2400;this.room=ac.createGain();this.room.gain.value=0;this.engineBus.connect(convolution);convolution.connect(roomFilter);roomFilter.connect(this.room);this.room.connect(this.bus);
   for(const name of AUDIO_ASSETS)void this.load(name);
   document.addEventListener('visibilitychange',()=>{if(document.hidden)this.silence();});
  }
@@ -45,14 +53,22 @@ export class RaceAudio {
    this.smooth(v.gain.gain,idle?(1-sampleMix)*.28:(isHigh||name===bank.file)?(.10+load*.19+n*.035)*p.body*sampleMix*(isHigh?highMix:1-highMix):0,.10);
   }
   this.smooth(this.synth.filter.frequency,bank.designed?450+n*1800+load*650:350+n*3000+load*1600);
+  const grip=frame.grip??0,surface=frame.surface;
+  this.surfacePhase=(this.surfacePhase+speed*dt*TAU/1.2)%TAU;
+  const moving=clamp(speed/12,0,1);
+  this.smooth(this.kerb.gain,(surface?.curb??0)*moving*(.16+.12*Math.sin(this.surfacePhase)),.015);
+  this.smooth(this.grass.gain,(surface?.grass??0)*moving*.55);
+  this.smooth(this.spray.gain,(surface?.wet??frame.wet)*moving*.36);
+  this.smooth(this.limit.gain,grip*.17*(1-frame.wet*.25));
+  this.smooth(this.room.gain,(surface?.tunnel??0)*.24,.18);
   const slip=clamp((frame.slip-.7)/8,0,1)*clamp(speed/6,0,1);
-  const tire=this.samples.get('tire');if(tire){this.smooth(tire.gain.gain,slip*.20*(1-frame.wet*.35));this.smooth(tire.source.playbackRate,.88+slip*.23,.1);}
-  this.smooth(this.scrub.gain,slip*(tire?.08:.5));this.smooth(this.pads.gain,frame.brake*.04*clamp(speed/15,0,1));this.smooth(this.wind.gain,clamp(speed/80,0,1)**2*(frame.camera===1?.24:.7));const rolling=this.samples.get('road');if(rolling){this.smooth(rolling.gain.gain,clamp(speed/65,0,1)*.10);this.smooth(rolling.source.playbackRate,.7+clamp(speed/90,0,1)*.7);}this.smooth(this.road.gain,clamp(speed/50,0,1)*(.04+frame.wet*.2));
-  const near=frame.opponents.filter(o=>Math.hypot(o.x,o.z)<100).sort((x,y)=>Math.hypot(x.x,x.z)-Math.hypot(y.x,y.z)).slice(0,3);
-  this.rivals.forEach((v,i)=>{const other=near[i];if(!other){this.smooth(v.gain.gain,0);return;}const profile=ENGINE_PROFILES[other.type]||p,d=Math.hypot(other.x,other.z);const closing=(other.speed-frame.speed)*(-other.z/Math.max(d,1));const doppler=clamp(343/(343-closing),.8,1.25);this.tune(v,profile,(profile.idle+(profile.redline-profile.idle)*clamp(Math.abs(other.speed)/80,.15,.9))*doppler,.075/(1+(d/12)**2),clamp(other.x/14,-.9,.9));});
+  const tire=this.samples.get('tire');if(tire){this.smooth(tire.gain.gain,Math.max(slip,grip*.5)*.20*(1-frame.wet*.35));this.smooth(tire.source.playbackRate,.88+slip*.23,.1);}
+  this.smooth(this.scrub.gain,slip*(tire?.08:.5));this.smooth(this.pads.gain,frame.brake*.04*clamp(speed/15,0,1));this.smooth(this.wind.gain,clamp(speed/80,0,1)**2*(frame.camera===1?.24:.7));const rolling=this.samples.get('road');if(rolling){this.smooth(rolling.gain.gain,clamp(speed/65,0,1)*.10);this.smooth(rolling.source.playbackRate,.7+clamp(speed/90,0,1)*.7);}this.smooth(this.road.gain,clamp(speed/50,0,1)*(.04+(surface?.rough??0)*.3));
+  const near=frame.opponents.slice(0,3);
+  this.rivals.forEach((v,i)=>{const other=near[i];if(!other||Math.hypot(other.x,other.z)>=100){this.smooth(v.gain.gain,0);return;}const direction=rivalFeedback(other.x,other.z),profile=ENGINE_PROFILES[other.type]||p,d=Math.hypot(other.x,other.z);const closing=(other.speed-frame.speed)*(-other.z/Math.max(d,1));const doppler=clamp(343/(343-closing),.8,1.25);this.tune(v,profile,(profile.idle+(profile.redline-profile.idle)*clamp(Math.abs(other.speed)/80,.15,.9))*doppler,direction.gain*direction.rear,direction.pan);});
  }
  private tune(v:Voice,p:EngineProfile,rpm:number,gain:number,pan:number){
  if(v.waveKey!==p.family){const real=new Float32Array(24),imag=new Float32Array(24);for(let i=1;i<24;i++){const shape=p.family==='porscheBoxer'?(i%2?1:.65):p.family==='nissanRB26'?(i<4?.85:.5):p.family==='toyota2JZ'?(i%2?1:.38):p.family==='bmwS58'?(i<3?.8:.6):p.family==='ferrari458'?(i%2?.85:.7):p.family==='ferrariF40'?(i%2?1:.32):p.family==='audiV10'?(i%3===0?.8:.48):p.family==='lamboV12'?(i%2?.7:.55):p.family==='mclarenV12'?(i<5?.9:.30):(i%2?.9:.55);imag[i]=shape/Math.pow(i,ENGINE_BANKS[p.family].designed?1.65:1.3);}v.osc.setPeriodicWave(this.ac.createPeriodicWave(real,imag));v.waveKey=p.family;}
  const f=rpm/60*p.cylinders/2;this.smooth(v.osc.frequency,f,.06);this.smooth(v.sub.frequency,f*.5,.06);this.smooth(v.filter.frequency,800+rpm*.32);this.smooth(v.gain.gain,gain,.08);this.smooth(v.pan.pan,pan,.1);}
- snapshot(){return {loaded:[...this.loaded],failed:[...this.failed],active:this.running,gear:this.train.gear,rpm:this.train.rpm,shift:this.train.shift,family:ENGINE_PROFILES[this.type]?.family,camera:this.current?.camera};}
+ snapshot(){return {loaded:[...this.loaded],failed:[...this.failed],active:this.running,gear:this.train.gear,rpm:this.train.rpm,shift:this.train.shift,family:ENGINE_PROFILES[this.type]?.family,camera:this.current?.camera,surface:this.current?.surface,grip:this.current?.grip,rivals:this.current?.opponents.map(o=>rivalFeedback(o.x,o.z))};}
 }

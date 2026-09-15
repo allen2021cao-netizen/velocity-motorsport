@@ -4,6 +4,7 @@ import './style.css';
 import './menu.css';
 import './mobile-landscape.css';
 import './race-timing.css';
+import './driving-cue.css';
 import {startSplash} from './splash';
 import {startOfflineCache} from './offline';
 document.querySelector('#app')!.innerHTML=shell;

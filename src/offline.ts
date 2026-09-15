@@ -1,16 +1,11 @@
-/** Start with the cover; never delay entry or request persistent-storage permission. */
+/** Cache visited assets on demand; do not compete with the selected car or a race. */
 export function startOfflineCache(){
  if(!('serviceWorker' in navigator)||!import.meta.env.PROD)return;
- let registration:ServiceWorkerRegistration|undefined;
- const save=(worker:ServiceWorker|null|undefined)=>worker?.postMessage({type:'CACHE_GAME',background:true});
- const resume=()=>{save(navigator.serviceWorker.controller||registration?.active);save(registration?.waiting);};
- navigator.serviceWorker.addEventListener('controllerchange',resume);
- window.addEventListener('online',resume);
- void navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'}).then(async reg=>{
-  registration=reg;
-  // Prepare an installed update too, without interrupting the current game.
-  const watch=()=>{const worker=reg.installing;if(worker)worker.addEventListener('statechange',()=>{if(worker.state==='installed')save(worker);});};
-  reg.addEventListener('updatefound',watch);watch();
-  const ready=await navigator.serviceWorker.ready;save(ready.active);save(reg.waiting);
+ // Stop a full-pack download left by an older page. Fetches still use the
+ // worker's content-verified cache, including on browsers without saveData.
+ const stop=()=>navigator.serviceWorker.controller?.postMessage({type:'CACHE_STOP'});
+ stop();navigator.serviceWorker.addEventListener('controllerchange',stop);
+ void navigator.serviceWorker.register('/sw.js',{updateViaCache:'none'}).then(reg=>{
+  reg.waiting?.postMessage({type:'CACHE_STOP'});
  }).catch(()=>{/* A later visit can retry; the game continues normally. */});
 }

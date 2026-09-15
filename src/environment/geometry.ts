@@ -18,7 +18,17 @@ export class Architecture {
  sphere(mat:T.Material,x:number,y:number,z:number,r:number,sy=1){this.put(this.shape('sphere',()=>new T.SphereGeometry(1,24,16)),mat,x,y,z,r,r*sy,r);}
  beam(mat:T.Material,a:T.Vector3,b:T.Vector3,r:number){const v=b.clone().sub(a),p=a.clone().add(b).multiplyScalar(.5);this.put(this.shape('beam',()=>new T.CylinderGeometry(1,1,1,6)),mat,p.x,p.y,p.z,r,v.length(),r,new T.Quaternion().setFromUnitVectors(new T.Vector3(0,1,0),v.normalize()));}
  plane(mat:T.Material,x:number,y:number,z:number,w:number,h:number,rotation=0){this.put(this.shape('plane',()=>new T.PlaneGeometry(1,1)),mat,x,y,z,w,h,1,new T.Quaternion().setFromAxisAngle(new T.Vector3(1,0,0),rotation),false);}
- finish(){let count=0;for(const bin of this.bins.values()){
-   const mesh=new T.InstancedMesh(bin.geometry,bin.material,bin.matrices.length);bin.matrices.forEach((m,i)=>mesh.setMatrixAt(i,m));mesh.instanceMatrix.needsUpdate=true;mesh.castShadow=bin.shadow;mesh.receiveShadow=true;mesh.computeBoundingSphere();this.root.add(mesh);this.resources.push(mesh);count+=bin.matrices.length;
-  }return{instances:count,batches:this.bins.size};}
+ finish(){let count=0,batches=0;for(const bin of this.bins.values()){
+   const round=bin.geometry.type==='SphereGeometry';
+   const cells=new Map<string,T.Matrix4[]>();
+   // Large landmark spheres may have closely overlaid ornament. Preserve their
+   // exact tessellation so changing detail cannot expose gaps or z-fighting.
+   for(const matrix of bin.matrices){const key=round&&matrix.getMaxScaleOnAxis()<=10?Math.floor(matrix.elements[12]/240)+':'+Math.floor(matrix.elements[14]/240):'full';const cell=cells.get(key)||[];cell.push(matrix);cells.set(key,cell);}
+   const levels=round?[bin.geometry,this.shape('sphere-medium',()=>new T.SphereGeometry(1,16,10)),this.shape('sphere-far',()=>new T.SphereGeometry(1,8,6))]:null;
+   for(const [key,matrices] of cells){
+    const mesh=new T.InstancedMesh(bin.geometry,bin.material,matrices.length);matrices.forEach((m,i)=>mesh.setMatrixAt(i,m));mesh.instanceMatrix.needsUpdate=true;mesh.castShadow=bin.shadow;mesh.receiveShadow=true;mesh.computeBoundingSphere();
+    if(levels&&key!=='full')mesh.userData.environmentLods=levels;
+    this.root.add(mesh);this.resources.push(mesh);count+=matrices.length;batches++;
+   }
+  }return{instances:count,batches};}
 }
