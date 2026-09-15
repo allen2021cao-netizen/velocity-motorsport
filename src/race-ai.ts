@@ -12,7 +12,7 @@ export function aiLimits(car:OpponentCar,setup:Setup,difficulty:number,wet=0,dri
  return{top:car.top/3.6*(1-setup.downforce*.035),grip:g,braking:g*d.braking*(car.braking??1)*(setup.assist==='off'?.79:1)*(1-Math.abs(setup.balance-55)*.004),throttle:d.throttle,pace:d.pace};
 }
 /** Road curvature contract is the angle over fourteen samples. */
-export function roadCurvature(curvature:number[],segment:number,index:number){return Math.abs(curvature[((index%curvature.length)+curvature.length)%curvature.length]||0)/(14*segment);}
+export function roadCurvature(curvature:number[] & {open?:boolean},segment:number,index:number){const i=curvature.open?Math.max(0,Math.min(curvature.length-1,index)):((index%curvature.length)+curvature.length)%curvature.length;return Math.abs(curvature[i]||0)/(14*segment);}
 /** Backward braking envelope includes simultaneous lateral load, not a fixed speed multiplier on straights. */
 export function aiTargetSpeed(curvature:number[],segment:number,index:number,car:OpponentCar,setup:Setup,difficulty:number,wet=0,driver?:Dynamics){
  const l=aiLimits(car,setup,difficulty,wet,driver);

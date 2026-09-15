@@ -1,6 +1,12 @@
-export type CityKey='tokyo'|'shanghai'|'hongkong'|'newyork'|'london'|'paris'|'dubai'|'vegas'|'miami'|'la'|'monaco'|'alps';
+export type CityKey='suzuka'|'fuji'|'bathurst'|'phillip'|'redbull'|'arosa'|'tokyo'|'shanghai'|'hongkong'|'newyork'|'london'|'paris'|'dubai'|'vegas'|'miami'|'la'|'monaco'|'alps';
 export interface CityProfile{label:string;style:'glass'|'stone'|'brick'|'deco'|'alpine';sky:'day'|'sunset'|'night'|'overcast';palette:number[];window:number;accent:number;height:[number,number];water:boolean;landmark:string;shops:string[];fog:number;rotation:number;}
 export const CITY_PROFILES:Record<CityKey,CityProfile>={
+ bathurst:{label:'澳大利亚 · 巴瑟斯特',style:'alpine',sky:'day',palette:[0x9b9265],window:0x769ca8,accent:0xd54c36,height:[4,12],water:false,landmark:'全景山 · 桉树林与金色原野',shops:['BATHURST'],fog:0xc5d6e1,rotation:1.5},
+ phillip:{label:'澳大利亚 · 菲利普岛',style:'alpine',sky:'day',palette:[0x829b66],window:0x769ca8,accent:0x3b9aba,height:[4,12],water:true,landmark:'巴斯海峡 · 草坡与海岸',shops:['PHILLIP ISLAND'],fog:0xc5d6e1,rotation:2.4},
+ redbull:{label:'奥地利 · 红牛环',style:'alpine',sky:'day',palette:[0x798462],window:0x88a8b7,accent:0xc84437,height:[5,12],water:false,landmark:'绿色山坡 · 起伏赛车场',shops:['SPIELBERG'],fog:0xc5d6e1,rotation:2.1},
+ suzuka:{label:'日本 · 铃鹿',style:'alpine',sky:'day',palette:[0x798462],window:0x88a8b7,accent:0xc84437,height:[5,12],water:false,landmark:'八字立交 · 铃鹿',shops:['SUZUKA'],fog:0xc5d6e1,rotation:2.1},
+ fuji:{label:'日本 · 富士',style:'alpine',sky:'day',palette:[0x798462],window:0x88a8b7,accent:0xc84437,height:[5,12],water:false,landmark:'富士山 · 雪冠与森林',shops:['FUJI'],fog:0xc5d6e1,rotation:2.1},
+ arosa:{label:'瑞士 · 阿罗萨',style:'alpine',sky:'day',palette:[0x715b43],window:0x88a8b7,accent:0xc84437,height:[5,12],water:false,landmark:'朗维斯 → 阿罗萨 · 山林与雪峰',shops:['AROSA'],fog:0xc5d6e1,rotation:2.1},
  tokyo:{label:'东京 · 湾岸',style:'glass',sky:'night',palette:[0x77858e,0xb0aaa0,0x596970],window:0xb7d5e3,accent:0xee552a,height:[18,62],water:true,landmark:'东京塔 · 桁架与双层展望台',shops:['湾岸食堂','東京珈琲','ホテル 港','地下鉄'],fog:0x273748,rotation:1.2},
  shanghai:{label:'上海 · 外滩',style:'stone',sky:'sunset',palette:[0xb9ad96,0xc6baa4,0x8f938a],window:0x4d6570,accent:0xdbb273,height:[16,34],water:true,landmark:'东方明珠 · 陆家嘴三塔',shops:['外滩咖啡','江畔书局','和平艺术','滨江步道'],fog:0x96999c,rotation:2.6},
  hongkong:{label:'香港 · 维港',style:'glass',sky:'night',palette:[0xa5aca5,0x68787b,0x85979b],window:0xb8cfbf,accent:0x59d4e6,height:[30,85],water:true,landmark:'中银大厦 · 三角立面与双天线',shops:['茶餐廳','海景酒店','港島冰室','中環藥房'],fog:0x26384a,rotation:.5},

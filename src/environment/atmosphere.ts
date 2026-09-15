@@ -3,9 +3,12 @@ import {RGBELoader} from 'three/addons/loaders/RGBELoader.js';
 import type {CityProfile} from './profiles';
 export class Atmosphere {
  private cache=new Map<string,Promise<{sky:T.DataTexture;environment:T.Texture}>>();private version=0;private current='';
+ private activeLoad:Promise<void>=Promise.resolve();
  status='loading';
  constructor(private renderer:T.WebGLRenderer,private scene:T.Scene,private sun:T.DirectionalLight,private ambient:T.AmbientLight,private hemi:T.HemisphereLight){}
- async set(profile:CityProfile,raining:boolean){
+ set(profile:CityProfile,raining:boolean){this.activeLoad=this.load(profile,raining);return this.activeLoad;}
+ ready(){return this.activeLoad;}
+ private async load(profile:CityProfile,raining:boolean){
   const version=++this.version;const night=profile.sky==='night';const key=raining?'overcast':night?'sunset':profile.sky;this.current=key;this.status='loading';
   this.scene.background=new T.Color(night?0x17263b:profile.fog);this.scene.fog=new T.Fog(profile.fog,night?220:320,night?1450:1850);
   this.ambient.color.set(night?0x829abc:0xcbd9e1);this.ambient.intensity=night?.5:.28;

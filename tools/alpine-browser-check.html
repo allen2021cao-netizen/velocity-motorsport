@@ -1,0 +1,10 @@
+<!doctype html><meta charset="utf-8"><title>Alpine race acceptance</title>
+<style>body{background:#122027;color:#d5edd2;font:16px system-ui}iframe{width:100%;height:580px;border:0}button{padding:12px}pre{white-space:pre-wrap}</style>
+<h1>新增赛道 · 驾驶验收</h1><button id="red">红牛环 · 发车与前进</button> <button id="arosa">阿罗萨 · 发车与前进</button> <button id="finish">验证阿罗萨终点</button><button id="sweepRed">红牛环全线贴地检查</button> <button id="sweepArosa">阿罗萨全线贴地检查</button><button id="viewMid">中段山景</button><button id="viewHigh">高处山景</button><pre id="report">选择测试项目</pre><iframe src="/"></iframe>
+<script type="module">
+const frame=document.querySelector('iframe'),report=document.querySelector('#report');
+async function run(key){report.textContent='准备中…';try{const result=await frame.contentWindow.__velocity.alpineAcceptance(key);report.textContent=JSON.stringify(result,null,2);}catch(e){report.textContent='FAIL '+e.stack;}}
+document.querySelector('#red').onclick=()=>run('redbull');document.querySelector('#arosa').onclick=()=>run('arosa');document.querySelector('#finish').onclick=()=>run('finish');
+for(const [id,key]of [['sweepRed','redbull'],['sweepArosa','arosa']])document.getElementById(id).onclick=async()=>{report.textContent='全线检查中…';try{report.textContent=JSON.stringify(await frame.contentWindow.__velocity.groundingSweep(key),null,2);}catch(e){report.textContent='FAIL '+e.message;}};
+for(const [id,u]of [['viewMid',.42],['viewHigh',.83]])document.getElementById(id).onclick=()=>{report.textContent=JSON.stringify(frame.contentWindow.__velocity.sceneryView(u),null,2);};
+</script>

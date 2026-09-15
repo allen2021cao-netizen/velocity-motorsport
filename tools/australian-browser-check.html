@@ -1,0 +1,7 @@
+<!doctype html><meta charset="utf-8"><title>澳洲赛道验收</title>
+<style>body{background:#132129;color:#e0ead7;font:15px system-ui}button{padding:12px;margin:4px}iframe{width:100%;height:620px;border:0}pre{white-space:pre-wrap}</style>
+<button data-track="bathurst">巴瑟斯特发车</button><button data-track="phillip">菲利普岛发车</button><button data-sweep="bathurst">巴瑟斯特全线贴地</button><button data-sweep="phillip">菲利普岛全线贴地</button><button data-view=".42">中段驾驶画面</button><button data-view=".7">后段驾驶画面</button><button data-edge="bathurst">巴瑟斯特防跌落</button><button data-edge="phillip">菲利普岛防跌落</button><pre id="report">选择检查项目</pre><iframe src="/"></iframe>
+<script type="module">
+const frame=document.querySelector('iframe'),report=document.querySelector('#report');
+for(const button of document.querySelectorAll('button'))button.onclick=async()=>{report.textContent='检查中…';try{const api=frame.contentWindow.__velocity;report.textContent=JSON.stringify(await(button.dataset.track?api.alpineAcceptance(button.dataset.track):button.dataset.sweep?api.groundingSweep(button.dataset.sweep):button.dataset.edge?api.groundingSweep(button.dataset.edge,true):api.sceneryView(Number(button.dataset.view))),null,2);}catch(e){report.textContent='FAIL '+e.stack;}};
+</script>

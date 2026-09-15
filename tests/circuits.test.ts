@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createTrackCurve,CIRCUITS,circuitCurvature} from '../src/circuits/circuit';
 import {TRACKS} from '../src/tracks.js';
 import {aiTargetSpeed} from '../src/race-ai';
-for(const track of TRACKS.filter(t=>CIRCUITS[t.theme]))test(track.theme+' route is closed, metre-scaled, drivable and brake-aware',()=>{
+for(const track of TRACKS.filter(t=>CIRCUITS[t.theme]&&!CIRCUITS[t.theme].mountain))test(track.theme+' route is closed, metre-scaled, drivable and brake-aware',()=>{
  const meta=CIRCUITS[track.theme],curve=createTrackCurve(track),n=1400,seg=curve.getLength()/n,ps=Array.from({length:n},(_,i)=>curve.getPointAt(i/n)),ts=ps.map((_,i)=>curve.getTangentAt(i/n));
  assert.ok(Math.abs(curve.getLength()-meta.length)<.1);assert.ok(curve.getPointAt(0).distanceTo(curve.getPointAt(1))<.0001);
  let minRadius=Infinity,gap=Infinity;for(let i=0;i<n;i++){assert.ok(ps[i].toArray().every(Number.isFinite));assert.ok(Math.abs(ps[i].distanceTo(ps[(i+1)%n])-seg)<seg*.1);minRadius=Math.min(minRadius,seg/Math.max(.000001,ts[i].angleTo(ts[(i+1)%n])));for(let j=i+1;j<n;j++)if(Math.min(j-i,n-j+i)*seg>65)gap=Math.min(gap,ps[i].distanceTo(ps[j]));}

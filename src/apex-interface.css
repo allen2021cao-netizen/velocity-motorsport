@@ -1,0 +1,29 @@
+/* Depth is confined to panel decoration; canvas and pointer geometry remain aligned. */
+#menu{background:transparent;}
+#title h1{color:#edf7ff;text-shadow:0 2px 0 #557181,0 5px 0 #203440,0 9px 18px #0009;letter-spacing:.15em}
+#title h1 span{color:#ffcf83;text-shadow:0 2px 0 #946d38,0 5px 0 #49341e,0 0 30px #ffbb5544}
+#title .sub{color:#8fb5c9;letter-spacing:.22em}#title .en{color:#79d8ed;letter-spacing:.22em}
+#menuPreview{border:1px solid #507483;border-top-color:#8bb5c4;border-radius:18px;box-shadow:inset 0 0 45px #18384655,inset 0 1px 0 #d9f5ff88,0 14px 0 -9px #071018,0 24px 45px #0008;isolation:isolate}
+#menuPreview::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:1;border-radius:inherit;background:linear-gradient(120deg,#b9edff16,transparent 28%,transparent 70%,#65ceef10);border-bottom:3px solid #66dcf155}
+#previewCaption{border-top:1px solid #6cb4cf55;background:linear-gradient(90deg,#07121cdd,#10233177);backdrop-filter:blur(10px)}
+#menuControls{background:linear-gradient(140deg,#1c303cde,#0a121deb);border:1px solid #426172;border-top-color:#7695a4;border-radius:16px;box-shadow:inset 0 1px 0 #c8efff28,0 13px 30px #0008}
+#menuTabs{gap:8px}#menuTabs button,#menuTabs [role=tab]{background:linear-gradient(#243a46,#14222e);border:1px solid #506773;box-shadow:inset 0 1px #bddeeb33,0 4px 0 #07111a;transition:border-color .2s,box-shadow .2s}
+#menuTabs [aria-selected=true],#menuTabs button.active{border-color:#72d6ef;color:#b5f5ff;box-shadow:inset 0 1px #d9fbff88,0 4px 0 #10323f,0 0 18px #48ceef25}
+#startBtn{background:linear-gradient(125deg,#ffe1a4,#edaa50);color:#22190e;border:1px solid #ffdfa6;box-shadow:inset 0 2px 0 #fff5d8,0 5px 0 #785328,0 10px 25px #dd94252e;border-radius:10px;letter-spacing:.08em}
+#startBtn:hover{filter:brightness(1.08)}#startBtn:active{box-shadow:inset 0 1px #fff5d8,0 2px 0 #785328;transform:translateY(2px)}
+.trackBtn{background:linear-gradient(145deg,#243542,#101b25);border-color:#405664;box-shadow:inset 0 1px #d5f6ff17,0 3px 8px #0004}.trackBtn.sel{border-color:#7ae7ff;box-shadow:inset 3px 0 #75dff5,0 0 18px #4dd4ef22}
+#performanceRadar{padding:14px 10px 10px;border:1px solid #3b5c6e;border-radius:14px;background:radial-gradient(ellipse at 50% 47%,#1d4c6277,transparent 65%),linear-gradient(155deg,#11232d,#08121c);box-shadow:inset 0 1px #95dcf733,0 6px 18px #0004}
+.radar-caption{letter-spacing:.12em;color:#a6e7f6}.radar-caption span{letter-spacing:0;color:#879da9}
+.radar-grid{stroke:#78b2cc;stroke-opacity:.28}.radar-platform{fill:#24465633;stroke:#477189;stroke-width:2}
+.radar-orbit{fill:none;stroke:#70cce0;stroke-opacity:.7;stroke-width:1;stroke-dasharray:18 9 3 9;animation:radarCircuit 18s linear infinite}
+#radarDepth{fill:#153343;stroke:#396d86;stroke-width:2}#radarShape{fill:url(#radarFill);stroke:#85edff;stroke-width:2;filter:url(#radarGlow)}
+.radar-node{fill:#fff2cc;stroke:#f5bf65;stroke-width:1.5;filter:url(#radarGlow)}
+#performanceRadar .radar-score{fill:#ffe0a1;font-size:16px;font-weight:750}#performanceRadar text{fill:#c6dce7}
+@keyframes radarCircuit{to{stroke-dashoffset:-156}}
+.cover-title h1{color:#edf7ff;text-shadow:0 3px #324c5d,0 8px 30px #000}.cover-title h1 span{color:#ffd28b}.cover-title small{color:#a9eaff}
+@media(prefers-reduced-motion:reduce){.radar-orbit{animation:none}#menuTabs button{transition:none}}
+@media(max-width:600px){#menuControls,#menuPreview{border-radius:11px}#performanceRadar{padding:10px 6px}#title .sub{letter-spacing:.1em}}
+
+#menu #carPanel,#menu #selPanel,#menu #setupPanel{background:linear-gradient(145deg,#1d303ad9,#0b1722e8);border-color:#49616e}
+
+@media(max-width:650px),(orientation:portrait){#menu #title .en{display:block;font-size:7px;letter-spacing:1px;max-width:210px}#menu #title .sub{letter-spacing:1px;font-size:8px}}

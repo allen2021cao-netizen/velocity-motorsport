@@ -15,9 +15,9 @@ async function obtain(e,background=false){
    const digest=async data=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',data)),v=>v.toString(16).padStart(2,'0')).join('');
    let hash=await digest(bytes);
    if(hash!==e.hash&&e.url.endsWith('.html')){
-    // The production proxy injects its analytics tag. Cache only the original
-    // build bytes, and still reject every other modification to the page.
-    const canonical=new TextDecoder().decode(bytes).replace(/<script type="module" src="https:\/\/static\.cloudflareinsights\.com\/beacon\.min\.js" data-cf-beacon='[^']*'><\/script>/g,'');
+    // Normalize only provider-injected scripts for the offline copy, then
+    // require the original build hash. Online navigations keep the live response.
+    const canonical=new TextDecoder().decode(bytes).replace(/<script type="module" src="https:\/\/static\.cloudflareinsights\.com\/beacon\.min\.js" data-cf-beacon='[^']*'><\/script>/g,'').replace(/<script>[\s\S]*?<\/script>/g,tag=>tag.includes('window.__CF$cv$params=')&&tag.includes('/cdn-cgi/challenge-platform/')?'':tag);
     const original=new TextEncoder().encode(canonical);
     if(await digest(original)===e.hash){bytes=original;hash=e.hash;}
    }

@@ -23,7 +23,7 @@ export function makeR34Cabin(body:T.Group,variant='r34'){
  const speed=dial(.083,320,'km/h'),rpm=dial(.083,10,'x1000 RPM'),fuel=dial(.05,100,'FUEL');
  for(const [d,x] of [[speed,-.26],[rpm,-.46],[fuel,-.095]] as const){d.group.position.set(x,.91,.368);cabin.add(d.group);}fuel.set(85);if(variant==='r8')for(const d of [speed,rpm,fuel])d.group.scale.x=-1;
  for(const x of [-.65,.12,.3,.63]){box(x,.79,.355,.13,.058,.027,trim,.006);for(let i=0;i<4;i++)box(x,.772+i*.011,.336,.11,.003,.003,metal,.001);}
- const cv=document.createElement('canvas');cv.width=512;cv.height=256;const ctx=cv.getContext('2d')!;const tex=new T.CanvasTexture(cv);tex.colorSpace=T.SRGBColorSpace;
+ const cv=document.createElement('canvas');cv.width=512;cv.height=256;const ctx=cv.getContext('2d')!;const tex=new T.CanvasTexture(cv);tex.colorSpace=T.SRGBColorSpace;tex.generateMipmaps=false;tex.minFilter=T.LinearFilter;
  const displayCase=box(.18,.97,.58,.31,.16,.10,trim,.018);if(variant==='r8')displayCase.visible=false;const screen=new T.Mesh(new T.PlaneGeometry(.278,.13),new T.MeshBasicMaterial({map:tex}));screen.rotation.y=Math.PI;screen.position.set(.18,.97,.526);cabin.add(screen);if(variant==='r8')screen.visible=false;
  box(.15,.625,.32,.22,.18,.06,trim);for(const x of [.075,.15,.225]){const knob=new T.Mesh(new T.CylinderGeometry(.02,.02,.015,24),metal);knob.rotation.x=Math.PI/2;knob.position.set(x,.615,.279);cabin.add(knob);}
  box(.05,.60,-.06,.018,.16,.018,metal);box(.05,.689,-.06,.05,.04,.05,trim);
@@ -31,7 +31,7 @@ export function makeR34Cabin(body:T.Group,variant='r34'){
  steering.add(new T.Mesh(new T.TorusGeometry(.17,.021,16,64),leather));
  for(const a of [Math.PI/2,-Math.PI/2,Math.PI]){const spoke=box(Math.sin(a)*.085,Math.cos(a)*.085,0,.052,.17,.027,trim,.01,steering);spoke.rotation.z=-a;}
  box(0,0,-.015,.145,.095,.06,leather,.025,steering);
- let last=-1;return {steering,update(kph:number,rev:number){speed.set(kph);rpm.set(rev);const bucket=Math.floor(kph/3);if(bucket===last)return;last=bucket;ctx.fillStyle='#0a1b23';ctx.fillRect(0,0,512,256);ctx.fillStyle='#9bc8ca';ctx.font='25px monospace';ctx.fillText('MULTI FUNCTION DISPLAY',18,34);ctx.font='19px monospace';ctx.fillText('BOOST   '+(Math.min(1.2,kph/160)).toFixed(2)+' bar',20,86);ctx.fillText('WATER   86 C',20,132);ctx.fillText('OIL     94 C',20,176);ctx.fillStyle='#77bfab';ctx.fillRect(24,203,Math.min(445,kph/320*445),14);tex.needsUpdate=true;}};
+ let last=-1,lastDraw=-Infinity;return {steering,update(kph:number,rev:number,displayVisible=true){speed.set(kph);rpm.set(rev);if(!displayVisible||variant==='r8')return;const now=performance.now(),bucket=Math.floor(kph/3);if(bucket===last||now-lastDraw<100)return;last=bucket;lastDraw=now;ctx.fillStyle='#0a1b23';ctx.fillRect(0,0,512,256);ctx.fillStyle='#9bc8ca';ctx.font='25px monospace';ctx.fillText('MULTI FUNCTION DISPLAY',18,34);ctx.font='19px monospace';ctx.fillText('BOOST   '+(Math.min(1.2,kph/160)).toFixed(2)+' bar',20,86);ctx.fillText('WATER   86 C',20,132);ctx.fillText('OIL     94 C',20,176);ctx.fillStyle='#77bfab';ctx.fillRect(24,203,Math.min(445,kph/320*445),14);tex.needsUpdate=true;}};
 }
 export function makeF40Instruments(body:T.Group){
  const group=new T.Group();group.name='original-f40-instruments';body.add(group);

@@ -1,6 +1,7 @@
 /** Equal-mass oriented boxes. Position correction never adds kinetic energy. */
-export type ContactBody={x:number;z:number;heading:number;vx:number;vz:number;length:number;width:number};
+export type ContactBody={y?:number;x:number;z:number;heading:number;vx:number;vz:number;length:number;width:number};
 export function overlap(a:ContactBody,b:ContactBody){
+ if(Math.abs((a.y??0)-(b.y??0))>2)return null;
  const axes=[a.heading,b.heading].flatMap(h=>[{x:Math.sin(h),z:Math.cos(h)},{x:Math.cos(h),z:-Math.sin(h)}]);
  let depth=Infinity,nx=0,nz=0;
  const radius=(c:ContactBody,n:{x:number;z:number})=>Math.abs(Math.sin(c.heading)*n.x+Math.cos(c.heading)*n.z)*c.length/2+Math.abs(Math.cos(c.heading)*n.x-Math.sin(c.heading)*n.z)*c.width/2;

@@ -17,3 +17,5 @@ const runtimeReady=import('./runtime.js').catch(error=>{
 });
 startSplash(runtimeReady);
 import './vehicle-radar.css';
+
+import './apex-interface.css';

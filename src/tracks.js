@@ -1,6 +1,12 @@
 import RATINGS from './track-ratings.json';
 import {CIRCUITS} from './circuits/circuit';
 const TRACKS = [
+ {city:'日本铃鹿',name:'铃鹿',en:'SUZUKA',time:'day',theme:'suzuka',base:900,modes:[]},
+ {city:'日本富士',name:'富士',en:'FUJI',time:'day',theme:'fuji',base:900,modes:[]},
+  {city:'巴瑟斯特',name:'全景山',en:'MOUNT PANORAMA',time:'day',theme:'bathurst',base:900,modes:[]},
+  {city:'菲利普岛',name:'菲利普岛',en:'PHILLIP ISLAND',time:'day',theme:'phillip',base:650,modes:[]},
+  { city:'奥地利',name:'红牛环',en:'RED BULL RING',time:'day',theme:'redbull',base:700,modes:[] },
+  { city:'瑞士',name:'阿罗萨山地赛',en:'AROSA CLASSICCAR',time:'day',theme:'arosa',base:1600,modes:[] },
   { city: '拉斯维加斯', name: '赌城大道', en: 'VEGAS STRIP', time: 'night', theme: 'vegas',
     base: 300, modes: [[1, 44, 6.1], [2, 22, 5.91]] },
   { city: '迪拜', name: '沙漠高速', en: 'DUBAI DESERT RUN', time: 'day', theme: 'dubai',
@@ -21,14 +27,21 @@ const TRACKS = [
     base: 245, modes: [[2, 70, .07], [4, 32, 6.2], [6, 18, 5.86]], precip: 'rain', sea: true },
   { city: '巴黎', name: '凯旋环线', en: 'PARIS TRIOMPHE', time: 'day', theme: 'paris',
     base: 220, modes: [[2, 43, 3.66], [5, 30, .55], [7, 12, 2.04]] },
-  { city: '阿尔卑斯', name: '雪山隘口', en: 'ALPINE PASS', time: 'day', theme: 'alps',
-    base: 230, modes: [[3, 81, .8], [5, 40, 4.08], [7, 13, 3.29]], precip: 'snow' },
   { city: '摩纳哥', name: '蒙特卡洛街道', en: 'MONACO MONTE CARLO', time: 'day', theme: 'monaco',
     base: 210, modes: [[4, 43, 2.66], [3, 36, 4.95], [6, 25, 1.17], [7, 17, 5.43]], sea: true },
 ];
+const TRACK_REGIONS=[
+ {name:'欧洲',themes:['redbull','arosa','monaco','london','paris']},
+ {name:'北美洲',themes:['vegas','miami','la','newyork']},
+ {name:'亚洲',themes:['shanghai','suzuka','fuji','tokyo','hongkong','dubai']},
+ {name:'澳洲',themes:['bathurst','phillip']},
+];
+const order=TRACK_REGIONS.flatMap(region=>region.themes);
+for(const track of TRACKS)track.region=TRACK_REGIONS.find(region=>region.themes.includes(track.theme)).name;
+TRACKS.sort((a,b)=>order.indexOf(a.theme)-order.indexOf(b.theme));
 for(const track of TRACKS){const circuit=CIRCUITS[track.theme];if(circuit){Object.assign(track,{name:circuit.name,en:circuit.en,circuit});if(track.theme==='shanghai')track.time='day';}}
-for(const track of TRACKS)Object.assign(track,{stars:RATINGS[track.theme].stars,difficulty:RATINGS[track.theme]});
+for(const track of TRACKS){const rating=RATINGS[track.theme]||{stars:3,reason:'评级中'};Object.assign(track,{stars:rating.stars,difficulty:rating});}
 const timeIcon = t => t === 'day' ? '☀' : t === 'dusk' ? '🌆' : '☾';
 
 
-export { TRACKS, timeIcon };
+export { TRACKS, TRACK_REGIONS, timeIcon };

@@ -14,18 +14,23 @@ export function setupGraphics(renderer:T.WebGLRenderer,scene:T.Scene,camera:T.Ca
  sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-32;sun.shadow.camera.right=32;sun.shadow.camera.top=32;sun.shadow.camera.bottom=-32;sun.shadow.camera.near=.1;sun.shadow.camera.far=200;sun.shadow.normalBias=.035;sun.shadow.bias=-.0001;scene.add(sun.target);
  const composer=new EffectComposer(renderer);composer.addPass(new RenderPass(scene,camera));
  const bloom=new UnrealBloomPass(new T.Vector2(innerWidth,innerHeight),.20,.45,1.15);composer.addPass(bloom);composer.addPass(new OutputPass());
- let quality='high';
+ let quality='high',lastShadowUpdate=-Infinity;
  const studioColor=new T.Color(0x1c232a),savedSunColor=new T.Color(),defaultOffset=new T.Vector3(-35,60,25);
  return {
   quality(q:string){
-   quality=q;renderer.shadowMap.enabled=q!=='low';
-   const size=q==='high'?2048:1024;
+   quality=q;renderer.shadowMap.enabled=true;renderer.shadowMap.autoUpdate=false;lastShadowUpdate=-Infinity;
+   // Keep the shader light/shadow layout stable during adaptive changes.
+   sun.shadow.intensity=q==='low'?.55:1;
+   const size=q==='high'?2048:q==='low'?512:1024;
    if(sun.shadow.mapSize.x!==size){sun.shadow.mapSize.set(size,size);sun.shadow.map?.dispose();sun.shadow.map=null;sun.shadow.needsUpdate=true;}
   },
+  async prepare(){await renderer.compileAsync(scene,camera);},
   resize(){composer.setPixelRatio(renderer.getPixelRatio());composer.setSize(innerWidth,innerHeight);},
   render(focus:T.Vector3,overview=false,studio=false,viewport?:DOMRect){
    const background=scene.background,environment=scene.environment,fog=scene.fog,intensity=scene.environmentIntensity,rotation=scene.environmentRotation.y,sunIntensity=sun.intensity;
    if(studio){savedSunColor.copy(sun.color);scene.background=studioColor;scene.environment=studioEnvironment;scene.environmentIntensity=1.25;scene.environmentRotation.y=0;scene.fog=null;sun.intensity=2.4;sun.color.set(0xfff5e9);}
+   const now=performance.now(),interval=quality==='high'||studio?0:quality==='low'?100:33;
+   renderer.shadowMap.needsUpdate=now-lastShadowUpdate>=interval;if(renderer.shadowMap.needsUpdate)lastShadowUpdate=now;
    renderer.info.reset();const extent=overview?460:32;
    sun.shadow.bias=overview?-.0007:-.0001;sun.shadow.normalBias=overview?.5:.035;
    if(sun.shadow.camera.right!==extent){sun.shadow.camera.left=-extent;sun.shadow.camera.right=extent;sun.shadow.camera.top=extent;sun.shadow.camera.bottom=-extent;sun.shadow.camera.far=overview?1600:200;sun.shadow.camera.updateProjectionMatrix();}

@@ -1,4 +1,69 @@
 {
+  "redbull": {
+    "stars": 2,
+    "score": 27,
+    "reason": "重刹频繁",
+    "length": 4318,
+    "metrics": {
+      "turningPerKm": 3.8673227181476655,
+      "tightFraction": 0.025,
+      "brakingPerKm": 224.9845407526975,
+      "halfWidth": 7.5,
+      "time": "day"
+    }
+  },
+  "arosa": {
+    "stars": 4,
+    "score": 69,
+    "reason": "窄路容错低 · 连续变向 · 重刹频繁",
+    "length": 7300,
+    "metrics": {
+      "turningPerKm": 11.736609434725414,
+      "tightFraction": 0.09714285714285714,
+      "brakingPerKm": 736.7343897525316,
+      "halfWidth": 4.5,
+      "time": "day"
+    }
+  },
+  "monaco": {
+    "stars": 5,
+    "score": 71,
+    "reason": "窄路容错低 · 连续变向 · 重刹频繁",
+    "length": 3337,
+    "metrics": {
+      "turningPerKm": 12.202262315865623,
+      "tightFraction": 0.11785714285714285,
+      "brakingPerKm": 1064.768779022949,
+      "halfWidth": 4.5,
+      "time": "day"
+    }
+  },
+  "london": {
+    "stars": 5,
+    "score": 85,
+    "reason": "窄路容错低 · 连续变向 · 急弯密集",
+    "length": 2090,
+    "metrics": {
+      "turningPerKm": 14.366654226421904,
+      "tightFraction": 0.18,
+      "brakingPerKm": 807.4572216053889,
+      "halfWidth": 4,
+      "time": "dusk"
+    }
+  },
+  "paris": {
+    "stars": 5,
+    "score": 70,
+    "reason": "窄路容错低 · 连续变向 · 急弯密集",
+    "length": 1930,
+    "metrics": {
+      "turningPerKm": 10.750463497059089,
+      "tightFraction": 0.15571428571428572,
+      "brakingPerKm": 634.9713005648167,
+      "halfWidth": 4.5,
+      "time": "day"
+    }
+  },
   "vegas": {
     "stars": 2,
     "score": 31,
@@ -10,19 +75,6 @@
       "brakingPerKm": 286.2726434346523,
       "halfWidth": 8,
       "time": "night"
-    }
-  },
-  "dubai": {
-    "stars": 3,
-    "score": 36,
-    "reason": "重刹频繁",
-    "length": 5390,
-    "metrics": {
-      "turningPerKm": 5.096281957203297,
-      "tightFraction": 0.05785714285714286,
-      "brakingPerKm": 532.3307241686992,
-      "halfWidth": 7,
-      "time": "day"
     }
   },
   "miami": {
@@ -38,20 +90,6 @@
       "time": "day"
     }
   },
-  "tokyo": {
-    "stars": 5,
-    "score": 87,
-    "reason": "雨天低抓地 · 窄路容错低 · 连续变向",
-    "length": 2585,
-    "metrics": {
-      "turningPerKm": 10.511482746179578,
-      "tightFraction": 0.1457142857142857,
-      "brakingPerKm": 624.549495552569,
-      "halfWidth": 4.5,
-      "precip": "rain",
-      "time": "night"
-    }
-  },
   "la": {
     "stars": 4,
     "score": 59,
@@ -62,19 +100,6 @@
       "tightFraction": 0.07214285714285715,
       "brakingPerKm": 662.5087098166538,
       "halfWidth": 5,
-      "time": "dusk"
-    }
-  },
-  "london": {
-    "stars": 5,
-    "score": 85,
-    "reason": "窄路容错低 · 连续变向 · 急弯密集",
-    "length": 2090,
-    "metrics": {
-      "turningPerKm": 14.366654226421904,
-      "tightFraction": 0.18,
-      "brakingPerKm": 807.4572216053889,
-      "halfWidth": 4,
       "time": "dusk"
     }
   },
@@ -104,6 +129,46 @@
       "time": "day"
     }
   },
+  "suzuka": {
+    "stars": 3,
+    "score": 38,
+    "reason": "重刹频繁",
+    "length": 5807,
+    "metrics": {
+      "turningPerKm": 5.1088435004082555,
+      "tightFraction": 0.024285714285714285,
+      "brakingPerKm": 218.52859005016222,
+      "halfWidth": 6,
+      "time": "day"
+    }
+  },
+  "fuji": {
+    "stars": 2,
+    "score": 25,
+    "reason": "重刹频繁",
+    "length": 4563,
+    "metrics": {
+      "turningPerKm": 5.218303723796325,
+      "tightFraction": 0.03,
+      "brakingPerKm": 148.98865976827392,
+      "halfWidth": 7.5,
+      "time": "day"
+    }
+  },
+  "tokyo": {
+    "stars": 5,
+    "score": 87,
+    "reason": "雨天低抓地 · 窄路容错低 · 连续变向",
+    "length": 2585,
+    "metrics": {
+      "turningPerKm": 10.511482746179578,
+      "tightFraction": 0.1457142857142857,
+      "brakingPerKm": 624.549495552569,
+      "halfWidth": 4.5,
+      "precip": "rain",
+      "time": "night"
+    }
+  },
   "hongkong": {
     "stars": 5,
     "score": 92,
@@ -118,43 +183,42 @@
       "time": "night"
     }
   },
-  "paris": {
-    "stars": 5,
-    "score": 70,
-    "reason": "窄路容错低 · 连续变向 · 急弯密集",
-    "length": 1930,
+  "dubai": {
+    "stars": 3,
+    "score": 36,
+    "reason": "重刹频繁",
+    "length": 5390,
     "metrics": {
-      "turningPerKm": 10.750463497059089,
-      "tightFraction": 0.15571428571428572,
-      "brakingPerKm": 634.9713005648167,
+      "turningPerKm": 5.096281957203297,
+      "tightFraction": 0.05785714285714286,
+      "brakingPerKm": 532.3307241686992,
+      "halfWidth": 7,
+      "time": "day"
+    }
+  },
+  "bathurst": {
+    "stars": 3,
+    "score": 46,
+    "reason": "窄路容错低 · 重刹频繁",
+    "length": 6213,
+    "metrics": {
+      "turningPerKm": 3.9882701493398582,
+      "tightFraction": 0.025,
+      "brakingPerKm": 225.5268639525271,
       "halfWidth": 4.5,
       "time": "day"
     }
   },
-  "alps": {
-    "stars": 4,
-    "score": 56,
-    "reason": "积雪低抓地 · 连续变向 · 重刹频繁",
-    "length": 1956,
+  "phillip": {
+    "stars": 2,
+    "score": 34,
+    "reason": "重刹频繁",
+    "length": 4445,
     "metrics": {
-      "turningPerKm": 9.619694269626297,
-      "tightFraction": 0.04285714285714286,
-      "brakingPerKm": 507.72253730355146,
-      "halfWidth": 8,
-      "precip": "snow",
-      "time": "day"
-    }
-  },
-  "monaco": {
-    "stars": 5,
-    "score": 71,
-    "reason": "窄路容错低 · 连续变向 · 重刹频繁",
-    "length": 3337,
-    "metrics": {
-      "turningPerKm": 12.202262315865623,
-      "tightFraction": 0.11785714285714285,
-      "brakingPerKm": 1064.768779022949,
-      "halfWidth": 4.5,
+      "turningPerKm": 4.911801324029062,
+      "tightFraction": 0.0007142857142857143,
+      "brakingPerKm": 181.28244706546735,
+      "halfWidth": 6,
       "time": "day"
     }
   }
