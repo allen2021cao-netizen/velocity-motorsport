@@ -1,14 +1,15 @@
+import type {VehiclePerformance} from './vehicle-performance';
 import {clamp,gripFor,stepVehicle,type Dynamics,type Setup} from './physics';
 export const DIFFICULTIES=[
  {name:'休闲',en:'CLUB',pace:.72,throttle:.76,braking:.72,mistake:.035,weave:.3,description:'提前制动、温和出弯，适合熟悉路线。'},
  {name:'竞技',en:'SPORT',pace:.94,throttle:1,braking:.91,mistake:.009,weave:.08,description:'充分利用直道，主动超车，稳定控制制动点与出弯。'},
  {name:'专家',en:'EXPERT',pace:.992,throttle:1,braking:.98,mistake:.0005,weave:.025,description:'强车阵容，精确制动与连续进攻，失误极少。'},
 ] as const;
-export type OpponentCar={top:number;accel:number;handling:number;wheelbase?:number};
+export type OpponentCar=VehiclePerformance;
 export function freshDriver():Dynamics{return {speed:0,heading:0,steer:0,drift:0,fuel:100,wear:0,temperature:75,longG:0,latG:0,traction:false,abs:false};}
 export function aiLimits(car:OpponentCar,setup:Setup,difficulty:number,wet=0,driver?:Dynamics){
  const d=DIFFICULTIES[difficulty],grip=gripFor(setup,driver?.wear??0,driver?.temperature??75,wet),g=9.81*grip*(.85+car.handling*.18);
- return{top:car.top/3.6*(1-setup.downforce*.035),grip:g,braking:g*d.braking*(setup.assist==='off'?.79:1)*(1-Math.abs(setup.balance-55)*.004),throttle:d.throttle,pace:d.pace};
+ return{top:car.top/3.6*(1-setup.downforce*.035),grip:g,braking:g*d.braking*(car.braking??1)*(setup.assist==='off'?.79:1)*(1-Math.abs(setup.balance-55)*.004),throttle:d.throttle,pace:d.pace};
 }
 /** Road curvature contract is the angle over fourteen samples. */
 export function roadCurvature(curvature:number[],segment:number,index:number){return Math.abs(curvature[((index%curvature.length)+curvature.length)%curvature.length]||0)/(14*segment);}
@@ -65,7 +66,7 @@ export function trafficPlan(self:TrafficCar,others:TrafficCar[],length:number,ha
 
 /** Sport matches the selected class; Expert fields the strongest available real cars. */
 export function matchedOpponents(cars:OpponentCar[],selected:number,difficulty:number){
- const performance=(c:OpponentCar)=>c.top/300*.45+c.accel*.35+c.handling*.2;
+ const performance=(c:OpponentCar)=>c.top/300*.36+c.accel*.28+c.handling*.16+(c.braking??1)*.08+(c.agility??1)*.06+(c.stability??1)*.06;
  if(difficulty===2)return cars.map((_,i)=>i).filter(i=>i!==selected).sort((a,b)=>performance(cars[b])-performance(cars[a])).slice(0,3);
  const reference=performance(cars[selected]);
  const score=(i:number)=>Math.abs(performance(cars[i])-reference)+Math.max(0,reference-performance(cars[i]))*(difficulty===2?2:1);

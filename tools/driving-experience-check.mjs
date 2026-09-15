@@ -21,8 +21,8 @@ try{
  if(!process.env.TOUCH_ONLY){const page=await pageFor(false);
  await page.click('#navCar');await page.click('#nextCar');assert.equal((await snapshot(page)).quality,'low');
  await page.reload();await page.waitForFunction(()=>window.__velocity,null,{timeout:90000});
- assert.equal((await snapshot(page)).quality,'low','quality survives reload');
- await start(page);await page.waitForFunction(()=>!document.querySelector('#drivingCue').hidden);
+ assert.equal((await snapshot(page)).quality,'high','garage starts at highest quality');
+ await start(page);assert.equal((await snapshot(page)).quality,'balanced','race starts at balanced quality');await page.waitForFunction(()=>!document.querySelector('#drivingCue').hidden);
  const initial=await snapshot(page);await page.keyboard.down('KeyW');
  await page.waitForFunction(()=>window.__velocity.snapshot().speed>12,null,{timeout:30000});
  await page.keyboard.down('KeyA');await page.waitForTimeout(500);await page.keyboard.up('KeyA');
@@ -39,7 +39,7 @@ try{
  await page.keyboard.up('KeyW');await page.screenshot({path:folder+'/desktop.png'});
  await page.keyboard.press('Escape');await page.click('#quitBtn');await page.click('#navSetup');await page.locator('#line').uncheck();
  await start(page);assert.ok(await page.locator('#drivingCue').isHidden());
- report.keyboard={steering:true,brake:true,reset:true,cameras:true,pause:true,qualityPersistence:true,cueToggle:true};
+ report.keyboard={steering:true,brake:true,reset:true,cameras:true,pause:true,qualityByScene:true,cueToggle:true};
  await page.keyboard.press('Escape');await page.click('#quitBtn');await page.click('#navSetup');await page.selectOption('#mode','race');await start(page);
  if(await page.evaluate(()=>typeof window.__raceFinishTest==='function')){
   await page.evaluate(()=>window.__raceFinishTest());await page.waitForTimeout(600);

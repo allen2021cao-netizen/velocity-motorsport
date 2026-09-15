@@ -1,0 +1,12 @@
+import {chromium} from '@playwright/test';import fs from 'node:fs';import assert from 'node:assert/strict';
+const browser=await chromium.launch({headless:true,channel:'msedge'}),errors=[];fs.mkdirSync('artifacts/performance-rating',{recursive:true});
+try{for(const [name,viewport] of [['desktop',{width:1440,height:900}],['phone',{width:844,height:390}],['portrait',{width:390,height:844}]]){
+ const page=await browser.newPage({viewport,hasTouch:name!=='desktop',isMobile:name!=='desktop'});page.on('pageerror',e=>errors.push(e.message));await page.goto('http://127.0.0.1:5173/');await page.waitForFunction(()=>window.__velocity,null,{timeout:90000});await page.locator('#launchCover').waitFor({state:'detached',timeout:90000});const rotate=page.locator('#rotateHint button');if(await rotate.isVisible())await rotate.click();
+ assert.equal(await page.locator('#radarShape').count(),1);assert.equal(await page.locator('#performanceRadar .radar-score').count(),6);assert.equal((await page.evaluate(()=>window.__velocity.snapshot())).quality,'high');
+ const expected=(await page.evaluate(()=>window.__velocity.snapshot())).performance;assert.deepEqual(await page.locator('.radar-score').allTextContents(),expected.map(String));
+ if(name==='desktop'){const scores=new Set();for(let i=0;i<13;i++){scores.add((await page.locator('.radar-score').allTextContents()).join(','));await page.click('#nextCar');}assert.equal(scores.size,13);}
+ await page.waitForFunction(()=>window.__velocity.snapshot().assetStatus==='ready',null,{timeout:90000});await page.screenshot({path:'artifacts/performance-rating/'+name+'.png'});const radar=await page.locator('#performanceRadar svg').boundingBox();assert.ok(radar.width<=viewport.width);
+ if(name==='desktop'){await page.click('#navTrack');assert.equal(await page.locator('.trackBtn').count(),12);assert.equal(await page.getByText(/原生天气难度/).count(),12);await page.screenshot({path:'artifacts/performance-rating/tracks.png'});await page.click('#navSetup');await page.selectOption('#mode','time');await page.click('#startBtn');await page.waitForFunction(()=>window.__velocity.snapshot().state==='race',null,{timeout:90000});assert.equal((await page.evaluate(()=>window.__velocity.snapshot())).quality,'balanced');await page.keyboard.press('Escape');await page.click('#quitBtn');assert.equal((await page.evaluate(()=>window.__velocity.snapshot())).quality,'high');}
+ await page.close();console.log(name+' radar and quality checks passed');}
+ assert.deepEqual(errors,[]);
+}finally{await browser.close();}

@@ -1,3 +1,4 @@
+import {VEHICLE_TRAITS} from './vehicle-performance';
 const CARS = [
   { nameCn: '保时捷 911 Carrera 4S', nameEn: 'PORSCHE 911 CARRERA 4S', type: 'p911',
     color: 0xd9d100, glow: 0xffaa00, top: 296, accel: .84, handling: .90, nos: .78,
@@ -49,4 +50,5 @@ const CARS = [
 
 
 CARS.push({nameCn:'法拉利 458 Italia',nameEn:'FERRARI 458 ITALIA',type:'458',color:0xb31321,glow:0xff3c30,top:325,accel:.88,handling:.93,nos:0,paceFac:1.04,desc:'中置 V8 · 多层车漆、完整座舱与独立轮组。进入驾驶席，感受每一道弯。'});
+CARS.forEach(car=>Object.assign(car,VEHICLE_TRAITS[car.type]));
 export { CARS };

@@ -1,3 +1,5 @@
+import {recoveryRate,performanceScores} from './vehicle-performance';
+import {updatePerformanceRadar} from './vehicle-radar';
 import {surfaceFeedback,gripFeedback} from './driving-feedback';
 import {resolveContacts} from './race-contact';
 import {freshTactics,tacticalPlan,PERSONALITIES} from './race-tactics';
@@ -918,7 +920,7 @@ TRACKS.forEach((t, i) => {
   b.setAttribute('role','button');b.tabIndex=0;b.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();b.click();}};
   b.className = 'trackBtn' + (i === trackSel ? ' sel' : '');
   const km = (approxLen(t) / 1000).toFixed(t.circuit?3:1);
-  b.innerHTML = '<canvas class="tshape" width="38" height="38"></canvas><span><div class="tn">' + timeIcon(t.time) + ' ' + t.city + ' · ' + t.name + '</div><div class="ts">' + '★★★★★'.slice(0, t.stars) + '☆☆☆☆☆'.slice(0, 5 - t.stars) + '</div><div class="tc">' + km + 'KM · ' + (t.circuit?t.circuit.turns+' 弯 · ':'') + (t.time === 'day' ? '白天' : t.time === 'dusk' ? '黄昏' : '夜晚') + '</div>' + (t.circuit?'<div class="tc">'+t.circuit.description+'</div>':'') + '</span>';
+  b.innerHTML = '<canvas class="tshape" width="38" height="38"></canvas><span><div class="tn">' + timeIcon(t.time) + ' ' + t.city + ' · ' + t.name + '</div><div class="ts">' + '★★★★★'.slice(0, t.stars) + '☆☆☆☆☆'.slice(0, 5 - t.stars) + '</div><div class="tc">' + km + 'KM · ' + (t.circuit?t.circuit.turns+' 弯 · ':'') + (t.time === 'day' ? '白天' : t.time === 'dusk' ? '黄昏' : '夜晚') + '</div>' + (t.circuit?'<div class="tc">'+t.circuit.description+'</div>':'')+'<div class="tc">原生天气难度 · '+t.difficulty.reason+'</div>' + '</span>';
   b.onclick = () => {
     initAudio(); if (trackSel === i) return;
     trackSel = i;
@@ -959,13 +961,12 @@ function updateMenuCar() {
   document.getElementById('carName').textContent = cfg.nameCn;
   document.getElementById('carNameEn').textContent = cfg.nameEn;
   document.getElementById('carDesc').textContent = selectedCar.assetStatus==='loading'?'正在载入精细车模… 载入后可直接鉴赏与驾驶。':selectedCar.assetStatus==='fallback'?'精细模型暂未载入，当前显示简化后备车型。':cfg.desc;
-  const st = [(cfg.top - 240) / 100, cfg.accel, cfg.handling, cfg.nos];
-  st.forEach((v, i) => document.getElementById('st' + i).style.width = clamp(v * 100, 8, 100) + '%');
+  updatePerformanceRadar(cfg);
 }
 function toMenu() {
   if(cityShowcase)buildWorld(trackSel);
   
-  state = 'menu';
+  state = 'menu';setQuality('high');
   showroom.visible=true;if(worldGroup)worldGroup.visible=true;document.getElementById('vehicleOverlay')?.classList.add('hidden');
   document.getElementById('tourOverlay')?.classList.add('hidden');
   document.getElementById('menu').classList.remove('hidden');
@@ -1009,7 +1010,7 @@ async function startRace() {
   document.getElementById('pitButton').style.display=options.mode==='endurance'?'block':'none';
   const nightish = T.time !== 'day';
   worldGroup.visible=true;showroom.visible=false;document.getElementById('vehicleOverlay')?.classList.add('hidden');document.getElementById('tourOverlay')?.classList.add('hidden');
-  state = 'countdown'; countdownT = 3.8; raceTime = 0; paused = false;
+  state = 'countdown';setQuality('balanced'); countdownT = 3.8; raceTime = 0; paused = false;
   checkpointTiming=new CheckpointTiming(trackLen);
   document.getElementById('menu').classList.add('hidden');
   document.getElementById('hud').style.display = 'block';
@@ -1189,7 +1190,7 @@ function updatePlayer(dt) {
   }
   player.trackIdx = bi;
   player.pos.x+=(player.contactX||0)*dt;player.pos.z+=(player.contactZ||0)*dt;
-  player.contactX=(player.contactX||0)*Math.exp(-4*dt);player.contactZ=(player.contactZ||0)*Math.exp(-4*dt);
+  player.contactX=(player.contactX||0)*Math.exp(-recoveryRate(player.cfg)*dt);player.contactZ=(player.contactZ||0)*Math.exp(-recoveryRate(player.cfg)*dt);
   const n = sNrm[bi], cp = sPts[bi];
   const lat = (player.pos.x - cp.x) * n.x + (player.pos.z - cp.z) * n.z;
   player.latOnTrack = lat;
@@ -1299,13 +1300,13 @@ function updateAI(dt) {
     const p0 = sPts[i0], p1 = sPts[i1], n0 = sNrm[i0], n1 = sNrm[i1];
     a.laneVelocity=(state==='race'||state==='finishing')?(avoid.lat-a.lat)/dt:0;
     a.lat = (state==='race'||state==='finishing')?avoid.lat:a.lat;
-    a.lat+=(a.lateralVelocity||0)*dt;a.lateralVelocity*=Math.exp(-4*dt);
+    a.lat+=(a.lateralVelocity||0)*dt;a.lateralVelocity*=Math.exp(-recoveryRate(a.car.cfg)*dt);
     const over=Math.abs(a.lat)-(ROAD_W-1.05);
     if(over>0){
       if(TRACKS[trackSel].circuit){a.speed*=Math.exp(-dt*Math.min(1.8,over*.28));if(over>5)a.lat-=Math.sign(a.lat)*(over-5)*(1-Math.exp(-dt*6));}
       else{a.lat=Math.sign(a.lat)*(ROAD_W-1.05);a.speed*=1-clamp(.10+over*.1,0,.3)*dt*32;a.lateralVelocity=0;}
     }
-    a.contactYaw*=Math.exp(-3*dt);
+    a.contactYaw*=Math.exp(-3*(a.car.cfg.stability??1)*dt);
     a.car.group.position.set(
       lerp(p0.x, p1.x, fr) + lerp(n0.x, n1.x, fr) * a.lat, 0,
       lerp(p0.z, p1.z, fr) + lerp(n0.z, n1.z, fr) * a.lat);
@@ -1809,7 +1810,7 @@ addEventListener('blur',()=>{clearInput();if((state==='race'||state==='countdown
 document.addEventListener('visibilitychange',()=>{if(document.hidden){clearInput();if((state==='race'||state==='countdown')&&!paused)togglePause();}});
 document.querySelector('#title .sub').textContent='13 CARS  /  12 CITIES  /  ONE PASSION';
 document.querySelector('#title .en').textContent='MOTORSPORT · 精于每一道弯';
-document.querySelectorAll('.statRow')[3].style.display='none';
+
 document.getElementById('btnNos').style.display='none';document.getElementById('nosBar').style.display='none';
 document.querySelector('#mirror').textContent='COCKPIT VIEW';
 const difficultyNote=document.createElement('p');difficultyNote.id='difficultyNote';difficultyNote.textContent=DIFFS[diffSel].description+' 对手含保守 / 稳定 / 进攻型，无追赶加速。';diffRow.after(difficultyNote);
@@ -1841,7 +1842,7 @@ window.addEventListener('vehicle-model-ready',event=>{if(event.detail!==CARS[sel
 
 buildWorld(trackSel);menuUI.select('car');toMenu();loop();
 // Read-only diagnostics for performance and smoke testing.
-window.__velocity={snapshot:()=>({state,paused,raceTime,playerFinish:player.finishTime,finishTimes:ais.map(a=>a.finishTime),track:TRACKS[trackSel].theme,trackLength:trackLen,roadWidth:ROAD_W*2,car:CARS[selected].type,speed:player.speed,heading:player.heading,position:player.pos.toArray(),lap:player.lap,laps:session.laps,mode:options.mode,wetness,ai:ais.length,fuel:player.fuel,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,fps:fpsEMA,physicsHz:120,quality:options.quality,qualityLevel:qLevel,audio:raceAudio?.snapshot(),detailed:!!carObjs[selected].detailed,modelKind:carObjs[selected].modelKind,dimensions:carObjs[selected].group.userData.dimensions,wheelCount:carObjs[selected].wheels.length,assetCredit:carObjs[selected].assetCredit,assetError:!!carObjs[selected].assetError,assetStatus:carObjs[selected].assetStatus,bodyLod:carObjs[selected].bodyLod?.getCurrentLevel(),aiLods:ais.map(a=>({car:a.car.cfg.type,level:a.car.bodyLod?.getCurrentLevel()})),steeringAngle:carObjs[selected].steeringWheel?.rotation.z,wheelPositions:carObjs[selected].wheels.map(w=>w.parent.position.toArray()),cockpit:carObjs[selected].cockpit,bonnet:carObjs[selected].bonnet,camera:camMode,motion:{body:options.bodyMotion,camera:options.cameraMotion},cameraEye:camera.position.toArray(),cameraClip:[camera.near,camera.far],pixelRatio:renderer.getPixelRatio(),orbit:vehicleOrbit.snapshot(),pedals:{throttle:player.throttlePressure,brake:player.brakePressure},cornerBraking:!!player.cornerBraking,menuTab,difficulty:diffSel,aiSpeeds:ais.map(a=>a.speed),aiDiagnostics:ais.map(a=>({car:a.car.cfg.type,speed:a.speed,planned:a.plannedSpeed,traffic:a.trafficTarget,target:a.commandTarget,throttle:a.driver.throttlePressure,brake:a.driver.brakePressure,distance:a.dist,lat:a.lat,latG:a.driver.latG,position:a.car.group.position.toArray(),heading:a.car.group.rotation.y,personality:PERSONALITIES[a.tactics.profile].name,tactic:a.tactics.mode,lateralVelocity:a.lateralVelocity,contactYaw:a.contactYaw})),sceneVisibility:{world:worldGroup.visible,showroom:showroom.visible,cars:carObjs.filter(c=>c.group.visible).length},environment:{...cityReport,sky:atmosphere.snapshot(),surfaces:surfaces.status}})};
+window.__velocity={snapshot:()=>({state,paused,raceTime,playerFinish:player.finishTime,finishTimes:ais.map(a=>a.finishTime),track:TRACKS[trackSel].theme,trackLength:trackLen,roadWidth:ROAD_W*2,car:CARS[selected].type,performance:performanceScores(CARS[selected]),speed:player.speed,heading:player.heading,position:player.pos.toArray(),lap:player.lap,laps:session.laps,mode:options.mode,wetness,ai:ais.length,fuel:player.fuel,drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles,fps:fpsEMA,physicsHz:120,quality:options.quality,qualityLevel:qLevel,audio:raceAudio?.snapshot(),detailed:!!carObjs[selected].detailed,modelKind:carObjs[selected].modelKind,dimensions:carObjs[selected].group.userData.dimensions,wheelCount:carObjs[selected].wheels.length,assetCredit:carObjs[selected].assetCredit,assetError:!!carObjs[selected].assetError,assetStatus:carObjs[selected].assetStatus,bodyLod:carObjs[selected].bodyLod?.getCurrentLevel(),aiLods:ais.map(a=>({car:a.car.cfg.type,level:a.car.bodyLod?.getCurrentLevel()})),steeringAngle:carObjs[selected].steeringWheel?.rotation.z,wheelPositions:carObjs[selected].wheels.map(w=>w.parent.position.toArray()),cockpit:carObjs[selected].cockpit,bonnet:carObjs[selected].bonnet,camera:camMode,motion:{body:options.bodyMotion,camera:options.cameraMotion},cameraEye:camera.position.toArray(),cameraClip:[camera.near,camera.far],pixelRatio:renderer.getPixelRatio(),orbit:vehicleOrbit.snapshot(),pedals:{throttle:player.throttlePressure,brake:player.brakePressure},cornerBraking:!!player.cornerBraking,menuTab,difficulty:diffSel,aiSpeeds:ais.map(a=>a.speed),aiDiagnostics:ais.map(a=>({car:a.car.cfg.type,speed:a.speed,planned:a.plannedSpeed,traffic:a.trafficTarget,target:a.commandTarget,throttle:a.driver.throttlePressure,brake:a.driver.brakePressure,distance:a.dist,lat:a.lat,latG:a.driver.latG,position:a.car.group.position.toArray(),heading:a.car.group.rotation.y,personality:PERSONALITIES[a.tactics.profile].name,tactic:a.tactics.mode,lateralVelocity:a.lateralVelocity,contactYaw:a.contactYaw})),sceneVisibility:{world:worldGroup.visible,showroom:showroom.visible,cars:carObjs.filter(c=>c.group.visible).length},environment:{...cityReport,sky:atmosphere.snapshot(),surfaces:surfaces.status}})};
 
 if(import.meta.env.DEV)window.__raceFinishTest=()=>{
  if(state!=='race')throw new Error('Start a local race first');

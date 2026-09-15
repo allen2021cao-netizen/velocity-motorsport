@@ -1,0 +1,7 @@
+#performanceRadar{margin:14px 0 9px;border-top:1px solid #43514b;padding-top:12px;color:#bdccc7}
+.radar-caption{display:flex;justify-content:space-between;font-size:11px;color:#e4ece8}.radar-caption span{font-size:9px;color:#8fa39a}
+#performanceRadar svg{display:block;width:100%;max-width:320px;max-height:255px;margin:auto;overflow:visible}
+.radar-grid{fill:none;stroke:#53665b;stroke-opacity:.55;stroke-width:1}#radarShape{fill:#d8ef8736;stroke:#d8ef87;stroke-width:2;stroke-linejoin:round}
+#performanceRadar text{fill:#b8c8be;font:11px 'Segoe UI',sans-serif}.radar-score{fill:#e6f3c1;font-size:14px;font-weight:600}
+#performanceRadar details{font-size:10px;line-height:1.7}#performanceRadar summary{cursor:pointer;color:#a6b8ac}#performanceRadar ul{padding-left:15px;margin:8px 0}#performanceRadar p{color:#8fa39a;margin:5px 0}
+@media(max-height:500px) and (orientation:landscape){#performanceRadar{margin-top:8px;padding-top:7px}#performanceRadar svg{max-height:195px}}

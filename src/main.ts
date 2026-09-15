@@ -16,3 +16,4 @@ const runtimeReady=import('./runtime.js').catch(error=>{
  throw error;
 });
 startSplash(runtimeReady);
+import './vehicle-radar.css';

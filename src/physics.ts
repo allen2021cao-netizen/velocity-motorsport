@@ -1,3 +1,4 @@
+import type {VehiclePerformance} from './vehicle-performance';
 export const clamp=(v:number,a:number,b:number)=>Math.max(a,Math.min(b,v));
 export interface Dynamics {speed:number;heading:number;steer:number;drift:number;fuel:number;wear:number;temperature:number;longG:number;latG:number;traction:boolean;abs:boolean;throttlePressure?:number;brakePressure?:number;}
 export interface Controls {throttle:number;brake:number;steer:number;handbrake:boolean;}
@@ -8,7 +9,7 @@ export function gripFor(setup:Setup,wear=0,temp=75,wet=0){
  return compound*water*(1-clamp(wear,0,1)*.32)*clamp(1-Math.abs(temp-78)*.003,.76,1);
 }
 /** Approximate bicycle model in metres/seconds. Combined grip budget limits braking + cornering. */
-export function stepVehicle(p:Dynamics,c:Controls,car:{top:number;accel:number;handling:number;wheelbase?:number},s:Setup,dt:number,wet=0){
+export function stepVehicle(p:Dynamics,c:Controls,car:VehiclePerformance,s:Setup,dt:number,wet=0){
  const brakeRequest=clamp(c.brake,0,1),throttleRequest=brakeRequest>.02?0:clamp(c.throttle,0,1);
  p.throttlePressure=(p.throttlePressure??0)+(throttleRequest-(p.throttlePressure??0))*(1-Math.exp(-(throttleRequest?8:24)*dt));
  p.brakePressure=(p.brakePressure??0)+(brakeRequest-(p.brakePressure??0))*(1-Math.exp(-22*dt));
@@ -20,9 +21,9 @@ export function stepVehicle(p:Dynamics,c:Controls,car:{top:number;accel:number;h
  // Digital input requests usable grip at speed, with full steering lock for tight slow corners.
  const steeringLock=Math.min(.68,Math.atan(maxG*wheelbase/Math.max(v*v,1))*1.18);
  const steerGoal=clamp(clamp(c.steer,-1,1)*steeringLock*(s.steering??1),-.74,.74);
- p.steer+=(steerGoal-p.steer)*(1-Math.exp(-(Math.abs(steerGoal)<.001?16:p.steer*steerGoal<0?15:12-4*clamp(v/70,0,1))*dt));
+ p.steer+=(steerGoal-p.steer)*(1-Math.exp(-(Math.abs(steerGoal)<.001?16:p.steer*steerGoal<0?15:12-4*clamp(v/70,0,1))*(car.agility??1)*dt));
  const demanded=p.speed*p.speed/wheelbase*Math.tan(p.steer);
- const braking=c.brake*maxG*(s.assist==='off'?.79:1)*(1-Math.abs(s.balance-55)*.004);
+ const braking=c.brake*maxG*(car.braking??1)*(s.assist==='off'?.79:1)*(1-Math.abs(s.balance-55)*.004);
  const lateralLimit=Math.sqrt(Math.max(0,maxG*maxG-braking*braking*.78));
  const lateral=clamp(demanded,-lateralLimit,lateralLimit);
  p.traction=c.throttle>.5&&v<18&&grip<.9;
@@ -41,8 +42,8 @@ export function stepVehicle(p:Dynamics,c:Controls,car:{top:number;accel:number;h
  p.longG=acceleration/9.81;p.latG=lateral/9.81;
  const yaw=v>.2?lateral/Math.max(v,2):0;
  const slip=Math.max(0,Math.abs(demanded)-lateralLimit)/Math.max(maxG,1);
- const driftGoal=Math.sign(p.steer)*clamp((c.handbrake?.18:0)+slip*(s.assist==='off'?.08:.012),0,.3);
- p.drift+=(driftGoal-p.drift)*(1-Math.exp(-5*dt));
+ const driftGoal=Math.sign(p.steer)*clamp((c.handbrake?.18:0)+slip*(s.assist==='off'?.08:.012)/(car.stability??1),0,.3);
+ p.drift+=(driftGoal-p.drift)*(1-Math.exp(-5*(car.stability??1)*dt));
  p.heading+=yaw*dt*(c.handbrake?1.22:1);
  if(c.handbrake)p.speed=Math.max(0,p.speed-4*dt);
  const targetTemp=36+v*.62+Math.abs(p.latG)*16+c.brake*14;
