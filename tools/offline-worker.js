@@ -11,8 +11,16 @@ async function obtain(e,background=false){
   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),90000);
   try{
    const response=await fetch(e.url,{cache:'no-cache',signal:controller.signal,priority:background?'low':'auto'});if(!response.ok)throw Error('下载失败：'+e.url);
-   const bytes=await response.arrayBuffer();
-   const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),v=>v.toString(16).padStart(2,'0')).join('');
+   let bytes=await response.arrayBuffer();
+   const digest=async data=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',data)),v=>v.toString(16).padStart(2,'0')).join('');
+   let hash=await digest(bytes);
+   if(hash!==e.hash&&e.url.endsWith('.html')){
+    // The production proxy injects its analytics tag. Cache only the original
+    // build bytes, and still reject every other modification to the page.
+    const canonical=new TextDecoder().decode(bytes).replace(/<script type="module" src="https:\/\/static\.cloudflareinsights\.com\/beacon\.min\.js" data-cf-beacon='[^']*'><\/script>/g,'');
+    const original=new TextEncoder().encode(canonical);
+    if(await digest(original)===e.hash){bytes=original;hash=e.hash;}
+   }
    if(hash!==e.hash)throw Error('资源版本已更新，请刷新页面后重试');
    const headers=new Headers(response.headers);headers.delete('content-encoding');headers.delete('content-length');
    const result=new Response(bytes,{status:200,headers});
