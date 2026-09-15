@@ -19,3 +19,4 @@ startSplash(runtimeReady);
 import './vehicle-radar.css';
 
 import './apex-interface.css';
+import './touch-controls.css';

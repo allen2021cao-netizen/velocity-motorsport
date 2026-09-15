@@ -881,6 +881,15 @@ document.getElementById('startBtn').onclick = () => { initAudio(); startRace(); 
 document.getElementById('againBtn').onclick = () => { document.getElementById('results').style.display = 'none'; startRace(); };
 document.getElementById('garageBtn').onclick = () => { document.getElementById('results').style.display = 'none'; toMenu(); };
 document.getElementById('resumeBtn').onclick = togglePause;
+document.getElementById('restartBtn').onclick = async () => {
+  if(preparingRace||!paused)return;
+  const panel=document.getElementById('pause'),button=document.getElementById('restartBtn');
+  const buttons=[...panel.querySelectorAll('button')],disabled=buttons.map(b=>b.disabled);
+  buttons.forEach(b=>b.disabled=true);button.textContent='正在重新开始…';clearInput();initAudio();
+  try{await startRace();panel.style.display='none';}
+  catch(error){console.error('Restart failed',error);paused=true;panel.style.display='flex';}
+  finally{buttons.forEach((b,i)=>b.disabled=disabled[i]);button.textContent='重新开始 ↻';}
+};
 document.getElementById('quitBtn').onclick = () => { paused = false; document.getElementById('pause').style.display = 'none'; toMenu(); };
 
 function togglePause() {

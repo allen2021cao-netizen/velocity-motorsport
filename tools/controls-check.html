@@ -1,0 +1,16 @@
+<!doctype html><meta charset="utf-8"><title>驾驶控件验证</title>
+<button id="run">验证暂停重开与默认帧数</button>
+<button data-device="ipad" data-size="1024,768">iPad 横屏</button>
+<button data-device="ipad" data-size="768,1024">iPad 竖屏</button>
+<button data-device="iphone" data-size="844,390">iPhone 横屏</button>
+<button data-device="iphone" data-size="390,844">iPhone 竖屏</button>
+<button data-device="iphone" data-size="320,568">小屏 iPhone</button>
+<pre id="report">准备</pre><iframe id="game" src="/" style="width:1024px;height:768px;border:0"></iframe>
+<script>
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+async function until(check){const end=Date.now()+60000;while(!check()){if(Date.now()>end)throw Error('等待超时');await wait(50);}}
+function rect(el){const r=el.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom};}
+function layout(){const d=game.contentDocument,ids=['btnL','btnR','btnCam','controlsToggle','btnGas','btnBrake'];const boxes=Object.fromEntries(ids.map(id=>[id,rect(d.getElementById(id))]));const overlaps=[];for(const a of ['btnL','btnR'])for(const b of ids.filter(id=>id!==a)){const p=boxes[a],q=boxes[b];if(p.x<q.right&&p.right>q.x&&p.y<q.bottom&&p.bottom>q.y)overlaps.push(a+'/'+b);}return{device:d.documentElement.dataset.touchDevice,size:[game.clientWidth,game.clientHeight],boxes,overlaps};}
+for(const b of document.querySelectorAll('[data-device]'))b.onclick=async()=>{const [w,h]=b.dataset.size.split(',');game.style.width=w+'px';game.style.height=h+'px';game.contentDocument.documentElement.dataset.touchDevice=b.dataset.device;await wait(200);report.textContent=JSON.stringify(layout(),null,2);};
+run.onclick=async()=>{run.disabled=true;try{const w=game.contentWindow,d=w.document;await until(()=>!!w.__velocity);d.getElementById('startBtn').click();await until(()=>w.__velocity.snapshot().state==='race');await wait(1600);const before=w.__velocity.snapshot();d.getElementById('btnPause').dispatchEvent(new w.PointerEvent('pointerdown',{bubbles:true}));await until(()=>w.__velocity.snapshot().paused);const pauseVisible=getComputedStyle(d.getElementById('pause')).display!=='none';d.getElementById('restartBtn').click();await until(()=>w.__velocity.snapshot().state==='countdown');await until(()=>w.__velocity.snapshot().state==='race');await wait(550);const after=w.__velocity.snapshot();const passed=pauseVisible&&before.car===after.car&&before.track===after.track&&after.raceTime<1.5&&after.lap===1&&!after.paused&&!d.getElementById('fpsValue').hidden&&getComputedStyle(d.getElementById('pause')).display==='none';report.textContent=JSON.stringify({passed,before:{time:before.raceTime,car:before.car,track:before.track},after:{time:after.raceTime,lap:after.lap,car:after.car,track:after.track,paused:after.paused},fps:d.getElementById('fpsValue').textContent,layout:layout()},null,2);}catch(e){report.textContent=String(e);}finally{run.disabled=false;}};
+</script>

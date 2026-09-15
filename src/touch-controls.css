@@ -1,0 +1,16 @@
+/* iPadOS also identifies as desktop Safari; experience.ts detects its touch input. */
+html[data-touch-device="ipad"]{--steer-size:104px;--steer-gap:16px;--steer-left:max(24px,env(safe-area-inset-left));--steer-bottom:calc(72px + env(safe-area-inset-bottom))}
+html[data-touch-device="iphone"]{--steer-size:76px;--steer-gap:12px;--steer-left:max(12px,env(safe-area-inset-left));--steer-bottom:max(12px,env(safe-area-inset-bottom))}
+html:is([data-touch-device="ipad"],[data-touch-device="iphone"]) #touchUI :is(#btnL,#btnR){width:var(--steer-size);height:var(--steer-size);bottom:var(--steer-bottom)}
+html:is([data-touch-device="ipad"],[data-touch-device="iphone"]) #touchUI #btnL{left:var(--steer-left)}
+html:is([data-touch-device="ipad"],[data-touch-device="iphone"]) #touchUI #btnR{left:calc(var(--steer-left) + var(--steer-size) + var(--steer-gap))}
+html:is([data-touch-device="ipad"],[data-touch-device="iphone"]) #touchUI :is(#btnL,#btnR) .big{font-size:30px}
+html[data-touch-device="ipad"] #touchUI #btnCam{left:var(--steer-left);bottom:calc(var(--steer-bottom) + var(--steer-size) + 16px)}
+html[data-touch-device="ipad"] #controlsToggle{left:var(--steer-left);top:auto;bottom:calc(var(--steer-bottom) + var(--steer-size) + 78px)}
+html[data-touch-device="iphone"] #touchUI #btnCam{left:var(--steer-left);bottom:calc(var(--steer-bottom) + var(--steer-size) + 14px)}
+@media (orientation:landscape){
+ html[data-touch-device="iphone"] #controlsToggle{left:calc(var(--steer-left) + 110px);top:auto;bottom:calc(var(--steer-bottom) + var(--steer-size) + 16px)}
+}
+@media (max-width:600px){html[data-touch-device="ipad"]{--steer-size:88px;--steer-gap:14px;--steer-left:max(16px,env(safe-area-inset-left))}}
+/* Keep steering and pedals separate on small phones and narrow Split View. */
+@media (max-width:360px){html:is([data-touch-device="ipad"],[data-touch-device="iphone"]){--steer-size:68px;--steer-gap:12px;--steer-left:max(8px,env(safe-area-inset-left))}}
